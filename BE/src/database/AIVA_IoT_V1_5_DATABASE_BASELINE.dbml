@@ -1,0 +1,328 @@
+Project AIVA_IoT_V1_5 {
+  database_type: 'MySQL'
+  Note: 'V1.5 P0/P1 baseline. Modular Monolith + separate AI Server. Internet search and RAG/memory P2 excluded.'
+}
+
+Table users {
+  id bigint [pk, increment]
+  email varchar(255) [not null, unique]
+  password_hash varchar(255) [not null]
+  display_name varchar(150) [not null]
+  status varchar(24) [not null, default: 'active', note: 'active, suspended, disabled']
+  email_verified_at datetime
+  last_login_at datetime
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+Table roles {
+  id int [pk, increment]
+  code varchar(32) [not null, unique, note: 'ADMIN, USER']
+  name varchar(100) [not null]
+}
+Table user_roles {
+  user_id bigint [not null, ref: > users.id]
+  role_id int [not null, ref: > roles.id]
+  indexes { (user_id, role_id) [pk] }
+}
+Table auth_sessions {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id]
+  refresh_token_hash varchar(255) [not null, unique]
+  expires_at datetime [not null]
+  revoked_at datetime
+  created_at datetime [not null]
+  indexes { (user_id, expires_at) }
+}
+Table privacy_preferences {
+  user_id bigint [pk, ref: - users.id]
+  save_history boolean [not null, default: true]
+  updated_at datetime [not null]
+}
+
+Table devices {
+  id bigint [pk, increment]
+  device_uid varchar(128) [not null, unique]
+  display_name varchar(120)
+  hardware_model varchar(100)
+  lifecycle_status varchar(32) [not null, default: 'available', note: 'available, pending_approval, assigned, reset_pending, maintenance']
+  connection_status varchar(20) [not null, default: 'offline']
+  current_firmware_id bigint [ref: > firmware_versions.id]
+  last_seen_at datetime
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+Table device_credentials {
+  id bigint [pk, increment]
+  device_id bigint [not null, ref: > devices.id]
+  credential_hash varchar(255) [not null, unique]
+  status varchar(20) [not null, default: 'active']
+  expires_at datetime
+  revoked_at datetime
+  created_at datetime [not null]
+  indexes { (device_id, status) }
+  Note: 'Device auth credentials; separate from short-lived pairing codes.'
+}
+Table device_pairing_codes {
+  id bigint [pk, increment]
+  device_id bigint [not null, ref: > devices.id]
+  code_hash varchar(255) [not null, unique]
+  expires_at datetime [not null]
+  consumed_at datetime
+  revoked_at datetime
+  created_at datetime [not null]
+  indexes { (device_id, expires_at) }
+}
+Table device_pairing_requests {
+  id bigint [pk, increment]
+  device_id bigint [not null, ref: > devices.id]
+  user_id bigint [not null, ref: > users.id]
+  pairing_code_id bigint [not null, ref: > device_pairing_codes.id]
+  status varchar(24) [not null, default: 'pending', note: 'pending, approved, rejected, cancelled']
+  reviewed_by bigint [ref: > users.id]
+  reviewed_at datetime
+  review_note varchar(500)
+  created_at datetime [not null]
+  indexes { (device_id, status) (user_id, status) }
+}
+Table device_assignments {
+  device_id bigint [pk, ref: - devices.id]
+  user_id bigint [not null, ref: > users.id]
+  pairing_request_id bigint [not null, unique, ref: > device_pairing_requests.id]
+  assigned_by bigint [not null, ref: > users.id]
+  assigned_at datetime [not null]
+  indexes { user_id }
+  Note: 'Exactly one CURRENT owner per device. Create only after Admin approval.'
+}
+Table device_assignment_history {
+  id bigint [pk, increment]
+  device_id bigint [not null, ref: > devices.id]
+  user_id bigint [not null, ref: > users.id]
+  pairing_request_id bigint [ref: > device_pairing_requests.id]
+  assigned_at datetime [not null]
+  unlinked_at datetime
+  unlinked_by bigint [ref: > users.id]
+  unlink_reason varchar(500)
+  indexes { (device_id, assigned_at) (user_id, assigned_at) }
+}
+Table device_unlink_operations {
+  id bigint [pk, increment]
+  device_id bigint [not null, ref: > devices.id]
+  former_user_id bigint [not null, ref: > users.id]
+  assignment_history_id bigint [not null, ref: > device_assignment_history.id]
+  requested_by bigint [not null, ref: > users.id]
+  status varchar(32) [not null, default: 'requested', note: 'requested, backed_up, revoked, reset_pending, completed, failed']
+  requested_at datetime [not null]
+  revoked_at datetime
+  completed_at datetime
+  failure_reason text
+  indexes { (device_id, status) (former_user_id, requested_at) }
+}
+Table device_recovery_backups {
+  id bigint [pk, increment]
+  unlink_operation_id bigint [not null, unique, ref: > device_unlink_operations.id]
+  encrypted_blob_uri varchar(1024) [not null, note: 'Encrypted object storage reference; no plaintext sensitive data']
+  checksum_sha256 char(64) [not null]
+  encryption_key_ref varchar(255) [not null]
+  created_at datetime [not null]
+  expires_at datetime [not null, note: 'created_at + 7 days']
+  deleted_at datetime
+  restored_at datetime
+  restored_by bigint [ref: > users.id]
+  indexes { (expires_at, deleted_at) }
+  Note: 'Backup before revocation. Restore only by Admin within 7 days, if device has no new owner.'
+}
+Table device_reset_jobs {
+  id bigint [pk, increment]
+  unlink_operation_id bigint [not null, ref: > device_unlink_operations.id]
+  device_id bigint [not null, ref: > devices.id]
+  status varchar(24) [not null, default: 'pending', note: 'pending, sent, acknowledged, failed']
+  attempt_count int [not null, default: 0]
+  requested_at datetime [not null]
+  sent_at datetime
+  acknowledged_at datetime
+  last_error varchar(500)
+  indexes { (device_id, status) }
+  Note: 'Do not allow new pairing before reset acknowledgement.'
+}
+Table device_telemetry {
+  id bigint [pk, increment]
+  device_id bigint [not null, ref: > devices.id]
+  event_type varchar(60) [not null]
+  wifi_rssi int
+  free_heap_bytes bigint
+  battery_percent tinyint
+  payload json
+  recorded_at datetime [not null]
+  indexes { (device_id, recorded_at) }
+}
+
+Table ai_providers {
+  id int [pk, increment]
+  code varchar(32) [not null, unique, note: 'LOCAL, OPENAI, GEMINI']
+  name varchar(100) [not null]
+  is_enabled boolean [not null, default: true]
+  health_status varchar(24)
+}
+Table ai_models {
+  id bigint [pk, increment]
+  provider_id int [not null, ref: > ai_providers.id]
+  model_code varchar(120) [not null]
+  capability varchar(20) [not null, note: 'LLM, STT, TTS']
+  is_enabled boolean [not null, default: true]
+  indexes { (provider_id, model_code, capability) [unique] }
+}
+Table ai_profiles {
+  user_id bigint [pk, ref: - users.id]
+  assistant_name varchar(100)
+  system_prompt text
+  language_code varchar(20)
+  voice_code varchar(100)
+  preferred_provider_id int [ref: > ai_providers.id]
+  preferred_llm_model_id bigint [ref: > ai_models.id]
+  updated_at datetime [not null]
+  Note: 'Shared across all Xiaozhi devices owned by this user.'
+}
+Table api_credentials {
+  id bigint [pk, increment]
+  provider_id int [not null, ref: > ai_providers.id]
+  owner_scope varchar(20) [not null, note: 'SYSTEM or USER']
+  owner_user_id bigint [ref: > users.id, note: 'NULL only for SYSTEM scope']
+  label varchar(100) [not null]
+  secret_ciphertext text [not null]
+  secret_hint varchar(16)
+  is_active boolean [not null, default: true]
+  created_at datetime [not null]
+  revoked_at datetime
+  indexes { (owner_scope, owner_user_id, provider_id) }
+  Note: 'System key and personal key never automatically substitute for each other.'
+}
+Table quota_policies {
+  id bigint [pk, increment]
+  user_id bigint [ref: > users.id, note: 'NULL for system-wide policy']
+  provider_id int [ref: > ai_providers.id]
+  requests_per_minute int
+  requests_per_day int
+  tokens_per_month bigint
+  is_active boolean [not null, default: true]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  indexes { (user_id, provider_id) }
+}
+
+Table conversations {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id]
+  device_id bigint [ref: > devices.id, note: 'NULL for WEB chat']
+  channel varchar(20) [not null, note: 'DEVICE or WEB']
+  title varchar(255)
+  status varchar(20) [not null, default: 'active']
+  started_at datetime [not null]
+  ended_at datetime
+  deleted_at datetime
+  indexes { (user_id, started_at) (device_id, started_at) }
+}
+Table ai_sessions {
+  id bigint [pk, increment]
+  conversation_id bigint [not null, ref: > conversations.id]
+  device_id bigint [ref: > devices.id]
+  ai_server_instance_id bigint [ref: > ai_server_instances.id]
+  status varchar(24) [not null, default: 'active']
+  started_at datetime [not null]
+  ended_at datetime
+  error_code varchar(80)
+  indexes { (conversation_id, started_at) }
+}
+Table messages {
+  id bigint [pk, increment]
+  conversation_id bigint [not null, ref: > conversations.id]
+  role varchar(20) [not null, note: 'user, assistant, system, tool']
+  content text
+  provider_id int [ref: > ai_providers.id]
+  created_at datetime [not null]
+  indexes { (conversation_id, created_at) }
+}
+Table usage_records {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id]
+  conversation_id bigint [ref: > conversations.id]
+  ai_session_id bigint [ref: > ai_sessions.id]
+  provider_id int [not null, ref: > ai_providers.id]
+  model_id bigint [ref: > ai_models.id]
+  credential_id bigint [ref: > api_credentials.id]
+  request_kind varchar(20) [not null, note: 'LLM, STT, TTS']
+  input_tokens int
+  output_tokens int
+  duration_ms int
+  status varchar(24) [not null]
+  occurred_at datetime [not null]
+  indexes { (user_id, occurred_at) (provider_id, occurred_at) }
+}
+
+Table firmware_versions {
+  id bigint [pk, increment]
+  hardware_model varchar(100) [not null]
+  version varchar(80) [not null]
+  file_uri varchar(1024) [not null]
+  checksum_sha256 char(64) [not null]
+  uploaded_by bigint [not null, ref: > users.id]
+  released_at datetime
+  created_at datetime [not null]
+  indexes { (hardware_model, version) [unique] }
+}
+Table ota_updates {
+  id bigint [pk, increment]
+  device_id bigint [not null, ref: > devices.id]
+  firmware_version_id bigint [not null, ref: > firmware_versions.id]
+  status varchar(24) [not null, default: 'pending']
+  requested_at datetime [not null]
+  completed_at datetime
+  error_message text
+  indexes { (device_id, requested_at) }
+}
+
+Table ai_server_instances {
+  id bigint [pk, increment]
+  instance_code varchar(100) [not null, unique]
+  status varchar(24) [not null]
+  last_healthcheck_at datetime
+  started_at datetime
+}
+Table resource_metrics {
+  id bigint [pk, increment]
+  instance_id bigint [not null, ref: > ai_server_instances.id]
+  cpu_percent decimal(5,2)
+  memory_percent decimal(5,2)
+  gpu_percent decimal(5,2)
+  gpu_memory_percent decimal(5,2)
+  active_sessions int
+  recorded_at datetime [not null]
+  indexes { (instance_id, recorded_at) }
+}
+Table system_logs {
+  id bigint [pk, increment]
+  instance_id bigint [ref: > ai_server_instances.id]
+  device_id bigint [ref: > devices.id]
+  severity varchar(20) [not null]
+  component varchar(100) [not null]
+  event_code varchar(100)
+  message text
+  occurred_at datetime [not null]
+  indexes { (severity, occurred_at) }
+}
+Table audit_logs {
+  id bigint [pk, increment]
+  actor_user_id bigint [ref: > users.id]
+  action varchar(100) [not null]
+  entity_type varchar(80) [not null]
+  entity_id varchar(100)
+  metadata json
+  occurred_at datetime [not null]
+  indexes { (actor_user_id, occurred_at) }
+}
+Table system_settings {
+  setting_key varchar(120) [pk]
+  setting_value json [not null]
+  updated_by bigint [ref: > users.id]
+  updated_at datetime [not null]
+  Note: 'Do not store plaintext API secrets.'
+}

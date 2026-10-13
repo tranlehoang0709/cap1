@@ -1,0 +1,242 @@
+PROPOSAL: XÂY DỰNG HỆ THỐNG TRỢ LÝ ẢO AI TOÀN DIỆN CHO THIẾT BỊ XIAOZHI
+
+================================================================================
+1. Introduction
+================================================================================
+
+1.1. Purpose of Document
+Tài liệu này là Bản đề xuất dự án (Project Proposal) cung cấp cái nhìn toàn diện về Hệ thống Trợ lý ảo AI Toàn diện (End-to-End AI Voice Assistant System) — một giải pháp tích hợp đa nền tảng kết hợp giữa phần cứng nhúng IoT (dựa trên nền tảng Xiaozhi ESP32), máy chủ xử lý trí tuệ nhân tạo thời gian thực (Realtime AI Server) và hệ sinh thái Web quản trị tập trung.
+
+Tài liệu xác định rõ:
+
+- Bối cảnh và động lực: Nâng cấp quy mô dự án vượt ra khỏi phạm vi một firmware đơn lẻ, hướng tới một hệ sinh thái hoàn chỉnh gồm Thiết bị đầu cuối (Edge Device) – Máy chủ truyền thông thời gian thực (Communication Gateway) – Nền tảng Web Quản trị (Admin/User Portal) – Hệ thống điều phối AI (AI Pipeline).
+- Mục tiêu kỹ thuật và nghiệp vụ: Định nghĩa bài toán quản lý người dùng, cơ chế cấp phát và kiểm soát API Key, quản lý vòng đời thiết bị (Device Management) và lộ trình công nghệ AI hai giai đoạn (Cloud-based sang Local/On-premise Models).
+- Kiến trúc và giải pháp công nghệ: Lựa chọn các công nghệ chuẩn công nghiệp hiện đại bao gồm NestJS cho Backend, Next.js cho Frontend, giao thức truyền thông độ trễ thấp (WebSocket/Socket) và firmware C/C++ tùy biến trên ESP-IDF.
+- Kế hoạch triển khai và kiểm soát chất lượng: Phân chia các mốc phát triển theo mô hình Agile Scrum, phân bổ nguồn lực, dự toán chi phí và đánh giá rủi ro kỹ thuật.
+
+1.2. Project Goal
+Mục tiêu cốt lõi của dự án là thiết kế và triển khai một Hệ sinh thái Trợ lý ảo AI thời gian thực hoàn chỉnh, kết nối liền mạch giữa phần cứng tương tác thông minh và hệ thống quản trị dịch vụ tập trung. Cụ thể, dự án hướng tới 4 mục tiêu lớn:
+
+1. Xây dựng Nền tảng Web Quản trị và Cổng người dùng (Admin & User Web Platform):
+   - Sử dụng kiến trúc hiện đại với NestJS (Backend) và Next.js (Frontend) nhằm cung cấp hệ thống phân quyền chặt chẽ (RBAC) cho Quản trị viên (Admin) và Người dùng cuối (User).
+   - Quản trị người dùng & API Key: Cung cấp cơ chế tạo, cấp phát, giới hạn hạn ngạch (quota) và thu hồi API Key, đảm bảo kiểm soát bảo mật và chi phí gọi tài nguyên AI.
+   - Quản lý thiết bị tập trung (Device Management): Cho phép người dùng ghép nối (pair) thiết bị với tài khoản cá nhân; giám sát trạng thái trực tuyến (online/offline, telemetry); cấu hình từ xa nhân cách AI (system prompt), giọng nói phản hồi và triển khai cập nhật firmware qua mạng (OTA Update).
+
+2. Xây dựng Hệ thống Server Điều phối AI Thời gian thực (Realtime AI Gateway & Server):
+   - Thiết lập máy chủ trung gian dựa trên kiến trúc mở của Xiaozhi Server, cung cấp kênh kết nối liên tục hai chiều (duplex) qua WebSocket với độ trễ thấp để truyền nhận luồng âm thanh trực tiếp (Audio Streaming).
+   - Điều phối quy trình xử lý AI tuần hoàn: Nhận diện giọng nói tự động (ASR/STT) -> Xử lý ngôn ngữ tự nhiên (LLM) -> Tổng hợp giọng nói thành âm thanh (TTS).
+
+3. Tùy biến và Tối ưu Firmware cho Thiết bị nhúng (Customized ESP32 Firmware):
+   - Phát triển firmware chuyên biệt trên nền tảng vi điều khiển ESP32, cấu hình thiết bị trỏ trực tiếp và giao tiếp an toàn với Server riêng của dự án thay vì hạ tầng mặc định.
+   - Tối ưu hóa pipeline thu âm từ microphone, phát âm thanh ra loa, nhận diện từ khóa đánh thức (Wake Word) và giao diện trực quan (màn hình hiển thị trạng thái, biểu cảm AI).
+
+4. Triển khai Lộ trình Công nghệ AI Hai Giai đoạn (Two-Phase AI Roadmap):
+   - Giai đoạn 1 (Version 1 – Nền tảng & Tích hợp Cloud AI): Hoàn thiện khung ứng dụng Web, Server giao tiếp và firmware; tích hợp các Cloud API uy tín (như OpenAI API cho LLM/ASR/TTS) để đảm bảo hệ thống phản hồi tức thì, chính xác và chứng minh tính khả thi của mô hình nghiệp vụ.
+   - Giai đoạn 2 (Version 2 – Nghiên cứu & Chuyển đổi sang Local Model): Giảm thiểu chi phí định kỳ và nâng cao tính riêng tư dữ liệu bằng cách thay thế Cloud API bằng các mô hình AI mã nguồn mở tự vận hành trên máy chủ nội bộ (Self-hosted/Local Models như Whisper, Open-source LLMs, FastTTS); đồng thời giải quyết bài toán tối ưu hóa tài nguyên phần cứng máy chủ.
+
+
+================================================================================
+2. Problem Definition
+================================================================================
+
+2.1. Business Need & User Need
+
+Về phía Người dùng cuối (User Need):
+- Nhu cầu tương tác tự nhiên và rảnh tay (Hands-free Interaction): Hầu hết các công cụ AI hiện nay (ChatGPT, Claude, Gemini) vẫn yêu cầu người dùng phải gõ phím hoặc mở ứng dụng điện thoại. Trong nhiều tình huống (đang lái xe, nấu ăn, làm việc kỹ thuật hoặc đối với trẻ em, người cao tuổi), một thiết bị trợ lý vật lý phản hồi trực tiếp bằng giọng nói tự nhiên, không cần màn hình cảm ứng, mang lại sự tiện ích vượt bậc.
+- Tốc độ phản hồi và tính cá nhân hóa: Người dùng cần một thiết bị có khả năng lắng nghe và đối thoại gần với thời gian thực (Realtime Conversation), có thể tùy chỉnh giọng nói, phong cách trò chuyện và quản lý lịch sử trao đổi của mình thông qua một giao diện web trực quan.
+
+Về phía Quản trị, Nghiên cứu và Vận hành Hệ thống (Business/System Need):
+- Hạn chế của các giải pháp thương mại khép kín: Các loa thông minh thương mại (Amazon Alexa, Google Home, Apple HomePod) hoạt động theo dạng "hộp đen" (black-box), đóng kín hệ sinh thái, không cho phép nhà phát triển can thiệp sâu vào firmware, logic server hoặc tự do lựa chọn mô hình AI theo mong muốn.
+- Yêu cầu về quy mô quản trị thiết bị và bảo mật: Việc chỉ dừng lại ở mức "flash firmware chạy độc lập" cho từng thiết bị là không khả thi khi đưa vào ứng dụng thực tế. Hệ thống bắt buộc phải có một nền tảng quản trị trung tâm để:
+  + Xác thực thiết bị (Device Authentication) trước khi cho phép kết nối vào máy chủ.
+  + Cấp phát và quản lý API Key cho từng tài khoản nhằm phân bổ tài nguyên và kiểm soát chi phí gọi AI API.
+  + Giám sát trạng thái hoạt động, hỗ trợ cập nhật từ xa và cấu hình tham số mà không cần cắm cáp nạp lại code.
+- Bài toán chi phí và quyền riêng tư dữ liệu (Data Privacy & Cost Optimization): Việc phụ thuộc lâu dài vào các dịch vụ Cloud AI thương mại tiềm ẩn nguy cơ rò rỉ dữ liệu cá nhân nhạy cảm và gánh nặng chi phí vận hành tăng tuyến tính theo số lượng người dùng. Do đó, nhu cầu thiết kế một kiến trúc mở, module hóa — có khả năng chuyển dịch linh hoạt từ Cloud API sang Local AI Model trên máy chủ riêng — là đòi hỏi tất yếu cho một đề tài kỹ thuật có tính ứng dụng cao.
+
+2.2. Solution (Giải pháp đề xuất)
+
+Nhóm đề xuất xây dựng Hệ sinh thái Trợ lý ảo AI Toàn diện, gồm 3 phân hệ trụ cột hoạt động phối hợp chặt chẽ:
+
+1. Phân hệ Phần cứng nhúng (Edge Hardware - Xiaozhi ESP32):
+   - Sử dụng vi điều khiển ESP32 (ưu tiên dòng ESP32-S3 có khả năng xử lý âm thanh và AI edge).
+   - Firmware tùy chỉnh được phát triển bằng C/C++ trên framework ESP-IDF v6.0.x, đảm nhận:
+     + Kết nối Wi-Fi, xác thực với hệ thống thông qua định danh thiết bị và Token/API Key.
+     + Thu nhận âm thanh chất lượng cao từ microphone I2S, truyền luồng âm thanh theo thời gian thực (Audio Streaming) tới Server.
+     + Nhận luồng âm thanh phản hồi từ Server và phát ra loa với độ trễ tối thiểu.
+     + Nhận diện từ khóa đánh thức (Wake Word) ngoại tuyến và điều khiển giao diện hiển thị (LCD/OLED biểu cảm khuôn mặt AI).
+
+2. Phân hệ Máy chủ Truyền thông & Xử lý AI Thời gian thực (Realtime AI Server):
+   - Lấy cảm hứng và kế thừa kiến trúc mở của dự án Xiaozhi Server, xây dựng máy chủ chuyên trách xử lý kết nối trực tiếp với thiết bị:
+     + Duy trì kết nối hai chiều liên tục thông qua giao thức WebSocket (hoặc MQTT + UDP Audio) nhằm giảm tối đa độ trễ khởi tạo kết nối.
+     + Đóng vai trò bộ điều phối (Orchestrator): chuyển đổi luồng Opus/PCM từ thiết bị -> đưa vào ASR -> nạp văn bản vào LLM -> chuyển câu trả lời sang TTS -> stream âm thanh trả ngược lại cho thiết bị theo dạng luồng (chunk-by-chunk) để người dùng không phải chờ đợi toàn bộ câu trả lời hoàn tất mới được nghe.
+
+3. Phân hệ Quản trị Web (Management Web Platform):
+   - Backend (NestJS): Xây dựng theo kiến trúc hướng module (Modular Architecture), cung cấp các RESTful API và WebSocket Gateway phục vụ:
+     + Quản lý người dùng, phân quyền Admin và Member.
+     + Hệ thống quản lý API Key: sinh khóa ngẫu nhiên an toàn, cấu hình hạn mức sử dụng (rate limiting/quota) cho từng người dùng.
+     + Quản lý vòng đời thiết bị: Cấp phát định danh (Device ID), ghép nối thiết bị vào tài khoản người dùng, giám sát trạng thái trực tuyến (heartbeat) và quản lý các bản build firmware để phục vụ cập nhật từ xa (OTA).
+   - Frontend (Next.js):
+     + Cung cấp giao diện hiện đại, tối ưu SEO và tương thích đa thiết bị.
+     + Trang quản trị (Admin Dashboard): Báo cáo lượng gọi API, tình trạng hoạt động của các thiết bị trong mạng lưới, quản lý người dùng và cấp phát tài nguyên.
+     + Cổng người dùng (User Portal): Cung cấp giao diện để người dùng kích hoạt thiết bị, đổi Wi-Fi, tùy chỉnh giọng nói (Voice/Accent), cấu hình tính cách AI (System Prompt) và xem lại nhật ký hội thoại.
+
+4. Lộ trình Triển khai AI Hai Giai đoạn (AI Phased Roadmap):
+   - Phiên bản 1 (Version 1 - Cloud API Foundation):
+     Tận dụng sức mạnh và độ ổn định của các dịch vụ đám mây (OpenAI Whisper/TTS API, GPT-4o-mini API) nhằm thiết lập quy trình hoạt động trơn tru từ phần cứng đến web server, kiểm chứng toàn diện giải pháp realtime và các chức năng quản trị.
+   - Phiên bản 2 (Version 2 - On-Premise / Local AI Integration):
+     Thay thế dần các thành phần AI đám mây bằng mô hình mã nguồn mở chạy trực tiếp trên máy chủ nội bộ (Self-hosted trên hạ tầng GPU riêng): ví dụ Whisper hoặc Faster-Whisper cho ASR; Qwen/Llama tối ưu qua vLLM/Ollama cho LLM; Piper hoặc ChatTTS cho TTS.
+     Thực hiện đánh giá so chuẩn (benchmark) về độ trễ, mức tiêu thụ tài nguyên phần cứng máy chủ và chi phí vận hành giữa hai mô hình Cloud vs Local.
+
+2.3. System Functions (Các chức năng hệ thống chi tiết)
+1. Đăng nhập & Xác thực hệ thống (User Authentication): Đăng nhập/Đăng xuất cho Admin và User, mã hóa bảo mật JWT Token.
+2. Admin quản lý người dùng (User Management): Tạo mới, chỉnh sửa, xóa, khóa và phân quyền (RBAC) cho người dùng.
+3. Admin quản lý thiết bị Xiaozhi (Device Management): Đăng ký thiết bị, gán MAC/Device ID, theo dõi tình trạng hoạt động.
+4. Gán thiết bị cho người dùng (Device Assignment & Pairing): Liên kết thiết bị vật lý Xiaozhi với tài khoản người dùng cá nhân.
+5. Quản lý trạng thái thiết bị Online/Offline (Device Telemetry): Theo dõi và cập nhật trạng thái kết nối thời gian thực (Online, Offline, Busy).
+6. Quản lý API Key AI & Hạn ngạch (AI API Key Management): Cấp phát, mã hóa lưu trữ, thu hồi và cấu hình giới hạn dung lượng sử dụng (quota/rate limit).
+7. Đăng ký & Kết nối thiết bị tới Server (Device Connection & Auth): Xác thực Device Token/Key trước khi thiết lập luồng truyền âm thanh.
+8. Thiết bị gửi dữ liệu giọng nói Realtime (Realtime Voice Streaming): Stream dữ liệu âm thanh dạng chunk (Opus/PCM) qua kết nối WebSocket hai chiều.
+9. Server xử lý luồng AI (Server AI Pipeline): Bộ điều phối xử lý chuỗi ASR (Speech-to-Text) -> LLM (Xử lý ngôn ngữ) -> TTS (Text-to-Speech).
+10. Server trả âm thanh/phản hồi Realtime cho thiết bị (Audio Streaming Response): Stream luồng âm thanh tổng hợp từ TTS về thiết bị qua WebSocket để phát tức thì qua loa.
+11. Lưu trữ nhật ký & Lịch sử tương tác (Interaction History Logging): Ghi nhận toàn bộ phiên tương tác (văn bản câu hỏi, câu trả lời, thời gian) vào PostgreSQL.
+12. Quản lý cấu hình thiết bị từ xa (Device Config Management): Tùy chỉnh thông số âm lượng, độ nhạy micro, giọng đọc TTS và system prompt từ Web.
+13. Quản lý & Cập nhật Firmware OTA (Firmware OTA Management): Quản lý bản build firmware và hỗ trợ thiết bị cập nhật phần mềm tự động từ xa.
+
+
+================================================================================
+3. Current Status of Art (Hiện trạng giải pháp & Bảng so sánh)
+================================================================================
+
+Các giải pháp trợ lý giọng nói AI thương mại (như ChatGPT Voice, Amazon Alexa, Google Home) đã chứng minh tính hiệu quả của tương tác thoại thời gian thực. Tuy nhiên, các giải pháp này là hệ sinh thái đóng (black-box), không cho phép tùy biến firmware, không cho phép can thiệp logic server và thiếu nền tảng quản trị linh hoạt cho doanh nghiệp/tổ chức.
+
+Bảng so sánh tính năng hệ thống:
+----------------------------------------------------------------------------------------------------------------------
+Feature                              | ChatGPT Voice | Xiaozhi AI Assistant | Proposed System (Hệ thống đề xuất)
+----------------------------------------------------------------------------------------------------------------------
+Voice Interaction                    |      ✓        |          ✓           |                 ✓
+Speech Recognition (STT)             |      ✓        |          ✓           |                 ✓
+AI Conversation (LLM)                |      ✓        |          ✓           |                 ✓
+Text-to-Speech (TTS)                 |      ✓        |          ✓           |                 ✓
+Real-time Response                   |      ✓        |          ✓           |                 ✓
+Continuous Conversation              |      ✓        |          ✓           |                 ✓
+Hardware Device Integration          |      —        |          ✓           |                 ✓
+Custom AI Model / API                |      —        |          ✓           |                 ✓
+Customizable Hardware                |      —        |          ✓           |                 ✓
+System Customization                 |      —        |          ✓           |                 ✓
+Open-source / Extensible             |      —        |          ✓           |                 ✓
+Internet-based AI                    |      ✓        |          ✓           |                 ✓
+Centralized Web Admin (Next.js)      |      —        |          —           |                 ✓
+User & API Key Quota Management      |      —        |          —           |                 ✓
+Local AI Model Roadmap (On-Premise)  |      —        |          —           |                 ✓
+----------------------------------------------------------------------------------------------------------------------
+
+
+================================================================================
+4. Engineering Approach (Phương pháp tiếp cận kỹ thuật)
+================================================================================
+
+4.1. System Context Diagram (Sơ đồ kiến trúc hệ thống)
+
+┌────────────────────────────────────────────────────────────────────────┐
+│                     XIAOZHI AI VOICE ASSISTANT SYSTEM                  │
+└────────────────────────────────────────────────────────────────────────┘
+                                  │
+┌─────────────────────────────────┴──────────────────────────────────────┐
+│                     1. REALTIME COMMUNICATION LAYER                    │
+│  Xiaozhi Device ◄─── WebSocket ───► AI Communication Server            │
+│                                             ├── ASR (Speech-to-Text)   │
+│                                             ├── OpenAI / Local LLM     │
+│                                             └── TTS (Text-to-Speech)   │
+└────────────────────────────────────────────────────────────────────────┘
+                                  │
+┌─────────────────────────────────┴──────────────────────────────────────┐
+│                    2. MANAGEMENT SYSTEM LAYER                          │
+│  Admin / User ──► Web Portal (Next.js) ── REST API ──► NestJS Backend │
+│                                                          │             │
+│                                                PostgreSQL Database     │
+└────────────────────────────────────────────────────────────────────────┘
+
+4.2. System Context Description (Mô tả chi tiết tác tử & thành phần)
+1. Quản trị viên (Admin): Sử dụng Web Admin (Next.js) để quản lý người dùng, quản lý thiết bị Xiaozhi, cấp phát và thu hồi API key, cấu hình hạn mức tài nguyên, giám sát trạng thái trực tuyến (telemetry) và đẩy các bản nạp nâng cấp firmware OTA.
+2. Người dùng cuối (User): Sử dụng User Portal để ghép nối thiết bị cá nhân, thiết lập cấu hình giọng nói (Voice/Accent), tùy chỉnh nhân cách AI (System Prompt) và xem nhật ký tương tác.
+3. Thiết bị Xiaozhi (Xiaozhi ESP32 Edge Device): Chạy firmware C/C++ tùy biến trên ESP-IDF v6.0.x. Thu nhận âm thanh micro I2S, truyền stream qua WebSocket, nhận âm thanh stream phản hồi để phát qua loa, xử lý Wake Word ngoại tuyến và hiển thị giao diện biểu cảm.
+4. Realtime AI Gateway & Server: Tiếp nhận kết nối WebSocket từ thiết bị, đóng vai trò bộ điều phối (Orchestrator) luồng ASR -> LLM -> TTS và truyền dữ liệu audio phản hồi dạng chunk với độ trễ tối thiểu.
+5. Web Admin Frontend (Next.js): Giao diện Web hiện đại, mượt mà, tối ưu SEO, hỗ trợ Admin Dashboard và User Portal.
+6. Backend Management Server (NestJS): Server backend cấu trúc hướng module, cung cấp RESTful API và WebSocket Gateway quản lý logic nghiệp vụ: auth (JWT), user, device, api_keys, configs, OTA management.
+7. Cơ sở dữ liệu (PostgreSQL Database): Cơ sở dữ liệu quan hệ lưu trữ dữ liệu người dùng, thông tin thiết bị, khóa API, bảng phân quyền, lịch sử tương tác và các bản build firmware.
+8. AI Service Engine (OpenAI API / Local AI Model): Phase 1 tích hợp OpenAI Cloud API (Whisper, GPT-4o-mini, TTS API); Phase 2 chuyển đổi sang Local Models (Faster-Whisper, Qwen/Llama qua vLLM/Ollama, Piper/ChatTTS) chạy trên máy chủ GPU riêng.
+
+4.3. Technical Constraints & Stack (Công nghệ & Ràng buộc kỹ thuật)
+- Ngôn ngữ lập trình: C/C++ (Firmware ESP32), TypeScript / JavaScript (NestJS Backend & Next.js Frontend).
+- Frameworks & Libraries: ESP-IDF v6.0.2 / 5.5.x, NestJS Framework, Next.js, Axios, WebSocket (ws / Socket.io).
+- Giao thức truyền thông: WebSocket (duplex realtime streaming audio/data), RESTful API, JWT Auth, OTA Update.
+- Dịch vụ AI: Phase 1 dùng OpenAI Cloud API; thiết kế kiến trúc độc lập (AI Provider Agnostic) để chuyển đổi mượt mà sang Local AI Models ở Phase 2.
+- Phần cứng: Vi điều khiển ESP32-S3, Microphone I2S, Loa I2S, Màn hình LCD/OLED, Nút bấm vật lý.
+- Cơ sở dữ liệu: PostgreSQL Database.
+- Công cụ phát triển: Visual Studio Code, ESP-IDF Extension, Postman, Docker, Git/GitHub.
+
+4.4. Actor and Use Case (Tác tử và Trường hợp sử dụng)
+- Admin: Đăng nhập/Đăng xuất; Quản lý tài khoản user (CRUD & RBAC); Quản lý thiết bị Xiaozhi; Gán thiết bị cho user; Quản lý & Cấp phát API Key AI; Xem telemetry trạng thái kết nối; Cấu hình System Prompt; Quản lý firmware OTA.
+- User: Đăng nhập/Đăng xuất; Ghép nối & Quản lý thiết bị cá nhân; Sử dụng trợ lý thoại AI; Xem nhật ký tương tác; Cấu hình giọng nói & tính cách AI.
+- Xiaozhi Device: Khởi tạo kết nối & Xác thực WebSocket; Stream audio realtime từ micro; Nhận stream audio phản hồi phát loa; Gửi tín hiệu Heartbeat; Nhận cấu hình từ xa và nâng cấp OTA.
+- AI Service Engine: Chuyển đổi giọng nói thành văn bản (ASR); Xử lý ngôn ngữ sinh văn bản (LLM); Tổng hợp văn bản thành giọng nói (TTS).
+
+4.5. Non-Functional Requirements (Yêu cầu phi chức năng)
+1. Độ trễ phản hồi thấp (Low Latency): Phản hồi hội thoại giọng nói end-to-end từ 1.2s đến 2.0s nhờ luồng stream hai chiều qua WebSocket.
+2. Khả năng xử lý đồng thời & Mở rộng (Concurrency & Scalability): AI Gateway Server và NestJS Backend hỗ trợ kết nối WebSocket đồng thời từ nhiều thiết bị mà không sụt giảm hiệu năng.
+3. Bảo mật & Xác thực (Security & Authentication): Xác thực Token/Key thiết bị trước khi mở WebSocket; mã hóa API Key (AES-256) trong PostgreSQL; bảo mật REST API bằng JWT.
+4. Độ tin cậy & Tự khôi phục (Reliability & Resilience): Tự động kết nối lại (Auto-reconnect) WebSocket khi gián đoạn Wi-Fi; phát thông báo lỗi khi rớt kết nối AI.
+5. Tính độc lập & Mở rộng AI (AI Provider Independence): Kiến trúc module hóa (Abstract AI Adapter) cho phép hoán đổi giữa Cloud API và Local AI Models mà không ảnh hưởng tới firmware hoặc Web Admin.
+
+
+================================================================================
+5. Tasks and Deliverables
+================================================================================
+
+Danh mục sản phẩm bàn giao (Deliverables):
+1. Nguyên mẫu phần cứng Thiết bị Xiaozhi ESP32 chạy firmware tùy chỉnh hoàn chỉnh.
+2. Mã nguồn Firmware C/C++ (ESP-IDF) hỗ trợ WebSocket streaming, Wake Word và OTA.
+3. Mã nguồn Backend NestJS (REST API + WebSocket Gateway + PostgreSQL Database).
+4. Mã nguồn Frontend Next.js (Admin Dashboard + User Portal).
+5. Mã nguồn AI Communication Server (Realtime Orchestrator).
+6. Bộ tài liệu kỹ thuật: Hướng dẫn cài đặt, cấu hình, nạp firmware, vận hành server và Báo cáo kiểm thử so chuẩn (Cloud vs Local AI).
+
+
+================================================================================
+6. Project Management
+================================================================================
+
+- Quy trình phát triển: Agile Scrum (3 Sprints trong 3 tháng).
+- Nhân lực: Nhóm 5 thành viên (Scrum Master, Firmware Dev, Backend Dev, Frontend Dev, AI & QA Engineer).
+- Dự toán ngân sách:
+  + Nhân công (5 thành viên x 3h/ngày x 90 ngày x 3 USD/h) = 4.050 USD.
+  + Linh kiện phần cứng, hạ tầng server và chi phí AI API = 500 USD.
+  + Tổng chi phí quy đổi: 4.550 USD.
+
+
+================================================================================
+7. Project Constraints
+================================================================================
+
+- Ràng buộc ngân sách & thời gian: Hoàn thành nguyên mẫu trong 3 tháng, kiểm soát chi phí gọi AI API.
+- Ràng buộc môi trường & an toàn: Thiết kế mạch an toàn nguồn cấp, tiết kiệm điện năng ở chế độ chờ.
+- Ràng buộc bảo mật & riêng tư: Thông báo rõ khi thiết bị thu âm, mã hóa lưu trữ khóa API và dữ liệu người dùng.
+
+
+================================================================================
+8. Conclusion
+================================================================================
+
+Dự án “Xây dựng Trợ lý ảo AI giao tiếp trực tiếp bằng giọng nói sử dụng thiết bị Xiaozhi” là một giải pháp kỹ thuật toàn diện và hiện đại. Bằng việc kết hợp phần cứng nhúng ESP32 tùy chỉnh, máy chủ truyền thông thời gian thực WebSocket, hệ thống quản trị Web tập trung (NestJS & Next.js) và lộ trình chuyển đổi AI hai giai đoạn (Cloud API sang Local Model), dự án giải quyết triệt để các hạn chế của những thiết bị trợ lý thương mại khép kín. Giải pháp không chỉ đem lại trải nghiệm tương tác giọng nói tự nhiên, mượt mà cho người dùng mà còn đảm bảo tính tự chủ về công nghệ, khả năng mở rộng hệ thống và tối ưu hóa chi phí vận hành lâu dài.
+
+
+================================================================================
+9. References
+================================================================================
+
+[1]. Software Development Standards for Guidance and Control Software Project.
+[2]. General Software Coding Standards and Guidelines.
+[3]. NestJS Documentation: https://docs.nestjs.com/
+[4]. Next.js Documentation: https://nextjs.org/docs
+[5]. ESP-IDF Programming Guide: https://docs.espressif.com/projects/esp-idf/
+[6]. Xiaozhi ESP32 Open-Source Project & Server Architecture.

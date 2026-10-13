@@ -1,0 +1,13 @@
+{
+    "type": "xiaozhi-s3-tft",
+    "manufacturer": "custom",
+    "target": "esp32s3",
+    "builds": [
+        {
+            "name": "xiaozhi-s3-tft",
+            "sdkconfig_append": [
+                "CONFIG_LCD_ST7789_240X320=y"
+            ]
+        }
+    ]
+}
