@@ -1,0 +1,111 @@
+/* Shared Streamlit widget theme. Native Streamlit config is dark, so every
+   control surface and foreground must be paired, including disabled states.
+   Named widget/state selectors avoid generated Emotion class dependencies. */
+:root:has(.stApp) :is([data-testid="stTextInputRootElement"],[data-testid="stTextAreaRootElement"],[data-testid="stNumberInputContainer"],[data-testid="stChatInput"]>div){background:var(--aiva-surface);color:var(--aiva-text);border:1px solid var(--aiva-control-border);border-radius:10px;overflow:hidden}
+:root:has(.stApp) :is([data-testid="stTextInputField"],[data-testid="stTextAreaRootElement"] textarea,[data-testid="stNumberInputField"],[data-testid="stChatInputTextArea"]){background:var(--aiva-surface);color:var(--aiva-text);-webkit-text-fill-color:var(--aiva-text);caret-color:var(--aiva-text);border:0}
+:root:has(.stApp) :is([data-testid="stTextInputField"],[data-testid="stTextAreaRootElement"] textarea,[data-testid="stNumberInputField"],[data-testid="stChatInputTextArea"])::placeholder{color:var(--aiva-muted);-webkit-text-fill-color:var(--aiva-muted);opacity:1}
+:root:has(.stApp) [data-testid="stTextInputField"]:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px var(--aiva-surface) inset;-webkit-text-fill-color:var(--aiva-text)}
+:root:has(.stApp) :is([data-testid="stTextInputRootElement"],[data-testid="stTextAreaRootElement"],[data-testid="stNumberInputContainer"],[data-testid="stChatInput"]>div):focus-within{border-color:var(--aiva-accent);box-shadow:0 0 0 2px var(--aiva-tint)}
+:root:has(.stApp) :is([data-testid="stTextInputField"],[data-testid="stTextAreaRootElement"] textarea,[data-testid="stNumberInputField"],[data-testid="stChatInputTextArea"]):disabled{background:var(--aiva-raised);color:var(--aiva-muted);-webkit-text-fill-color:var(--aiva-muted);cursor:not-allowed}
+:root:has(.stApp) :is([data-testid="stTextInputRootElement"],[data-testid="stTextAreaRootElement"],[data-testid="stNumberInputContainer"],[data-testid="stChatInput"]>div):has(:is(input,textarea):disabled){background:var(--aiva-raised);border-color:var(--aiva-border)}
+/* Streamlit 1.65 puts its border/background on the immediate inner wrapper,
+   not stChatInput. Target that surface without recoloring every nested div. */
+:root:has(.stApp) [data-testid="stChatInput"]{color:var(--aiva-text)}
+/* Preserve native validation semantics and distinguish errors from focus. */
+:root:has(.stApp) [data-testid="stNumberInputContainer"]:has(input[aria-invalid="true"]){border-color:var(--aiva-bad)}
+:root:has(.stApp) [data-testid="stTextInputRootElement"] button{background:transparent;color:var(--aiva-text)}
+:root:has(.stApp) [data-testid="stTextInputRootElement"] button svg{fill:currentColor}
+:root:has(.stApp) :is([data-testid="stNumberInputStepUp"],[data-testid="stNumberInputStepDown"],[data-testid="stNumberInputClearButton"]){background:var(--aiva-raised);color:var(--aiva-text)}
+:root:has(.stApp) :is([data-testid="stNumberInputStepUp"],[data-testid="stNumberInputStepDown"],[data-testid="stNumberInputClearButton"]):enabled:is(:hover,:focus-visible){background:var(--aiva-tint);color:var(--aiva-text);outline:2px solid var(--aiva-accent);outline-offset:-2px}
+:root:has(.stApp) :is([data-testid="stNumberInputStepUp"],[data-testid="stNumberInputStepDown"],[data-testid="stNumberInputClearButton"]):disabled{background:var(--aiva-raised);color:var(--aiva-muted);opacity:1;cursor:not-allowed}
+/* React Aria selectbox and multiselect field groups; no generated class names. */
+:root:has(.stApp) :is([data-testid="stSelectbox"],[data-testid="stMultiSelect"]) [role="group"]:has(input[role="combobox"]){background:var(--aiva-surface);color:var(--aiva-text);border:1px solid var(--aiva-control-border);border-radius:10px;min-height:42px}
+:root:has(.stApp) :is([data-testid="stSelectbox"],[data-testid="stMultiSelect"]) input[role="combobox"]{background:var(--aiva-surface);color:var(--aiva-text);-webkit-text-fill-color:var(--aiva-text);caret-color:var(--aiva-text)}
+:root:has(.stApp) :is([data-testid="stSelectbox"],[data-testid="stMultiSelect"]) input[role="combobox"]::placeholder{color:var(--aiva-muted);-webkit-text-fill-color:var(--aiva-muted);opacity:1}
+:root:has(.stApp) :is([data-testid="stSelectbox"],[data-testid="stMultiSelect"]) [role="group"]:has(input[role="combobox"]):hover{border-color:var(--aiva-accent)}
+:root:has(.stApp) :is([data-testid="stSelectbox"],[data-testid="stMultiSelect"]) [role="group"]:has(input[role="combobox"]):is(:focus-within,[data-focus-within]){border-color:var(--aiva-accent);box-shadow:0 0 0 2px var(--aiva-tint)}
+:root:has(.stApp) :is([data-testid="stSelectbox"],[data-testid="stMultiSelect"]) button{background:transparent;color:var(--aiva-text)}
+:root:has(.stApp) :is([data-testid="stSelectbox"],[data-testid="stMultiSelect"]) [role="group"]:has(input:disabled){background:var(--aiva-raised);border-color:var(--aiva-border)}
+:root:has(.stApp) :is([data-testid="stSelectbox"],[data-testid="stMultiSelect"]) :is(input:disabled,button:disabled,[data-disabled]){color:var(--aiva-muted);-webkit-text-fill-color:var(--aiva-muted);cursor:not-allowed}
+:root:has(.stApp) :is([data-testid="stSelectbox"],[data-testid="stMultiSelect"]) input[role="combobox"]:disabled{background:var(--aiva-raised)}
+:root:has(.stApp) [data-testid="stMultiSelect"] [data-tag]{background:var(--aiva-tint);color:var(--aiva-text);border:1px solid var(--aiva-border);border-radius:6px}
+:root:has(.stApp) [data-testid="stMultiSelect"] [data-tag]:focus-visible{outline:2px solid var(--aiva-accent);outline-offset:2px}
+:root:has(.stApp) [data-testid="stMultiSelect"]:has(input:disabled) [data-tag]{background:var(--aiva-raised);color:var(--aiva-muted);cursor:not-allowed}
+/* Legacy BaseWeb controls are still used by some installed widgets. */
+:root:has(.stApp) :is([data-testid="stSelectbox"],[data-testid="stMultiSelect"]) [data-baseweb="select"]>div{background:var(--aiva-surface);color:var(--aiva-text);border-color:var(--aiva-border)}
+:root:has(.stApp) :is([data-testid="stSelectbox"],[data-testid="stMultiSelect"]) [data-baseweb="select"] :is(input,[data-baseweb="input"]){background:var(--aiva-surface);color:var(--aiva-text);-webkit-text-fill-color:var(--aiva-text)}
+:root:has(.stApp) :is([data-testid="stSelectbox"],[data-testid="stMultiSelect"]) [data-baseweb="select"]>div:has(input:disabled){background:var(--aiva-raised);color:var(--aiva-muted)}
+:root:has(.stApp) :is([data-testid="stSelectbox"],[data-testid="stMultiSelect"]) [data-baseweb="select"] input:disabled{background:var(--aiva-raised);color:var(--aiva-muted);-webkit-text-fill-color:var(--aiva-muted)}
+:root:has(.stApp) [data-testid="stMultiSelect"] [data-baseweb="tag"]{background:var(--aiva-tint);color:var(--aiva-text)}
+/* Select and multiselect portals can be siblings of stApp. Preserve their
+   native position/transform/height, virtualization and keyboard event handlers. */
+:root:has(.stApp) :is([data-testid="stSelectboxVirtualDropdown"],[data-testid="stMultiSelectDropdown"],[data-baseweb="popover"]:has([role="listbox"])){background:var(--aiva-surface);color:var(--aiva-text);border:1px solid var(--aiva-border);border-radius:10px;box-shadow:0 8px 24px #10131c18}
+:root:has(.stApp) :is([data-testid="stSelectboxVirtualDropdown"],[data-testid="stMultiSelectDropdown"],[data-baseweb="popover"]:has([role="listbox"])) :is([role="listbox"],[data-baseweb="menu"]){background:var(--aiva-surface);color:var(--aiva-text)}
+:root:has(.stApp) [data-baseweb="popover"]:has([role="listbox"])>div{background:var(--aiva-surface);color:var(--aiva-text)}
+:root:has(.stApp) :is([data-testid="stSelectboxVirtualDropdown"],[data-testid="stMultiSelectDropdown"],[data-baseweb="popover"]:has([role="listbox"])) [role="option"]{background:var(--aiva-surface);color:var(--aiva-text);-webkit-text-fill-color:var(--aiva-text)}
+:root:has(.stApp) :is([data-testid="stSelectboxVirtualDropdown"],[data-testid="stMultiSelectDropdown"],[data-baseweb="popover"]:has([role="listbox"])) [role="listbox"] [role="option"] [data-item-hl]{background:transparent;color:inherit}
+:root:has(.stApp) :is([data-testid="stSelectboxVirtualDropdown"],[data-testid="stMultiSelectDropdown"],[data-baseweb="popover"]:has([role="listbox"])) [role="option"]:is(:hover,[data-hovered],[data-focused],[data-selected],[aria-selected="true"]){background:var(--aiva-tint);color:var(--aiva-text)}
+:root:has(.stApp) :is([data-testid="stSelectboxVirtualDropdown"],[data-testid="stMultiSelectDropdown"],[data-baseweb="popover"]:has([role="listbox"])) [role="option"]:is([data-focused],:focus-visible){outline:2px solid var(--aiva-accent);outline-offset:-2px}
+:root:has(.stApp) :is([data-testid="stSelectboxVirtualDropdown"],[data-testid="stMultiSelectDropdown"],[data-baseweb="popover"]:has([role="listbox"])) [role="option"]:is([data-disabled],[aria-disabled="true"]){background:var(--aiva-raised);color:var(--aiva-muted);-webkit-text-fill-color:var(--aiva-muted);cursor:not-allowed}
+:root:has(.stApp) :is([data-testid="stSelectboxVirtualDropdown"],[data-testid="stMultiSelectDropdown"]) [role="listbox"]>span{color:var(--aiva-muted)}
+/* Native buttons and composer action, including controls inside portal forms. */
+:root:has(.stApp) :is(.stButton,.stFormSubmitButton) button,:root:has(.stApp) [data-testid="stPopoverButton"]{background:var(--aiva-surface);color:var(--aiva-text);border:1px solid var(--aiva-border);border-radius:10px;min-height:42px;font-weight:500;touch-action:manipulation;transition:background-color .18s ease,border-color .18s ease}
+:root:has(.stApp) :is(.stButton,.stFormSubmitButton) button:hover{background:var(--aiva-raised);border-color:var(--aiva-accent)}
+:root:has(.stApp) :is(.stButton,.stFormSubmitButton) button:is([kind="primary"],[kind="primaryFormSubmit"],[data-testid="stBaseButton-primary"],[data-testid="stBaseButton-primaryFormSubmit"]){background:var(--aiva-button);color:#fdfdfe;border-color:var(--aiva-button)}
+:root:has(.stApp) :is(.stButton,.stFormSubmitButton) button:is([kind="primary"],[kind="primaryFormSubmit"]):enabled:hover{box-shadow:0 0 0 2px var(--aiva-tint)}
+:root:has(.stApp) :is(.stButton,.stFormSubmitButton) button [data-testid="stMarkdownContainer"]{color:inherit}
+:root:has(.stApp) :is(.stButton,.stFormSubmitButton) button :is([data-testid="stMarkdownContainer"] p,[data-testid="stMarkdownContainer"] span){color:inherit;-webkit-text-fill-color:currentColor}
+:root:has(.stApp) :is(.stButton,.stFormSubmitButton) button:disabled{background:var(--aiva-raised);color:var(--aiva-muted);border-color:var(--aiva-border);opacity:1;cursor:not-allowed;transform:none}
+/* Primary selectors include a variant attribute: disabled must win over that
+   selector too, rather than inheriting its enabled white label. */
+:root:has(.stApp) :is(.stButton,.stFormSubmitButton) button:is([kind="primary"],[kind="primaryFormSubmit"],[data-testid="stBaseButton-primary"],[data-testid="stBaseButton-primaryFormSubmit"]):disabled{background:var(--aiva-raised);color:var(--aiva-muted);border-color:var(--aiva-border)}
+:root:has(.stApp) :is(.stButton,.stFormSubmitButton) button:focus-visible,:root:has(.stApp) [data-testid="stPopoverButton"]:focus-visible{outline:2px solid var(--aiva-accent);outline-offset:3px}
+:root:has(.stApp) [data-testid="stChatInputSubmitButton"]{background:var(--aiva-button);color:#fdfdfe;border:0;border-radius:9px}
+:root:has(.stApp) [data-testid="stChatInputSubmitButton"] svg{fill:currentColor;color:inherit}
+:root:has(.stApp) [data-testid="stChatInputSubmitButton"]:disabled{background:var(--aiva-raised);color:var(--aiva-muted);opacity:1}
+/* Native header buttons/icons use the fixed Streamlit theme, independently of
+   the sidebar surface. Limit the replacement to sidebar chrome and widget help. */
+:root:has(.stApp) [data-testid="stSidebarCollapseButton"] button{color:var(--aiva-text);background:transparent}
+:root:has(.stApp) [data-testid="stSidebarCollapseButton"] [data-testid="stIconMaterial"]{color:var(--aiva-muted)}
+:root:has(.stApp) [data-testid="stSidebarCollapseButton"] button:is(:hover,:focus-visible){background:var(--aiva-tint);outline:2px solid var(--aiva-accent);outline-offset:2px}
+/* Checkboxes and radio/toggle labels retain native input and keyboard behavior. */
+:root:has(.stApp) :is([data-testid="stCheckbox"],[data-testid="stRadio"]) label{color:var(--aiva-text);touch-action:manipulation}
+:root:has(.stApp) :is([data-testid="stCheckbox"],[data-testid="stRadio"]) label:has(input:focus-visible){outline:2px solid var(--aiva-accent);outline-offset:3px;border-radius:6px}
+:root:has(.stApp) :is([data-testid="stCheckbox"],[data-testid="stRadio"]) label:has(input:disabled) [data-testid="stMarkdownContainer"]{color:var(--aiva-muted)}
+:root:has(.stApp) [data-testid="stCheckbox"] label:not(:has(input[role="switch"]))>div:first-of-type{background:var(--aiva-surface);border-color:var(--aiva-border)}
+:root:has(.stApp) [data-testid="stCheckbox"] label:not(:has(input[role="switch"])):has(input:checked)>div:first-of-type{background:var(--aiva-button);border-color:var(--aiva-button);color:#fdfdfe}
+:root:has(.stApp) [data-testid="stCheckbox"] label:not(:has(input[role="switch"]))>div:first-of-type svg{stroke:currentColor}
+:root:has(.stApp) [data-testid="stCheckbox"] label:not(:has(input[role="switch"])):has(input:disabled)>div:first-of-type{background:var(--aiva-raised);border-color:var(--aiva-border);color:var(--aiva-muted)}
+:root:has(.stApp) [data-testid="stCheckbox"] label:not(:has(input[role="switch"])):not(:has(input:disabled)):hover>div:first-of-type{border-color:var(--aiva-accent)}
+:root:has(.stApp) [data-testid="stCheckbox"] label:has(input[role="switch"])>div:first-of-type{background:var(--aiva-border)}
+:root:has(.stApp) [data-testid="stCheckbox"] label:has(input[role="switch"]:checked)>div:first-of-type{background:var(--aiva-button)}
+:root:has(.stApp) [data-testid="stCheckbox"] label:has(input[role="switch"])>div:first-of-type>div{background:var(--aiva-surface)}
+:root:has(.stApp) [data-testid="stRadioOption"]>div>div:first-child{background:var(--aiva-surface);border-color:var(--aiva-border)}
+:root:has(.stApp) [data-testid="stRadioOption"]:has(input:checked)>div>div:first-child{border-color:var(--aiva-accent)}
+:root:has(.stApp) [data-testid="stRadioOption"]:has(input:checked)>div>div:first-child>div{background:var(--aiva-accent)}
+:root:has(.stApp) [data-testid="stRadioOption"]:not(:has(input:disabled)):hover>div>div:first-child{border-color:var(--aiva-accent)}
+/* Tabs, form rhythm, tables and pagination share one role-independent style. */
+:root:has(.stApp) [data-testid="stTabs"] [role="tablist"]{border-bottom:1px solid var(--aiva-border);gap:20px}
+:root:has(.stApp) [data-testid="stTabs"] [role="tab"]{color:var(--aiva-muted);background:transparent}
+:root:has(.stApp) [data-testid="stTabs"] [role="tab"]:is([aria-selected="true"],[data-selected]){color:var(--aiva-accent);border-bottom-color:var(--aiva-accent)}
+:root:has(.stApp) [data-testid="stTabs"] [role="tab"]:focus-visible{outline:2px solid var(--aiva-accent);outline-offset:-2px}
+:root:has(.stApp) [data-testid="stTabs"] [role="tab"]:is(:disabled,[aria-disabled="true"],[data-disabled]){color:var(--aiva-muted);cursor:not-allowed}
+:root:has(.stApp) [data-testid="stTabs"] [data-baseweb="tab-highlight"]{background:var(--aiva-accent)}
+:root:has(.stApp) [data-testid="stForm"]{border:0;padding:0;border-radius:12px}
+:root:has(.stApp) [data-testid="stForm"] [data-testid="stVerticalBlock"]{gap:1rem}
+:root:has(.stApp) [data-testid="stExpander"] summary:focus-visible{outline:2px solid var(--aiva-accent);outline-offset:2px}
+:root:has(.stApp) :is([class*="st-key-table_toolbar_"],[class*="st-key-table_pagination_"]) [data-testid="stWidgetLabel"]{font-size:.875rem}
+:root:has(.stApp) [data-testid="stTable"]{background:var(--aiva-surface);color:var(--aiva-text);border:1px solid var(--aiva-border);border-radius:12px;overflow:auto;font-size:.875rem;line-height:1.5}
+:root:has(.stApp) [data-testid="stTable"] th{background:var(--aiva-raised);color:var(--aiva-muted);font-weight:500}
+:root:has(.stApp) [data-testid="stTable"] td{color:var(--aiva-text);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;max-width:32rem}
+:root:has(.stApp) [data-testid="stTable"] :is(td,th){border-color:var(--aiva-border);padding:12px 14px}
+/* Only named Streamlit overlays, not every role=dialog/popover on the page. */
+:root:has(.stApp) :is([data-testid="stPopoverBody"],[data-testid="stDialog"] [role="dialog"]){background:var(--aiva-surface);color:var(--aiva-text);border-color:var(--aiva-border);border-radius:12px}
+:root:has(.stApp) :is([data-testid="stPopoverBody"],[data-testid="stDialog"] [role="dialog"]) [data-testid="stMarkdownContainer"]{color:var(--aiva-text)}
+:root:has(.stApp) :is([data-testid="stPopoverBody"],[data-testid="stDialog"] [role="dialog"]) [data-testid="stWidgetLabel"]{color:var(--aiva-text)}
+:root:has(.stApp) :is([data-testid="stPopoverBody"],[data-testid="stDialog"] [role="dialog"]) [data-testid="stCaptionContainer"]{color:var(--aiva-muted)}
+:root:has(.stApp) :is([data-testid="stAlert"],[data-testid="stAlertContainer"]){background:var(--aiva-raised);color:var(--aiva-text);border:1px solid var(--aiva-border);border-radius:12px}
+:root:has(.stApp) [data-testid="stAlert"]>div{background:var(--aiva-raised);color:var(--aiva-text)}
+:root:has(.stApp) [data-testid="stAlert"] [data-testid="stMarkdownContainer"]{color:var(--aiva-text)}
+:root:has(.stApp) [data-testid="stAlert"]:has([data-testid="stAlertContainer"]){border:0;background:transparent}
+@media(prefers-reduced-motion:reduce){:root:has(.stApp) :is(.stButton,.stFormSubmitButton) button{transition:none}}

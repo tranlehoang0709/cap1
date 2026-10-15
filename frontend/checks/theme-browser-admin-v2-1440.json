@@ -1,0 +1,375 @@
+{
+  "version": 2,
+  "viewport": {
+    "width": 1440,
+    "height": 1080,
+    "devicePixelRatio": 2.0000000298023224
+  },
+  "restored": {
+    "page": "System Settings",
+    "theme": {
+      "toggleDark": false,
+      "declaredScheme": "light",
+      "computedScheme": "light",
+      "observedDark": false,
+      "backgroundToken": "#f4f5f8",
+      "surfaceToken": "#fdfdfe",
+      "appBackground": "rgb(244, 245, 248)",
+      "sidebarBackground": "rgb(253, 253, 254)"
+    }
+  },
+  "results": [
+    {
+      "page": "Dashboard",
+      "requestedDark": false,
+      "observedDark": false,
+      "app": "rgb(244, 245, 248)",
+      "sidebar": "rgb(253, 253, 254)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    },
+    {
+      "page": "Quản lý người dùng",
+      "requestedDark": false,
+      "observedDark": false,
+      "app": "rgb(244, 245, 248)",
+      "sidebar": "rgb(253, 253, 254)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 5,
+      "robots": []
+    },
+    {
+      "page": "Quản lý thiết bị",
+      "requestedDark": false,
+      "observedDark": false,
+      "app": "rgb(244, 245, 248)",
+      "sidebar": "rgb(253, 253, 254)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    },
+    {
+      "page": "AI Management",
+      "requestedDark": false,
+      "observedDark": false,
+      "app": "rgb(244, 245, 248)",
+      "sidebar": "rgb(253, 253, 254)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    },
+    {
+      "page": "API Key & Quota",
+      "requestedDark": false,
+      "observedDark": false,
+      "app": "rgb(244, 245, 248)",
+      "sidebar": "rgb(253, 253, 254)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    },
+    {
+      "page": "OTA Firmware",
+      "requestedDark": false,
+      "observedDark": false,
+      "app": "rgb(244, 245, 248)",
+      "sidebar": "rgb(253, 253, 254)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    },
+    {
+      "page": "Logs & Monitoring",
+      "requestedDark": false,
+      "observedDark": false,
+      "app": "rgb(244, 245, 248)",
+      "sidebar": "rgb(253, 253, 254)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    },
+    {
+      "page": "System Settings",
+      "requestedDark": false,
+      "observedDark": false,
+      "app": "rgb(244, 245, 248)",
+      "sidebar": "rgb(253, 253, 254)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    },
+    {
+      "page": "Dashboard",
+      "requestedDark": true,
+      "observedDark": true,
+      "app": "rgb(16, 19, 28)",
+      "sidebar": "rgb(25, 30, 42)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    },
+    {
+      "page": "Quản lý người dùng",
+      "requestedDark": true,
+      "observedDark": true,
+      "app": "rgb(16, 19, 28)",
+      "sidebar": "rgb(25, 30, 42)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 5,
+      "robots": []
+    },
+    {
+      "page": "Quản lý thiết bị",
+      "requestedDark": true,
+      "observedDark": true,
+      "app": "rgb(16, 19, 28)",
+      "sidebar": "rgb(25, 30, 42)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    },
+    {
+      "page": "AI Management",
+      "requestedDark": true,
+      "observedDark": true,
+      "app": "rgb(16, 19, 28)",
+      "sidebar": "rgb(25, 30, 42)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    },
+    {
+      "page": "API Key & Quota",
+      "requestedDark": true,
+      "observedDark": true,
+      "app": "rgb(16, 19, 28)",
+      "sidebar": "rgb(25, 30, 42)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    },
+    {
+      "page": "OTA Firmware",
+      "requestedDark": true,
+      "observedDark": true,
+      "app": "rgb(16, 19, 28)",
+      "sidebar": "rgb(25, 30, 42)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    },
+    {
+      "page": "Logs & Monitoring",
+      "requestedDark": true,
+      "observedDark": true,
+      "app": "rgb(16, 19, 28)",
+      "sidebar": "rgb(25, 30, 42)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    },
+    {
+      "page": "System Settings",
+      "requestedDark": true,
+      "observedDark": true,
+      "app": "rgb(16, 19, 28)",
+      "sidebar": "rgb(25, 30, 42)",
+      "headerTops": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "scroll": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "notRendered": 0,
+      "robots": []
+    }
+  ]
+}

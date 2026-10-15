@@ -1,0 +1,11 @@
+{
+  "name": "aiva-robot-component",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild scene.js --bundle --minify --format=iife --target=es2020 --outfile=robot.bundle.js --legal-comments=eof",
+    "test": "node --test model.test.js controls.test.js fallback.test.js theme.test.js"
+  },
+  "dependencies": { "three": "0.180.0" },
+  "devDependencies": { "esbuild": "0.25.10" }
+}
