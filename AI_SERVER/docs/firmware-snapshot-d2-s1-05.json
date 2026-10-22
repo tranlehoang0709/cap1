@@ -1,0 +1,55 @@
+{
+  "document_version": "0.1.0-draft",
+  "captured_date": "2026-10-22",
+  "firmware_project_version": "2.4.2",
+  "git_commit": null,
+  "source_selection": "Người dùng xác nhận dùng snapshot workspace; chưa phải xác nhận giao thức của Dev 3.",
+  "dev3_protocol_confirmation": "PENDING",
+  "board_and_build_configuration": "PENDING",
+  "files": [
+    {
+      "path": "../xiaozhi-esp32/CMakeLists.txt",
+      "sha256": "264ef1b0ceb890d5e93ad7bff93d310b861c88d61da6e29bd261c1139582f145"
+    },
+    {
+      "path": "../xiaozhi-esp32/main/protocols/protocol.h",
+      "sha256": "1e14d6e34525c64dcfc5a00c74f36cae54dd071ae66ed337dbf952d6d20a58f0"
+    },
+    {
+      "path": "../xiaozhi-esp32/main/protocols/protocol.cc",
+      "sha256": "9b42610253f5bd91c79e6ce5f1d4d7b34b01d6aa66f4eba38e5eabd2cd91dcae"
+    },
+    {
+      "path": "../xiaozhi-esp32/main/protocols/websocket_protocol.h",
+      "sha256": "273ac38ade4598b241988e66898e59521931ed03635aef354d6332aff9a21d95"
+    },
+    {
+      "path": "../xiaozhi-esp32/main/protocols/websocket_protocol.cc",
+      "sha256": "ea4f50e20fafc81d23cacf4d98c0a7d29bd4e39a0b91c120a08fe824d50fc620"
+    },
+    {
+      "path": "../xiaozhi-esp32/main/application.cc",
+      "sha256": "614c09d4a2f7cd9d2288c3184b576cdc171edb1befec86c76f6045c378c11952"
+    },
+    {
+      "path": "../xiaozhi-esp32/main/audio/audio_service.h",
+      "sha256": "c2094f56a493cb13b431ceae23da437a29316658881199c4fe3d0f843ee50f88"
+    },
+    {
+      "path": "../xiaozhi-esp32/main/audio/audio_service.cc",
+      "sha256": "4f01aa91597173256f19751620c20c6ba28f4fab6ade744ae75a91ab24b6d425"
+    },
+    {
+      "path": "../xiaozhi-esp32/main/ota.cc",
+      "sha256": "7b046477f51deace32169f177c69c368cb6a94294305910f62078410f43893cf"
+    },
+    {
+      "path": "../xiaozhi-esp32/main/protocols/text_glyph_payload.cc",
+      "sha256": "c215074e4da41516dfecc37d0a3edbbc57a2c544bcae289d0cb3fc9b91213916"
+    },
+    {
+      "path": "../xiaozhi-esp32/main/assets.cc",
+      "sha256": "2220fa2d24ebdc2ddcef4d438f3a2a6c3ef0647c084def921354ac5ff5f739a9"
+    }
+  ]
+}
