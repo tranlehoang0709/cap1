@@ -177,3 +177,76 @@ Artifact cục bộ được ignore: `.venv/`, `.pytest_cache/`, `__pycache__/`,
 Nếu cần hoàn tác, phục hồi các file đã điền nội dung về checkpoint rỗng
 ban đầu và bỏ riêng `scripts/run_dev.py`, sau khi xác nhận không có thay
 đổi mới của người dùng; không tự thực hiện thao tác xóa/rollback.
+
+## D2-S1-08 — Kiểm thử kết nối realtime tích hợp
+
+Ngày: **23/10/2026**. Đây là lần kiểm thử workspace Windows hiện tại. Kết quả macOS từ tasks 01–02 trong các phần trên là bằng chứng lịch sử, không thay cho lần chạy tích hợp task 08. Không có token thật nào được dùng hoặc ghi vào report.
+
+### Điều kiện và lệnh đã chạy
+
+- Source AI Server: checkout workspace hiện tại. Firmware: `PROJECT_VER=2.4.2`, checkout `97c008f02ab23bf98b7f959ec18b0519aac907fb`; Dev 3 chưa xác nhận đây là build robot cần kiểm thử. [Giao thức](protocol.md) vẫn là draft/PENDING.
+- `device_auth.py`, `session_manager.py`, `heartbeat.py` và các test auth/session/heartbeat/integration đang rỗng. `/ws/dev-echo` không xác thực thiết bị.
+- Không có valid Development test device/token, backend endpoint/mock contract, phiên bản client/firmware được Dev 3 xác nhận hoặc concurrency target được thống nhất.
+- Đã chạy:
+
+```powershell
+python -m pytest tests\test_health.py tests\test_config.py tests\test_websocket.py tests\test_device_auth.py tests\test_sessions.py tests\test_heartbeat.py tests\test_logging.py tests\integration\test_realtime.py -v
+```
+
+Kết quả: **không thu thập/không chạy test**; Python 3.14 báo `No module named pytest`. ASGI import smoke cũng không chạy được do thiếu `pydantic_settings`. Không khởi chạy server/client, không tạo tình huống network loss và không chạy concurrency.
+
+### Ma trận 12 case
+
+| # | Setup, bước chạy, kết quả mong đợi | Kết quả thực tế / bằng chứng | Trạng thái |
+| --- | --- | --- | --- |
+| 1 | Cài dependencies; chạy server, GET `/health`, dừng sạch. Mong đợi startup, HTTP 200 và shutdown. | Không chạy được: thiếu pytest và `pydantic_settings`; test hiện có `test_health.py`; task 01 có bằng chứng macOS lịch sử riêng. | NOT RUN |
+| 2 | Chạy server loopback; WebSocket handshake rồi gửi/nhận echo text. Mong đợi handshake và payload được echo nguyên vẹn. | Không chạy được trong lần này; `/ws/dev-echo` là echo local hiện có, không phải giao thức robot. Task 02 có báo cáo TCP lịch sử. | NOT RUN |
+| 3 | Dùng token thiếu/sai/hết hạn/thu hồi và thiết bị không quyền. Mong đợi 401/403 theo contract, không accept. | Không chạy: auth runtime, token test và device policy chưa có. | NOT RUN |
+| 4 | Backend mock trả timeout/lỗi/response sai. Mong đợi fail closed, không bypass auth. | Không chạy: chưa có Backend client/mock contract hoặc auth flow. | NOT RUN |
+| 5 | Đóng WebSocket bình thường, dừng process/network riêng biệt. Mong đợi cleanup; network loss được ghi đúng là abrupt loss. | Không chạy lần này; không mô phỏng network loss. Test transport cũ không được tính thành kết quả task 08. | NOT RUN |
+| 6 | Gửi heartbeat và để quá timeout. Mong đợi healthy connection giữ và timeout dọn session/task. | Người dùng đề xuất server Ping 20 s/Pong timeout 10 s, telemetry 30 s riêng. Workspace dependency có auto-Pong, nhưng server chưa tích hợp timeout/cleanup, telemetry chưa xác nhận; pytest/dependency thiếu. | NOT RUN |
+| 7 | Ngắt rồi kết nối lại. Mong đợi theo reconnect policy đã thống nhất. | Không chạy: reconnect policy chưa xác nhận và client không tự reconnect. | NOT RUN |
+| 8 | Kết nối trùng cùng robot. Mong đợi xử lý theo policy task 04. | Không chạy: SessionManager/runtime chưa có; policy chỉ được ghi ở tài liệu task 04, chưa tích hợp code. | NOT RUN |
+| 9 | Gửi malformed/unsupported/oversized. Mong đợi close/error đúng contract và giới hạn bytes. | Không chạy lần này vì môi trường thiếu dependency; `/ws/dev-echo` focused tests có case binary/empty/oversize nhưng không thể gọi là đã pass task 08. | NOT RUN |
+| 10 | Kết nối đồng thời số robot đã thống nhất. Mong đợi mọi session tách biệt. | Không chạy: target concurrency chưa được Dev 1/3 thống nhất. Không suy ra production capacity. | NOT RUN |
+| 11 | Restart server khi client/session đang hoạt động rồi reconnect. Mong đợi session cũ đóng, reconnect đúng policy, không orphan. | Không chạy: session/reconnect runtime chưa có; không restart server trong lượt này. | NOT RUN |
+| 12 | Theo dõi task/session registry và log sau tất cả luồng. Mong đợi không orphan và không có secret/audio/conversation. | Không chạy tích hợp; không có registry session/task để kiểm kê. Không dùng secret/token; log design hiện không ghi payload. | NOT RUN |
+
+### Defect và phụ thuộc còn lại
+
+| Severity | Vấn đề / tái hiện | Owner |
+| --- | --- | --- |
+| Blocker | Không thể xác thực tích hợp robot: auth/session/heartbeat chưa triển khai, Dev 3 protocol/firmware còn PENDING. | Dev 1/Dev 3 xác nhận contract; AI Server owner triển khai tasks bị thiếu |
+| Blocker | Không thể chạy bộ pytest trong môi trường hiện tại: `python -m pytest` báo thiếu pytest; import app thiếu `pydantic_settings`. | Môi trường test/AI Server owner |
+| High | Không có test token, backend endpoint/mock contract hoặc concurrency target để thực hiện case tương ứng. | Dev 1/Dev 3 cung cấp cấu hình test an toàn |
+
+Không sửa code runtime trong task 08 vì không có test tích hợp nào thực thi được; không đổi firmware, Backend, database hoặc contract chưa được duyệt.
+
+### DoD task 08
+
+| Điều kiện | Trạng thái | Ghi chú |
+| --- | --- | --- |
+| Startup, health, shutdown | NOT RUN | Pytest và dependency `pydantic_settings` không có trong môi trường hiện tại. |
+| WebSocket hợp lệ, message exchange | NOT RUN | Chưa chạy client/server task 08. |
+| Token invalid/expired/revoked và Backend fail closed | NOT RUN | Auth và Backend validation runtime chưa có. |
+| Disconnect/heartbeat/reconnect/duplicate cleanup | NOT RUN | Session/heartbeat implementation và policy xác nhận chưa có. |
+| Invalid/unsupported/oversized | NOT RUN | Có focused tests cũ cho echo nhưng task 08 không thực thi được. |
+| Concurrency ở target đã thống nhất | NOT RUN | Target chưa được Dev 1/Dev 3 cung cấp. |
+| Restart/reconnect và không orphan | NOT RUN | Session registry/reconnect runtime chưa có. |
+| Không lộ secret và không dùng production capacity claim | PASS (phạm vi báo cáo) | Không dùng token hoặc chạy concurrency; không có claim 20 robots/1 second. |
+| Mọi case có trạng thái/evidence | PASS (tài liệu) | Ma trận 12 case ghi setup, kỳ vọng, thực tế, lý do và trạng thái. |
+| Previous tests remain passing | NOT RUN | Không có pytest/dependency trong môi trường chạy hiện tại; historical task 01–02 evidence được giữ riêng. |
+
+Không có kết quả case nào được đánh dấu PASS cho lần tích hợp task 08 này.
+
+### Bổ sung sau khi xác nhận cấu hình Development
+
+Người dùng yêu cầu dùng cấu hình Development hiện có để đối chiếu firmware. Giá trị đọc từ `.env.example`: `AI_SERVER_HOST=127.0.0.1`, `AI_SERVER_PORT=8000`, `AI_SERVER_LOG_LEVEL=warning`, `AI_SERVER_RELOAD=true`, `AI_SERVER_WS_MAX_MESSAGE_BYTES=4096`; endpoint client local là `ws://127.0.0.1:8000/ws/dev-echo`. Đây là cấu hình server local; không có test token.
+
+Đối chiếu giao thức: firmware WebSocket lấy URL/token/version từ Settings, gửi header tùy cấu hình, gửi client `hello` và chờ server `hello`; Dev echo chỉ loopback, không auth, không reserve session, không triển khai protocol handler. Nó echo bytes text, không phải backend robot đã xác nhận. Firmware/board/build Dev 3 vẫn PENDING; do đó không kết nối robot vào endpoint này và firmware compatibility là **NOT RUN**.
+
+Cài dependency trong venv macOS rồi chạy lệnh đã ghi trong README là bước kế tiếp để thực thi local Development cases 1–2, 5 và 9. Không đưa token vào source, command line hoặc report. Các case auth/backend/session/heartbeat/reconnect/concurrency vẫn chờ contract và fixtures Dev 1/Dev 3.
+
+### Heartbeat proposal comparison — bổ sung 23/10/2026
+
+Cấu hình Development được người dùng đề xuất: AI Server control Ping mỗi 20 giây, Pong timeout 10 giây, robot phản hồi Pong; telemetry 30 giây và độc lập. Source dependency `78/esp-ml307` trong workspace xử lý Ping nhận được bằng Pong echo và cung cấp `Ping()`/`OnPong()`, nhưng protocol layer không dùng API chủ động và server hiện tắt Uvicorn ping. Đây mới là capability của source dependency, không phải xác nhận build Dev 3. Server heartbeat/timeout/session cleanup và telemetry chưa được tích hợp; heartbeat test vẫn NOT RUN. Chi tiết nằm trong `protocol.md` mục 7.

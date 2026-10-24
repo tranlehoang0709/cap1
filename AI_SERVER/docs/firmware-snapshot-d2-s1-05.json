@@ -3,10 +3,15 @@
   "captured_date": "2026-10-22",
   "firmware_project_version": "2.4.2",
   "git_commit": null,
+  "workspace_checkout_commit": "97c008f02ab23bf98b7f959ec18b0519aac907fb",
   "source_selection": "Người dùng xác nhận dùng snapshot workspace; chưa phải xác nhận giao thức của Dev 3.",
   "dev3_protocol_confirmation": "PENDING",
   "board_and_build_configuration": "PENDING",
   "files": [
+    {
+      "path": "../xiaozhi-esp32/main/idf_component.yml",
+      "sha256": "8668afa5b3823adf4808a83a00f1a3f8ca5592212ef39ff2e29185d812450452"
+    },
     {
       "path": "../xiaozhi-esp32/CMakeLists.txt",
       "sha256": "264ef1b0ceb890d5e93ad7bff93d310b861c88d61da6e29bd261c1139582f145"
@@ -22,6 +27,18 @@
     {
       "path": "../xiaozhi-esp32/main/protocols/websocket_protocol.h",
       "sha256": "273ac38ade4598b241988e66898e59521931ed03635aef354d6332aff9a21d95"
+    },
+    {
+      "path": "../xiaozhi-esp32/managed_components/78__esp-ml307/idf_component.yml",
+      "sha256": "966175e680e95f6f1700dd69136efbc9b65c6cfd2483752525ff58c0d84922b1"
+    },
+    {
+      "path": "../xiaozhi-esp32/managed_components/78__esp-ml307/include/web_socket.h",
+      "sha256": "89575b7197fdc66472571b97257284e92195f7506f10ca33e7adfeb4b7f7ab59"
+    },
+    {
+      "path": "../xiaozhi-esp32/managed_components/78__esp-ml307/src/web_socket.cc",
+      "sha256": "b7709bfcc4db43e554b8f06d310553aa3663207935b06bef41bd98765517b852"
     },
     {
       "path": "../xiaozhi-esp32/main/protocols/websocket_protocol.cc",

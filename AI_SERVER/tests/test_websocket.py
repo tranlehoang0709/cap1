@@ -113,9 +113,15 @@ def live_server(tmp_path):
     })
     log_path = tmp_path / "server.log"
     with log_path.open("w+", encoding="utf-8") as output:
+        process_options = {}
+        if os.name == "nt":
+            # Windows cannot deliver SIGINT with Popen.send_signal(). Give the
+            # child its own console process group so CTRL_BREAK is deliverable.
+            process_options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
         process = subprocess.Popen(
             [sys.executable, str(root / "scripts/run_dev.py")], cwd=root,
             env=environment, stdout=output, stderr=output,
+            **process_options,
         )
         try:
             deadline = time.monotonic() + 10
@@ -136,7 +142,8 @@ def live_server(tmp_path):
             yield f"ws://127.0.0.1:{port}/ws/dev-echo", process, environment
         finally:
             if process.poll() is None:
-                process.send_signal(signal.SIGINT)
+                shutdown_signal = signal.CTRL_BREAK_EVENT if os.name == "nt" else signal.SIGINT
+                process.send_signal(shutdown_signal)
                 try:
                     process.wait(timeout=5)
                 except subprocess.TimeoutExpired:

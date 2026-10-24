@@ -10,10 +10,11 @@ Không dùng tài liệu này để tuyên bố AI Server tương thích robot t
 ## 1. Nguồn chính xác và cách đọc trạng thái
 
 Firmware khai báo `PROJECT_VER="2.4.2"` trong
-[`CMakeLists.txt`](../../xiaozhi-esp32/CMakeLists.txt). Git trong workspace
-trỏ lên repository cha `/Users/mac`, không có HEAD hợp lệ để truy commit.
-**Commit: không xác định; board/sdkconfig/build thực tế: PENDING.**
-Định danh snapshot bằng đường dẫn và SHA-256 của **11 file nguồn** trong
+[`CMakeLists.txt`](../../xiaozhi-esp32/CMakeLists.txt). Checkout workspace hiện
+đang ở commit `97c008f02ab23bf98b7f959ec18b0519aac907fb`; chưa có bằng chứng
+commit/board/sdkconfig/build này chính xác là bản Dev 3 dùng.
+**Commit firmware Dev 3, board/sdkconfig/build thực tế: PENDING.**
+Định danh snapshot bằng đường dẫn và SHA-256 của **15 file nguồn** trong
 [`firmware-snapshot-d2-s1-05.json`](firmware-snapshot-d2-s1-05.json).
 Kiểm tra snapshot khi source thay đổi; không suy ra version từ tên folder.
 
@@ -56,7 +57,7 @@ hình MQTT; có cấu hình WebSocket mới chọn `WebsocketProtocol` nếu kh�
 | `Protocol-Version` | Chuỗi của `version_` | Chưa chốt 1/2/3 được phép |
 | `Device-Id` | MAC qua `SystemInfo::GetMacAddress()` | Không coi header là identity đã xác thực; ánh xạ sang DB device_id PENDING |
 | `Client-Id` | `Board::GetUuid()` | Ý nghĩa identity/reconnect của server PENDING |
-| Subprotocol | Không thấy đặt `Sec-WebSocket-Protocol` tại lớp protocol | Dependency `web_socket.h` chưa có implementation trong workspace; Dev 3 xác nhận build thực tế |
+| Subprotocol | Không thấy đặt `Sec-WebSocket-Protocol` tại lớp protocol | Source `web_socket.h` có trong managed component; Dev 3 xác nhận build thực tế |
 | Origin | Không thấy lớp protocol đặt Origin | Policy server cho robot PENDING |
 
 Không dùng token thật trong ví dụ, log hoặc tài liệu. Không tự coi MAC,
@@ -405,15 +406,30 @@ message trong WebSocket protocol đã đọc. Đừng đổi “>120 giây, ki�
 
 WebSocket `Start()` không mở socket hoặc tạo reconnect timer. Channel được
 mở theo tương tác khi cần; callback đóng đưa về idle. Không suy diễn backoff
-MQTT/reconnect Wi-Fi thành retry WebSocket có bảo đảm. `web_socket.h`
-implementation không có trong snapshot nên native control ping/pong,
-connect/TLS timeout, retry ngầm và close code từ dependency chưa xác định.
+MQTT/reconnect Wi-Fi thành retry WebSocket có bảo đảm.
+
+**SOURCE — khả năng của dependency có trong workspace:** `main/idf_component.yml`
+khai báo `78/esp-ml307 ~3.6.6`; managed component hiện có là 3.6.7,
+repository commit `40d99e50367034832a6790c17832ca2cb5b91f8b`. `WebSocket::OnTcpData()`
+tự phản hồi control Ping opcode `0x9` bằng Pong `0xA` cùng payload. API `Ping()`
+và `OnPong()` cũng có. Tuy vậy `WebsocketProtocol` hiện không gọi `Ping()` hoặc
+đăng ký `OnPong()`; chưa có timeout checker cho Pong trong protocol layer. Đây là
+bằng chứng capability của dependency trong workspace, không xác nhận board/build Dev 3.
+
+**CẤU HÌNH DEVELOPMENT ĐỀ XUẤT — người dùng cung cấp, Dev 3 chưa xác nhận:**
+server gửi control Ping mỗi **20 s**, đợi Pong **10 s**; firmware trả Pong tự động;
+telemetry dự kiến **30 s** và độc lập với heartbeat. Source ở trên hỗ trợ nhánh
+server-originated Ping/Pong tại dependency; chưa thấy firmware application phát
+telemetry mỗi 30 s hoặc xác nhận telemetry schema/được phép tính là hoạt động.
+Không coi các giá trị đề xuất này là contract của firmware Dev 3 trước khi họ
+xác nhận đúng board, sdkconfig và build.
 
 | Khoản | Hiện trạng | Trạng thái hợp đồng robot |
 | --- | --- | --- |
 | Firmware chờ hello | 10.000 ms SOURCE | Cần Dev 3 xác nhận giữ nguyên |
 | Firmware inactivity | Điều kiện >120 s khi query channel SOURCE | Cần chốt tính liveness/timeout server |
-| Server echo ping tự động | Tắt; chưa có heartbeat ứng dụng | Heartbeat là task 06, PENDING |
+| AI Server echo ping tự động | Tắt trong `scripts/run_dev.py` (`ws_ping_interval=None`) | Cấu hình Development đề xuất 20 s/10 s; chưa tích hợp, firmware build cần Dev 3 xác nhận |
+| Telemetry | Chưa có server telemetry/runtime | Đề xuất 30 s, tách heartbeat; schema/nguồn firmware PENDING |
 | Client script timeout | Mặc định 5 s từng thao tác, tổng hữu hạn, không tự reconnect | Chỉ client Development, không phải robot contract |
 | Retry/backoff/jitter/max attempts | Chưa xác định cho WebSocket robot | PENDING |
 | Resume phiên cũ / session mới khi reconnect | Firmware có session_id nhưng không chứng minh resume semantics | PENDING |
@@ -428,11 +444,11 @@ connect/TLS timeout, retry ngầm và close code từ dependency chưa xác đ�
 | Task 05 | Dùng snapshot workspace để lập dự thảo, phần chưa chốt PENDING | Tài liệu và kiểm tra snapshot/ví dụ | Không coi user chọn source là Dev 3 đã duyệt giao thức |
 
 **Schema runtime robot: PENDING, chưa triển khai.** Giữ `messages.py` và
-`validator.py` rỗng thay vì dựng schema strict từ parser C++ vốn permissive
+`validator.py` chưa có model/parser robot thay vì dựng schema strict từ parser C++ vốn permissive
 rồi tự áp vào hai phía. Chưa có `parse_message()/validate_message()` robot,
 state machine hoặc xác nhận “valid/invalid robot message” bằng Pydantic.
-`tests/test_protocol.py` chỉ kiểm tra nguồn SHA-256, JSON ví dụ và các byte
-header minh họa; kết quả đó **không phải kiểm thử validator hoặc robot thật**.
+`tests/test_protocol.py` chỉ kiểm tra SHA-256 nguồn firmware trong snapshot và
+cú pháp JSON của ví dụ; kết quả đó **không phải kiểm thử validator hoặc robot thật**.
 Client script giữ nguyên echo, không tự gửi hello/reboot/audio.
 
 ## 9. Checklist xác nhận Dev 3 / Dev 1
