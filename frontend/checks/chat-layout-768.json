@@ -1,0 +1,26 @@
+{
+  "viewport": {
+    "width": 768,
+    "height": 1080
+  },
+  "results": [
+    {
+      "dark": false,
+      "scheme": "light",
+      "workspace": 679.2000122070312,
+      "history": 679.2000122070312,
+      "main": 679.2000122070312,
+      "direction": "column",
+      "failures": []
+    },
+    {
+      "dark": true,
+      "scheme": "dark",
+      "workspace": 679.2000122070312,
+      "history": 679.2000122070312,
+      "main": 679.2000122070312,
+      "direction": "column",
+      "failures": []
+    }
+  ]
+}

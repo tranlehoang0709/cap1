@@ -1,0 +1,333 @@
+{
+  "viewport": {
+    "width": 982,
+    "height": 776,
+    "devicePixelRatio": 1.25
+  },
+  "results": [
+    {
+      "page": "Dashboard",
+      "dark": false,
+      "heading": "Dashboard",
+      "stylesheet": true,
+      "checked": 15,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": [
+        {
+          "renderer": true,
+          "frames": 6,
+          "error": null,
+          "theme": "card light"
+        }
+      ]
+    },
+    {
+      "page": "AI Chat",
+      "dark": false,
+      "heading": "AI Chat",
+      "stylesheet": true,
+      "checked": 8,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": "rgb(253, 253, 254)",
+      "robots": []
+    },
+    {
+      "page": "Thiết bị của tôi",
+      "dark": false,
+      "heading": "Thiết bị của tôi",
+      "stylesheet": true,
+      "checked": 13,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": [
+        {
+          "renderer": true,
+          "frames": 10,
+          "error": null,
+          "theme": "card light"
+        },
+        {
+          "renderer": true,
+          "frames": 9,
+          "error": null,
+          "theme": "card light"
+        },
+        {
+          "renderer": true,
+          "frames": 3,
+          "error": null,
+          "theme": "card light"
+        }
+      ]
+    },
+    {
+      "page": "Cấu hình trợ lý AI",
+      "dark": false,
+      "heading": "Cấu hình trợ lý AI",
+      "stylesheet": true,
+      "checked": 9,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": []
+    },
+    {
+      "page": "API Key cá nhân",
+      "dark": false,
+      "heading": "API Key cá nhân",
+      "stylesheet": true,
+      "checked": 5,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": []
+    },
+    {
+      "page": "Lịch sử hội thoại",
+      "dark": false,
+      "heading": "Lịch sử hội thoại",
+      "stylesheet": true,
+      "checked": 11,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": []
+    },
+    {
+      "page": "Quyền riêng tư",
+      "dark": false,
+      "heading": "Quyền riêng tư",
+      "stylesheet": true,
+      "checked": 5,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": []
+    },
+    {
+      "page": "Tài khoản",
+      "dark": false,
+      "heading": "Tài khoản",
+      "stylesheet": true,
+      "checked": 6,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": []
+    },
+    {
+      "page": "Dashboard",
+      "dark": true,
+      "heading": "Dashboard",
+      "stylesheet": true,
+      "checked": 15,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": [
+        {
+          "renderer": true,
+          "frames": 13,
+          "error": null,
+          "theme": "dark card"
+        }
+      ]
+    },
+    {
+      "page": "AI Chat",
+      "dark": true,
+      "heading": "AI Chat",
+      "stylesheet": true,
+      "checked": 8,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": "rgb(25, 30, 42)",
+      "robots": []
+    },
+    {
+      "page": "Thiết bị của tôi",
+      "dark": true,
+      "heading": "Thiết bị của tôi",
+      "stylesheet": true,
+      "checked": 13,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": [
+        {
+          "renderer": true,
+          "frames": 13,
+          "error": null,
+          "theme": "dark card"
+        },
+        {
+          "renderer": true,
+          "frames": 12,
+          "error": null,
+          "theme": "dark card"
+        },
+        {
+          "renderer": true,
+          "frames": 3,
+          "error": null,
+          "theme": "dark card"
+        }
+      ]
+    },
+    {
+      "page": "Cấu hình trợ lý AI",
+      "dark": true,
+      "heading": "Cấu hình trợ lý AI",
+      "stylesheet": true,
+      "checked": 9,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": []
+    },
+    {
+      "page": "API Key cá nhân",
+      "dark": true,
+      "heading": "API Key cá nhân",
+      "stylesheet": true,
+      "checked": 5,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": []
+    },
+    {
+      "page": "Lịch sử hội thoại",
+      "dark": true,
+      "heading": "Lịch sử hội thoại",
+      "stylesheet": true,
+      "checked": 11,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": []
+    },
+    {
+      "page": "Quyền riêng tư",
+      "dark": true,
+      "heading": "Quyền riêng tư",
+      "stylesheet": true,
+      "checked": 5,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": []
+    },
+    {
+      "page": "Tài khoản",
+      "dark": true,
+      "heading": "Tài khoản",
+      "stylesheet": true,
+      "checked": 6,
+      "failures": [],
+      "header": {
+        "top": 96,
+        "bottom": 231.875,
+        "belowToolbar": true,
+        "visible": true
+      },
+      "horizontalOverflow": false,
+      "chatBackground": null,
+      "robots": []
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+/* Native Streamlit product UI. TasteSkill redesign principles, existing AIVA brand.
+   Radius: panels 16px, controls 10px, status pills 999px. */
+.stApp{--aiva-field-bg:var(--aiva-surface);--aiva-field-text:var(--aiva-text);--aiva-field-border:var(--aiva-border);--aiva-field-muted:var(--aiva-muted);background:var(--aiva-bg);color:var(--aiva-text);font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif}
+/* Streamlit owns padding-top: it reserves space for its absolute toolbar
+   (and top navigation/embedded variants). Never replace it with a shorthand. */
+.stApp [data-testid="stMainBlockContainer"]{max-width:1440px;padding-left:2.75rem;padding-right:2.75rem;padding-bottom:3rem}
+.stApp [data-testid="stVerticalBlock"]{gap:1rem}
+[data-testid="stHeader"]{background:var(--aiva-bg)}
+.stApp h1{font-size:clamp(1.65rem,2.2vw,2.1rem);font-weight:650;letter-spacing:-.04em;margin:0}
+.stApp h2{font-size:1.4rem;font-weight:650;letter-spacing:-.025em}
+.stApp h3{font-size:1.12rem;font-weight:650;letter-spacing:-.015em}
+.stApp h1,.stApp h2,.stApp h3{text-wrap:balance;overflow-wrap:anywhere}
+.stApp p,.stApp small{overflow-wrap:anywhere}
+.stApp h1,.stApp h2,.stApp h3,.stApp label,.stApp [data-testid="stWidgetLabel"]{color:var(--aiva-text)}
+/* Button labels are Markdown too: inherit the component's foreground instead
+   of assigning the page foreground inside primary/disabled buttons. */
+.stApp [data-testid="stMarkdownContainer"]{color:inherit}
+.stApp [data-testid="stCaptionContainer"]{color:var(--aiva-muted);line-height:1.6}
+.stApp .st-key-login_form_panel [data-testid="stCaptionContainer"]{opacity:1}
+/* Token đã đủ tương phản; bỏ opacity native tại Dashboard/Chat có hook. */
+.stApp:has(.st-key-dashboard_hero,.st-key-dashboard_metrics,.st-key-chat_workspace) [data-testid="stCaptionContainer"]{opacity:1}
+/* Scope theo heading Portal hiện hữu; giữ nguyên caption Login. */
+.stApp:has(.st-key-portal_page_header :is(#robot-cua-toi,#cai-dat-tro-ly,#tro-chuyen-ai,#tai-khoan,#quan-ly-nguoi-dung,#quan-ly-thiet-bi,#ai-management,#api-key-and-quota,#ota-firmware,#logs-and-monitoring,#system-settings)) [data-testid="stCaptionContainer"]{opacity:1}
+.stApp a{color:var(--aiva-accent)}
+.brand{display:flex;align-items:center;gap:16px;padding:4px 0 20px;border-bottom:1px solid var(--aiva-border)}
+.brand b{font-size:23px;line-height:1.4;letter-spacing:-.035em;color:var(--aiva-text);flex-shrink:0}
+.brand span{font-size:13px;color:var(--aiva-muted)}
+.brand small{margin-left:auto;font-size:12px;color:var(--aiva-muted)}
+.stApp [data-testid="stMainBlockContainer"] .brand{flex-wrap:wrap;row-gap:8px}
+.stApp [data-testid="stMainBlockContainer"] .brand span{display:block;min-width:0;line-height:1.5;overflow-wrap:anywhere}
+[data-testid="stSidebar"]{background:var(--aiva-surface);border-right:1px solid var(--aiva-border)}
+[data-testid="stSidebarUserContent"]{padding:24px 20px}
+[data-testid="stSidebar"] .stRadio label{padding:10px 13px;border-radius:10px;min-height:43px}
+/* React Aria puts marker and text inside the same flex row. Hide only the
+   marker, never the label's first div (which may contain the entire label). */
+[data-testid="stSidebar"] [data-testid="stRadioOption"]>div>div:first-child{display:none}
+[data-testid="stSidebar"] .stRadio label:hover{background:var(--aiva-raised)}
+[data-testid="stSidebar"] .stRadio label:has(input:checked){background:var(--aiva-tint);box-shadow:inset 3px 0 var(--aiva-accent)}
+[data-testid="stSidebar"] .stRadio label:has(input:focus-visible){outline:2px solid var(--aiva-accent);outline-offset:2px}
+.sidebar-brand{font-size:23px;line-height:1.4;font-weight:700;letter-spacing:-.035em;padding:0 0 5px;overflow-wrap:anywhere;color:var(--aiva-text)}
+.sidebar-account{display:flex;gap:12px;align-items:center;min-width:0;color:var(--aiva-text)}
+.sidebar-account>div{min-width:0}.sidebar-account .avatar{flex-shrink:0}
+.sidebar-account .avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:var(--aiva-tint);color:var(--aiva-accent);font-weight:700}
+.sidebar-account strong{font-size:14px}.sidebar-account small{display:block;font-size:12px;color:var(--aiva-muted)}
+.stApp [class*="st-key-aiva_panel_"],.stApp .st-key-login_form_panel{background:var(--aiva-surface);border:1px solid var(--aiva-border)!important;border-radius:16px!important;padding:22px!important;box-shadow:0 4px 16px #10131c04}
+.stApp [class*="st-key-aiva_panel_"] [class*="st-key-aiva_panel_"]{box-shadow:none;padding:16px!important}
+.stApp .st-key-login_brand_panel{border:0!important;background:transparent;padding:20px 30px 20px 0}
+.stApp .st-key-login_form_panel{padding:32px!important}
+.st-key-login_form_panel h1{font-size:1.75rem}
+.stApp h2.login-heading{font-size:clamp(1.8rem,3.1vw,2.8rem);font-weight:650;letter-spacing:-.045em;line-height:1.18;max-width:24ch;margin:12px 0 20px;padding:0}
+.login-copy{color:var(--aiva-muted);line-height:1.7;max-width:48ch}
+.stApp [data-testid="stMetric"]{background:var(--aiva-surface);border:1px solid var(--aiva-border);border-radius:14px;padding:18px 20px;min-height:112px}
+.stApp [data-testid="stMetricLabel"]{color:var(--aiva-muted);font-size:13px}
+.stApp [data-testid="stMetricValue"]{font-size:clamp(1.6rem,2.5vw,2.3rem);font-weight:600;letter-spacing:-.04em;color:var(--aiva-text);font-variant-numeric:tabular-nums}
+.stApp [data-testid="stExpander"]{border:1px solid var(--aiva-border);border-radius:12px;background:var(--aiva-surface)}
+.stApp [data-testid="stExpander"] summary{color:var(--aiva-text)}
+.stApp [data-testid="stChatMessage"]{background:var(--aiva-raised);color:var(--aiva-text);border:0;border-radius:16px}
+.stApp [class*="st-key-table_toolbar_"]{padding:16px;background:var(--aiva-raised);border-radius:12px}
+.stApp [class*="st-key-table_pagination_"] [data-testid="stCaptionContainer"]{padding-bottom:10px;font-variant-numeric:tabular-nums}
+.stApp hr{border-color:var(--aiva-border)}
+.status{display:inline-flex;border-radius:999px;font-size:12px;font-weight:600;padding:5px 10px}
+.online{background:var(--aiva-good-bg);color:var(--aiva-good)}
+.offline{background:var(--aiva-bad-bg);color:var(--aiva-bad)}
+.provider-row{display:flex;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--aiva-border);align-items:center}
+.provider-row>div{min-width:0}.provider-row .status{flex-shrink:0;white-space:nowrap}
+.provider-row:last-child{border:0}.provider-row small{display:block;color:var(--aiva-muted);padding-top:3px}
+.pairing-state{display:flex;align-items:center;gap:16px;padding:16px;background:var(--aiva-tint);border-radius:12px}
+.pairing-state small{color:var(--aiva-muted)}
+.pairing-radar{display:grid;place-items:center;width:42px;height:42px;border:1px solid var(--aiva-accent);border-radius:50%;color:var(--aiva-accent)}
+.pairing-radar i{display:none}.success-animation{display:none}
+.stApp:has(.st-key-login_header) [data-testid="stMainBlockContainer"]{max-width:1250px}
+.stApp .st-key-login_header{border-bottom:1px solid var(--aiva-border);padding-bottom:1rem}
+.stApp .st-key-login_header [data-testid="stHorizontalBlock"]{flex-direction:row;align-items:center;flex-wrap:nowrap}
+.stApp .st-key-login_header [data-testid="stColumn"]:first-child{flex:1 1 0!important;width:auto!important;min-width:0!important}
+.stApp .st-key-login_header [data-testid="stColumn"]:last-child{flex:0 0 auto!important;width:auto!important;min-width:max-content!important}
+.stApp .st-key-login_header .brand{flex-wrap:wrap;row-gap:6px;padding:0;border:0}
+.stApp .st-key-login_header .brand span{display:block;min-width:0;line-height:1.5;overflow-wrap:anywhere}
+.stApp .st-key-login_header .st-key-aiva_theme_switch_scope{margin-bottom:0}
+@media(max-width:480px){
+  .stApp .st-key-login_header [data-testid="stHorizontalBlock"]{gap:8px}
+  .stApp .st-key-login_header .brand b{font-size:18px;flex-shrink:1}
+  .stApp .st-key-login_header .st-key-aiva_theme_switch_scope label:has(input){padding-left:58px}
+  .stApp .st-key-login_header .st-key-aiva_theme_switch_scope label:has(input)::before{width:46px}
+  .stApp .st-key-login_header .st-key-aiva_theme_switch_scope label:has(input:checked)::after{transform:translateX(4px) rotate(12deg)}
+}
+/* Dashboard Người dùng: chừa đủ chỗ cho nhãn khi sidebar đang mở.
+   Từ 960px giữ bố cục desktop; không đổi runtime hay chiều cao iframe. */
+@media(max-width:959px){
+  .stApp .st-key-dashboard_hero [data-testid="stHorizontalBlock"]{display:grid;grid-template-columns:minmax(0,1fr)}
+  .stApp:has(.st-key-dashboard_hero) .st-key-dashboard_metrics [data-testid="stHorizontalBlock"]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stApp:has(.st-key-dashboard_hero) :is(.st-key-dashboard_hero,.st-key-dashboard_metrics) [data-testid="stColumn"]{width:100%!important;min-width:0;flex:initial!important}
+  .stApp:has(.st-key-dashboard_hero) :is(.st-key-table_toolbar_usage,.st-key-table_pagination_usage) [data-testid="stHorizontalBlock"]{flex-direction:column}
+  .stApp:has(.st-key-dashboard_hero) :is(.st-key-table_toolbar_usage,.st-key-table_pagination_usage) [data-testid="stColumn"]{width:100%!important;min-width:0;flex:initial!important}
+}
+/* Giữ nguyên breakpoint Dashboard Quản trị đã nghiệm thu. */
+/* Sidebar mở làm workspace tablet chỉ còn 380px. Mỗi form cần khoảng
+   220px cho field, cộng padding panel; giữ nguyên cột desktop từ 960px.
+   Chỉ chọn hàng ngoài chứa form/iframe, không đổi các hàng con. */
+@media(min-width:768px) and (max-width:959px){
+  .stApp:has(.st-key-portal_page_header #robot-cua-toi) [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] iframe),
+  .stApp [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [class*="st-key-FormSubmitter-assistant_persona-"]){display:grid;grid-template-columns:minmax(0,1fr)}
+  .stApp:has(.st-key-portal_page_header #robot-cua-toi) [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] iframe)>[data-testid="stColumn"],
+  .stApp [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [class*="st-key-FormSubmitter-assistant_persona-"])>[data-testid="stColumn"]{width:100%!important;min-width:0;flex:initial!important}
+  .stApp :is(.st-key-table_toolbar_history,.st-key-table_toolbar_memory,.st-key-table_toolbar_knowledge,.st-key-table_toolbar_my_robots,.st-key-table_toolbar_my_requests) [data-testid="stHorizontalBlock"]:has(button){display:grid;grid-template-columns:minmax(0,1fr) max-content}
+  .stApp :is(.st-key-table_toolbar_history,.st-key-table_toolbar_memory,.st-key-table_toolbar_knowledge,.st-key-table_toolbar_my_robots,.st-key-table_toolbar_my_requests) [data-testid="stHorizontalBlock"]:has(button)>[data-testid="stColumn"]{width:100%!important;min-width:0;flex:initial!important}
+}
+@media(max-width:768px){
+  .stApp:not(:has(.st-key-dashboard_hero)) .st-key-dashboard_metrics [data-testid="stHorizontalBlock"]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stApp:not(:has(.st-key-dashboard_hero)) .st-key-dashboard_metrics [data-testid="stColumn"]{width:100%!important;min-width:0;flex:initial!important}
+}
+/* Admin: chỉ hàng panel/metric bị ép hẹp, giữ tỷ lệ desktop đang hoạt động. */
+@media(min-width:768px) and (max-width:959px){
+  .stApp:has(.st-key-dashboard_metrics):not(:has(.st-key-dashboard_hero)) [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [class*="st-key-aiva_panel_"]){display:grid;grid-template-columns:minmax(0,1fr)}
+  .stApp:has(.st-key-portal_page_header :is(#ai-management,#quan-ly-thiet-bi)) [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] :is([class*="st-key-toggle_"],[data-testid="stMetric"])){display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stApp:has(.st-key-dashboard_metrics):not(:has(.st-key-dashboard_hero)) [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [class*="st-key-aiva_panel_"])>[data-testid="stColumn"],
+  .stApp:has(.st-key-portal_page_header :is(#ai-management,#quan-ly-thiet-bi)) [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] :is([class*="st-key-toggle_"],[data-testid="stMetric"]))>[data-testid="stColumn"]{width:100%!important;min-width:0;flex:initial!important}
+  .stApp:has(.st-key-portal_page_header :is(#quan-ly-nguoi-dung,#quan-ly-thiet-bi,#ai-management,#api-key-and-quota,#ota-firmware,#logs-and-monitoring)) [class*="st-key-table_toolbar_"] [data-testid="stHorizontalBlock"]{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))}
+  .stApp:has(.st-key-portal_page_header :is(#quan-ly-nguoi-dung,#quan-ly-thiet-bi,#ai-management,#api-key-and-quota,#ota-firmware,#logs-and-monitoring)) [class*="st-key-table_toolbar_"] [data-testid="stHorizontalBlock"]:has([class*="st-key-reset_"]){grid-template-columns:minmax(0,1fr) max-content}
+  .stApp:has(.st-key-portal_page_header :is(#quan-ly-nguoi-dung,#quan-ly-thiet-bi,#ai-management,#api-key-and-quota,#ota-firmware,#logs-and-monitoring)) [class*="st-key-table_toolbar_"] [data-testid="stColumn"]{width:100%!important;min-width:0;flex:initial!important}
+}
+/* VRAM cần 114px ở 1024px nhưng cột chỉ còn 105px; giữ desktop từ 1200px. */
+@media(min-width:768px) and (max-width:1199px){
+  .stApp:has(.st-key-portal_page_header #logs-and-monitoring) [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [data-testid="stMetric"]){display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stApp:has(.st-key-portal_page_header #logs-and-monitoring) [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [data-testid="stMetric"])>[data-testid="stColumn"]{width:100%!important;min-width:0;flex:initial!important}
+}
+@media(max-width:767px){
+  .stApp [data-testid="stMainBlockContainer"]{padding-left:1rem;padding-right:1rem;padding-bottom:2rem}
+  .brand{gap:8px}.brand span{display:none}.brand small{font-size:10px}
+  .stApp [data-testid="stHorizontalBlock"]{flex-direction:column}
+  .stApp [data-testid="stColumn"]{width:100%!important;flex:1 1 100%!important;min-width:0!important}
+  .stApp .st-key-login_brand_panel{padding:0}
+  .stApp .st-key-login_form_panel{padding:20px!important}
+  .stApp [class*="st-key-table_toolbar_"]{padding:12px}
+  .stApp [class*="st-key-table_pagination_"] [data-testid="stCaptionContainer"]{padding:0}
+  .provider-row{align-items:flex-start;flex-wrap:wrap}
+}
+/* Header content stays in normal flow; only the header itself can overflow.
+   Do not override main/sidebar scrolling or Streamlit's toolbar clearance. */
+.stApp :is(.st-key-portal_page_header,.st-key-login_header){height:auto;max-height:none;overflow:visible;flex-shrink:0;position:relative}
+.stApp .st-key-portal_page_header{gap:.65rem}
+/* Chat styles live here; no competing inline stylesheet or forced 70vh rail. */
+.stApp .st-key-chat_workspace{margin-top:.5rem;container: aiva-chat / inline-size}
+.stApp .st-key-chat_history{border-right:1px solid var(--aiva-border);padding-right:20px;min-height:0;max-height:65dvh;overflow:auto;overscroll-behavior:contain}
+.stApp .st-key-chat_history h3{margin-top:0}
+.stApp .st-key-chat_history .stButton button{text-align:left;justify-content:flex-start;border:1px solid transparent;background:transparent}
+.stApp .st-key-chat_history .stButton button:hover{background:var(--aiva-raised);border-color:var(--aiva-border);transform:none}
+.stApp .st-key-chat_history .stButton button[kind="primary"]{background:var(--aiva-tint)!important;color:var(--aiva-text)!important}
+.stApp .st-key-chat_history .stButton button[kind="primary"] [data-testid="stMarkdownContainer"]{color:var(--aiva-text)!important}
+.stApp .st-key-chat_main{max-width:900px;width:100%;min-width:0;margin:0 auto}
+.stApp .st-key-chat_main [data-testid="stCaptionContainer"]{line-height:1.5}
+.stApp .st-key-chat_main .chat-welcome{text-align:center;padding:clamp(24px,5vh,48px) 8px}
+.stApp .st-key-chat_main .chat-welcome h2{font-size:clamp(24px,2.4vw,32px);font-weight:600}
+.stApp .st-key-chat_main .chat-welcome p{color:var(--aiva-muted);font-size:15px}
+.stApp .st-key-chat_main [data-testid="stChatMessage"]{border:0;background:var(--aiva-raised);padding:14px 16px;border-radius:16px}
+.stApp .st-key-chat_main [data-testid="stChatMessageContent"]{color:var(--aiva-text)}
+.stApp [data-testid="stTabPanel"]:has(.st-key-history_selected) [data-testid="stChatMessageContent"]{color:var(--aiva-text)}
+.stApp .st-key-chat_main [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]){background:var(--aiva-tint)}
+.stApp .st-key-chat_messages{height:clamp(240px,45dvh,430px)!important}
+/* Use available workspace width, including the space taken by the sidebar.
+   The native proportional columns otherwise squeeze history into a few pixels. */
+/* Placeholder đo được 122px; dành thêm chỗ cho padding và nhãn New Chat.
+   Chỉ giới hạn hàng ngoài, giữ tỷ lệ cũ khi cột lịch sử đã đủ rộng. */
+@media(min-width:768px){
+  @container aiva-chat (width > 700px){
+    .stApp .st-key-chat_workspace [data-testid="stHorizontalBlock"]:has(.st-key-chat_history){display:grid;grid-template-columns:minmax(192px,1fr) minmax(0,3.4fr)}
+    .stApp .st-key-chat_workspace [data-testid="stHorizontalBlock"]:has(.st-key-chat_history)>[data-testid="stColumn"]{width:100%;min-width:0}
+  }
+}
+@container aiva-chat (max-width:700px){
+  .stApp .st-key-chat_workspace [data-testid="stHorizontalBlock"]{flex-direction:column;gap:1rem}
+  .stApp .st-key-chat_workspace [data-testid="stHorizontalBlock"]>[data-testid="stColumn"]{flex:1 1 100%;width:100%;min-width:0}
+  .stApp .st-key-chat_history{border-right:0;border-bottom:1px solid var(--aiva-border);padding-right:0;padding-bottom:16px;max-height:240px}
+  .stApp .st-key-chat_main .chat-welcome{padding:24px 8px}
+}
+@media(prefers-reduced-motion:reduce){.stApp *,.stApp *::before,.stApp *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

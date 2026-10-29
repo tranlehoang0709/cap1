@@ -1,0 +1,105 @@
+{
+  "viewport": {
+    "width": 1024,
+    "height": 1080,
+    "devicePixelRatio": 2.0000000298023224
+  },
+  "results": [
+    {
+      "page": "Dashboard",
+      "dark": false,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "Quản lý người dùng",
+      "dark": false,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "Quản lý thiết bị",
+      "dark": false,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "AI Management",
+      "dark": false,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "API Key & Quota",
+      "dark": false,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "OTA Firmware",
+      "dark": false,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "Logs & Monitoring",
+      "dark": false,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "System Settings",
+      "dark": false,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "Dashboard",
+      "dark": true,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "Quản lý người dùng",
+      "dark": true,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "Quản lý thiết bị",
+      "dark": true,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "AI Management",
+      "dark": true,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "API Key & Quota",
+      "dark": true,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "OTA Firmware",
+      "dark": true,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "Logs & Monitoring",
+      "dark": true,
+      "failures": [],
+      "overflow": false
+    },
+    {
+      "page": "System Settings",
+      "dark": true,
+      "failures": [],
+      "overflow": false
+    }
+  ]
+}

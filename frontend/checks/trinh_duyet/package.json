@@ -1,0 +1,20 @@
+{
+  "name": "aiva-browser-checks",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "probe": "node helpers/kiem_tra_moi_truong.js",
+    "test:smoke": "node helpers/chay_kiem_thu.js --grep @smoke",
+    "test:ui": "node helpers/chay_kiem_thu.js --grep @ui",
+    "test:responsive": "node helpers/chay_kiem_thu.js --grep @responsive",
+    "test:robot": "node helpers/chay_kiem_thu.js --grep @robot",
+    "test:screenshots": "node helpers/chay_kiem_thu.js --grep @screenshots",
+    "test": "node helpers/chay_kiem_thu.js",
+    "test:list": "playwright test --list",
+    "check": "node --test helpers/bao_mat.test.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0"
+  }
+}

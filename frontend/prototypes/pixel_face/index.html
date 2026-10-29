@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>AIVA · Phòng thử biểu cảm LED</title><link rel="icon" href="data:,"><link rel="stylesheet" href="style.css"></head>
+<body>
+<header class="masthead"><a href="./" aria-label="AIVA Pixel Face">AIVA<span> / LAB</span></a><span class="prototype-badge">PROTOTYPE 01</span></header>
+<main>
+  <section class="intro"><p class="eyebrow">PIXEL FACE · 128 × 64</p><h1>Một gương mặt. <br>Nhiều cảm xúc.</h1><p>Thử ngôn ngữ biểu cảm mới cho AIVA. <br>Chỉ chạy trên trình duyệt, không điều khiển robot thật.</p></section>
+  <section class="preview" aria-label="Màn hình xem thử khuôn mặt LED">
+    <div class="display-shell"><div class="display-top"><span>AIVA / PIXEL DISPLAY</span><span id="motion-status">Đang chuyển động</span></div><canvas id="face" width="128" height="64" role="img" aria-label="Khuôn mặt LED: Bình thường"></canvas><div class="display-bottom"><span>CYAN LED</span><span>LOCAL PREVIEW</span></div></div>
+    <div class="selection-status" aria-live="polite"><span id="expression-label">Bình thường</span><span id="expression-description">Nhẹ nhàng, tò mò</span></div>
+  </section>
+  <section class="controls" aria-label="Điều khiển xem thử">
+    <div class="section-label"><h2>Chọn một cảm xúc</h2><span>01 — 05</span></div>
+    <div id="expressions" class="expression-buttons" role="group" aria-label="Biểu cảm">
+      <button data-expression="neutral" aria-pressed="true"><span class="face-icon">• •</span>Bình thường</button>
+      <button data-expression="happy" aria-pressed="false"><span class="face-icon">⌒ ⌒</span>Vui vẻ</button>
+      <button data-expression="angry" aria-pressed="false"><span class="face-icon">ˋ ˊ</span>Tức giận</button>
+      <button data-expression="sad" aria-pressed="false"><span class="face-icon">ˊ ˋ</span>Buồn bã</button>
+      <button data-expression="sleepy" aria-pressed="false"><span class="face-icon">− −</span>Buồn ngủ</button>
+    </div>
+    <div class="playback"><button id="play" type="button" aria-pressed="false">Tạm dừng</button><label><input id="reduce-motion" type="checkbox"> Giảm chuyển động</label><span class="playback-note">Tự dừng khi preview khuất hoặc tab bị ẩn.</span></div>
+  </section>
+  <footer>Hình vẽ gốc cho AIVA-IoT · Canvas 2D · Không kết nối dịch vụ AI</footer>
+</main>
+<script type="module" src="preview.mjs"></script>
+</body></html>
