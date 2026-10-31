@@ -138,6 +138,8 @@ curl -i http://127.0.0.1:8000/health
 Client gửi một message text, nhận echo, so sánh chính xác rồi đóng 1000.
 Output thành công có `Handshake OK`, `Echo OK` và
 `Connection closed cleanly (1000)`. Không in nội dung payload/header.
+Client kiểm tra mã đóng thực tế sau khi nhận echo: chỉ mã 1000 được coi là
+thành công; mã khác (kể cả 1001) được in đúng và client thoát code 1.
 Client có timeout mặc định 5 giây cho connect/send/receive/close và giới hạn
 tổng thời gian, không tự reconnect; `--timeout 2` thay timeout thử nghiệm.
 Proxy tự động, compression và keepalive ping được tắt ở client; server cũng
@@ -268,8 +270,11 @@ test này bằng TestClient rồi coi là đã kiểm tra transport.
 `lifespan()` ghi startup trước khi phục vụ và shutdown khi thoát. Không có
 tài nguyên database hoặc client AI cần cleanup. Application logger ghi JSON
 console-only; event WebSocket bình thường ở INFO, còn cảnh báo/lỗi ở mức tương
-ứng. Mức cấu hình mặc định `warning` vẫn hiển thị startup/shutdown. Log Uvicorn
-vẫn theo đúng `AI_SERVER_LOG_LEVEL`.
+ứng. Mức cấu hình mặc định `warning` vẫn hiển thị startup/shutdown.
+Log transport `uvicorn.error` và `uvicorn.asgi` dưới WARNING bị chặn khi
+lifespan cấu hình logging, kể cả khi chọn debug/trace, vì chúng có thể chứa
+header, URL/query hoặc frame payload. Cảnh báo/lỗi transport vẫn theo mức đã
+chọn; log JSON của ứng dụng cung cấp sự kiện kết nối/ngắt kết nối an toàn.
 Uvicorn 0.54.0 ghi ERROR và traceback cho UTF-8 sai đã được xử lý ở tầng
 transport, sau đó đóng `1007`. Đây là lỗi input có chủ đích trong test;
 không phải exception thoát khỏi handler và không làm dừng server.
@@ -299,6 +304,8 @@ Ví dụ tìm nhanh:
 
 Không ghi Authorization, Device Token, API key, audio hoặc nội dung cuộc hội thoại.
 Auth, session và heartbeat chưa có runtime nên event tương ứng chưa được phát.
+Test TCP hồi quy trong `tests/test_websocket.py` kiểm tra token giả, query và
+payload không xuất hiện trong log debug/trace; kiểm tra riêng mã đóng 1000/1001/1011.
 
 ## Mapping source
 

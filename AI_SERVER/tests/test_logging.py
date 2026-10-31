@@ -75,3 +75,24 @@ def test_lifecycle_formatter_names_startup_and_shutdown():
     shutdown = logging.LogRecord("ai_server", logging.WARNING, __file__, 1, "AI Server shutdown", (), None)
     assert json.loads(formatter.format(startup))["event"] == "app.startup"
     assert json.loads(formatter.format(shutdown))["event"] == "app.shutdown"
+
+
+def test_transport_logging_keeps_warnings_and_errors_without_duplicate_filters(monkeypatch):
+    configure_logging("debug")
+    configure_logging("trace")
+    for name in ("uvicorn.error", "uvicorn.asgi"):
+        logger = logging.getLogger(name)
+        filters = [item for item in logger.filters if getattr(item, "_ai_server_transport_filter", False)]
+        assert len(filters) == 1
+        stream = StringIO()
+        handler = logging.StreamHandler(stream)
+        monkeypatch.setattr(logger, "handlers", [handler])
+        monkeypatch.setattr(logger, "propagate", False)
+        monkeypatch.setattr(logger, "level", 5)
+        for level in (5, logging.DEBUG, logging.INFO):
+            logger.log(level, "private-header-or-frame")
+        logger.warning("safe transport warning")
+        logger.error("safe transport error")
+        assert "private-header-or-frame" not in stream.getvalue()
+        assert "safe transport warning" in stream.getvalue()
+        assert "safe transport error" in stream.getvalue()

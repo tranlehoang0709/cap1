@@ -4,6 +4,6 @@ module.exports = {
   roots: ['<rootDir>/test'],
   testRegex: '.*\\.spec\\.ts$',
   moduleFileExtensions: ['ts', 'js', 'json'],
-  collectCoverageFrom: ['src/modules/users/**/*.ts', '!src/modules/users/**/*.spec.ts'],
+  collectCoverageFrom: ['src/**/*.ts', '!src/main.ts'],
   clearMocks: true,
 };

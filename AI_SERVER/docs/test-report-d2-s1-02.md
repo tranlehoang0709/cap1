@@ -168,6 +168,36 @@ Không sửa thư viện hoặc tắt logger để giấu lỗi.
 **Windows: NOT RUN** cho cài dependency, server/client, TCP và pytest.
 README có lệnh PowerShell; không dùng kết quả macOS để ghi PASS Windows.
 
+## Kiểm tra và sửa lỗi bổ sung — Windows, 30/10/2026
+
+Phần này là bằng chứng mới; trạng thái Windows NOT RUN phía trên thuộc lần
+báo cáo cũ. Đã đọc `AGENTS.md` trước khi sửa và bổ sung nội quy bắt buộc đọc
+file hướng dẫn trước mọi thay đổi code.
+
+- Lỗi đã tái hiện: log debug của transport chứa Authorization giả và message;
+  client in cố định mã 1000 dù server đóng 1001 sau echo.
+- `configure_logging()` cài filter idempotent cho `uvicorn.error` và
+  `uvicorn.asgi`: bỏ log dưới WARNING chứa header/frame/scope thô; giữ
+  warning/error theo mức cấu hình. Log lifecycle/kết nối của application vẫn có.
+- Client đọc `close_code` thực tế; mã thiếu được biểu diễn là 1006, không gửi
+  close frame 1006. Chỉ mã 1000 được coi là kết thúc thành công; mã khác báo
+  đúng mã và thoát code 1 qua entrypoint.
+- Test mới: TCP thật tại debug và trace không lộ token/header/query/payload;
+  server thử nghiệm đóng 1000, 1001, 1011 sau echo; filter không bị nhân đôi
+  và vẫn phát cảnh báo/lỗi.
+
+Lệnh chạy từ `AI_SERVER`:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests -q --basetemp=.pytest-temp-d2s102-fix -p no:cacheprovider --tb=short
+```
+
+Kết quả: **75 passed in 16.00s**, gồm toàn bộ test hiện có và sáu case hồi quy
+mới. Server fixture khởi động/dừng sạch; echo, close/error codes, giới hạn
+message, health/config, logging, protocol snapshot và profiles giữ PASS.
+Robot thật/LAN thật chưa thử; auth/session/heartbeat/integration còn scaffold
+và không thuộc kết quả PASS của bản sửa echo Development này.
+
 ## Dev 3 cần xác nhận trước các task tiếp theo
 
 1. Endpoint robot chính thức, nguồn cấp URL qua cấu hình/OTA và version

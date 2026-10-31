@@ -11,6 +11,10 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "test": "jest --runInBand",
+    "test:coverage": "jest --runInBand --coverage --coverageReporters=json-summary --coverageReporters=text-summary --coverageDirectory=coverage/sprint2",
+    "test:typecheck": "tsc --noEmit --incremental false",
+    "test:mysql": "node scripts/run-mysql-integration.cjs",
+    "test:quota:mysql": "node scripts/run-mysql-integration.cjs --quota",
     "test:watch": "jest --watch"
   },
   "dependencies": {

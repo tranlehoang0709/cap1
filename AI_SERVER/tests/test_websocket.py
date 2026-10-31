@@ -12,6 +12,7 @@ import time
 import httpx
 import pytest
 from websockets.asyncio.client import connect
+from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosed, InvalidStatus
 from websockets.frames import Frame, Opcode
 
@@ -99,7 +100,7 @@ def test_unexpected_disconnect_does_not_send_again():
 
 
 @pytest.fixture
-def live_server(tmp_path):
+def live_server(tmp_path, request):
     """Actual run_dev.py process, ephemeral loopback port and finite cleanup."""
     root = Path(__file__).resolve().parents[1]
     with socket.socket() as probe:
@@ -108,7 +109,7 @@ def live_server(tmp_path):
     environment = {key: value for key, value in os.environ.items() if not key.upper().startswith("AI_SERVER_")}
     environment.update({
         "AI_SERVER_HOST": "127.0.0.1", "AI_SERVER_PORT": str(port),
-        "AI_SERVER_RELOAD": "false", "AI_SERVER_LOG_LEVEL": "warning",
+        "AI_SERVER_RELOAD": "false", "AI_SERVER_LOG_LEVEL": getattr(request, "param", "warning"),
         "AI_SERVER_WS_MAX_MESSAGE_BYTES": "4096", "PYTHONDONTWRITEBYTECODE": "1",
     })
     log_path = tmp_path / "server.log"
@@ -289,3 +290,50 @@ def test_client_timeout_is_bounded(monkeypatch):
     monkeypatch.setattr(ws_client, "connect", lambda *args, **kwargs: SilentConnection())
     with pytest.raises(TimeoutError):
         asyncio.run(ws_client.exchange("ws://127.0.0.1:8000/ws/dev-echo", "hello", 0.01, 4096, False))
+
+
+@pytest.mark.parametrize("live_server", ["debug", "trace"], indirect=True)
+def test_real_transport_logs_do_not_expose_headers_or_payload(live_server, tmp_path):
+    url, _, _ = live_server
+    markers = ["audit-authorization-marker", "audit-device-token-marker", "audit-query-marker", "audit-conversation-marker"]
+
+    async def exercise():
+        async with connect(
+            url + "?audit=" + markers[2], proxy=None, ping_interval=None,
+            additional_headers={"Authorization": "Bearer " + markers[0], "Device-Token": markers[1]},
+            open_timeout=2, close_timeout=2,
+        ) as websocket:
+            await websocket.send(markers[3])
+            assert await asyncio.wait_for(websocket.recv(), 2) == markers[3]
+
+    asyncio.run(exercise())
+    contents = (tmp_path / "server.log").read_text(encoding="utf-8")
+    assert "websocket.connected" in contents
+    assert all(marker not in contents for marker in markers)
+
+
+@pytest.mark.parametrize("close_code", [1000, 1001, 1011])
+def test_client_reports_actual_close_code(close_code, capsys):
+    from scripts.ws_client import exchange
+
+    async def exercise():
+        async def echo_then_close(websocket):
+            await websocket.send(await websocket.recv())
+            await websocket.close(code=close_code)
+
+        async with serve(echo_then_close, "127.0.0.1", 0) as server:
+            port = server.sockets[0].getsockname()[1]
+            operation = exchange(f"ws://127.0.0.1:{port}/ws/dev-echo", "test", 2, 4096, False)
+            if close_code == 1000:
+                await operation
+            else:
+                with pytest.raises(ValueError, match="Expected normal close code 1000"):
+                    await operation
+
+    asyncio.run(exercise())
+    output = capsys.readouterr()
+    if close_code == 1000:
+        assert "Connection closed cleanly (1000)" in output.out
+    else:
+        assert f"Connection closed: code {close_code}" in output.err
+        assert "Connection closed cleanly" not in output.out

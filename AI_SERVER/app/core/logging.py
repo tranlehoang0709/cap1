@@ -12,6 +12,7 @@ from typing import Any
 
 _LOGGER_NAME = "ai_server"
 _HANDLER_MARKER = "_ai_server_console_handler"
+_TRANSPORT_FILTER_MARKER = "_ai_server_transport_filter"
 _REDACTIONS = (
     re.compile(r"(?i)(authorization\s*[:=]\s*)(?:bearer\s+)?[^\s,;]+"),
     re.compile(r"(?i)(\bbearer\s+)[A-Za-z0-9._~+/-]{8,}"),
@@ -74,8 +75,25 @@ def _event_from_message(message: str) -> str:
     return known.get(message, "application.event")
 
 
+class _TransportLogFilter(logging.Filter):
+    """Transport diagnostics below WARNING can expose headers and raw frames.
+
+    Application events provide safe connection lifecycle logs instead. Filter
+    records rather than formatting/redacting arbitrary conversation content.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.levelno >= logging.WARNING
+
+
 def configure_logging(log_level: str) -> logging.Logger:
     """Configure one idempotent console handler for the application logger."""
+    for name in ("uvicorn.error", "uvicorn.asgi"):
+        transport_logger = logging.getLogger(name)
+        if not any(getattr(item, _TRANSPORT_FILTER_MARKER, False) for item in transport_logger.filters):
+            transport_filter = _TransportLogFilter()
+            setattr(transport_filter, _TRANSPORT_FILTER_MARKER, True)
+            transport_logger.addFilter(transport_filter)
     logger = logging.getLogger(_LOGGER_NAME)
     level = 5 if log_level == "trace" else getattr(logging, log_level.upper())
     logger.setLevel(level)

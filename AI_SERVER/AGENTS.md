@@ -1,5 +1,12 @@
 # Bản đồ luồng AI_SERVER
 
+## Nội quy bắt buộc trước khi sửa code
+
+- Trước mọi lần sửa code, phải đọc `AGENTS.md` áp dụng cho thư mục đang sửa và tuân thủ các quy định trong đó. Đọc lại khi nội quy thay đổi.
+- Kiểm tra Git status/diff trước khi sửa; giữ nguyên công việc có sẵn của người dùng.
+- Mỗi bản sửa lỗi phải có test hồi quy, chạy các kiểm tra liên quan và báo đúng kết quả; test chưa chạy không được tính là PASS.
+- Cập nhật tài liệu và bảng luồng khi hành vi hoặc luồng thực thi thay đổi. Không tự push.
+
 Tài liệu này ghi luồng chạy hiện có trong mã nguồn. Cột **Ghi chú** tối đa 20 ký tự.
 
 ## Luồng chạy
@@ -12,6 +19,7 @@ Tài liệu này ghi luồng chạy hiện có trong mã nguồn. Cột **Ghi ch
 | `app.main:create_app()` | `app.api.device_profiles` | Gắn router hồ sơ |
 | `app.main:create_app()` | `app.api.websocket` | Gắn router WS |
 | `app.main:lifespan()` | `app.core.logging` | Log vòng đời |
+| `app.core.logging:configure_logging()` | `uvicorn.error/asgi` | Chặn log nhạy cảm |
 | `GET /health` | `app.api.health:health()` | Trả trạng thái |
 | `GET /device-profiles` | `app.api.device_profiles:list_profiles()` | Liệt kê board |
 | `GET /device-profiles/{id}` | `app.api.device_profiles:read_profile()` | Đọc hồ sơ board |
@@ -28,6 +36,7 @@ Tài liệu này ghi luồng chạy hiện có trong mã nguồn. Cột **Ghi ch
 | `websocket_endpoint()` | `app.core.logging` | Log kết nối |
 | `websocket_endpoint()` | `app.core.config.Settings` | Byte tối đa |
 | `scripts/ws_client.py` | `WS /ws/dev-echo` | Thử echo local |
+| `scripts.ws_client:exchange()` | `WebSocket.close_code` | Mã đóng thực tế |
 
 ## Chưa thuộc luồng chạy
 
