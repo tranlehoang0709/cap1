@@ -18,6 +18,29 @@ SPEC.loader.exec_module(build)
 
 
 class VersionTests(unittest.TestCase):
+    def test_sd2_build_replaces_sd1_selection_and_keeps_usb_console(self):
+        variants = build._collect_variants(idf_version=(6, 0, 2))
+        sd1 = next(v for v in variants if v["board"] == "custom/xiaozhi-s3-tft")
+        sd2 = next(v for v in variants if v["board"] == "custom/aiva-iot-s3-st7789")
+        self.assertNotEqual(sd1["config"], sd2["config"])
+        self.assertNotEqual(sd1["full_name"], sd2["full_name"])
+        config = json.loads(
+            (ROOT / "main/boards/custom/aiva-iot-s3-st7789/config.json")
+            .read_text(encoding="utf-8")
+        )
+        options = config["builds"][0]["sdkconfig_append"]
+        with tempfile.TemporaryDirectory() as directory, contextlib.chdir(directory):
+            old_selection = f'{sd1["config"]}=y\n'
+            Path("sdkconfig").write_text(old_selection, encoding="utf-8")
+            with mock.patch.object(build, "_run_idf") as run_idf:
+                build._configure_build("esp32s3", options, "aiva-iot-s3-st7789", False)
+            fragment = Path("build/xiaozhi-build.sdkconfig.defaults").read_text(encoding="utf-8")
+            self.assertIn(f'{sd2["config"]}=y\n', fragment)
+            self.assertIn("CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y\n", fragment)
+            self.assertNotIn(old_selection, fragment)
+            self.assertEqual(Path("sdkconfig.old").read_text(encoding="utf-8"), old_selection)
+            self.assertIn("-DBOARD_NAME=aiva-iot-s3-st7789", run_idf.call_args.args)
+
     def test_custom_xiaozhi_s3_board_configuration(self):
         board_dir = ROOT / "main/boards/custom/xiaozhi-s3-tft"
         config = json.loads((board_dir / "config.json").read_text(encoding="utf-8"))

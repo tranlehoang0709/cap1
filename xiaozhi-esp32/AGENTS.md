@@ -217,3 +217,14 @@ Driver khác và cấu hình mặc định vẫn false. Không bật flag trư�
 SDK/board/ISR. ML307 được restore nguyên archive registry 3.6.6 với checksum;
 chưa resolve toàn bộ dependencies hoặc có lock. Snapshot FIX là source audit,
 không phải physical/protocol approval. Xem ../AI_SERVER/docs/test-report-d2-s2-05-fix.md.
+
+## SD1/SD2 và lần nạp SD2 đầu tiên (04/11/2026)
+
+Quy ước người dùng mới nhất: **SD1** = `custom/xiaozhi-s3-tft`, **SD2** =
+`custom/aiva-iot-s3-st7789`. Nhãn D1/SD2 trong các ghi chú cũ là lịch sử,
+không dùng để đổi chéo hai board. SD2 dùng NS4168, mic I2S chưa xác minh mã IC,
+LCD ST7789 240x240; giữ nguyên GPIO đã test trong cấu hình board riêng.
+SD2 đã build bằng ESP-IDF 6.0.2, flash/verify trên COM3 và boot đúng SKU;
+quan sát 40 giây không panic/reset loop. Đây chỉ là nghiệm thu nạp/boot,
+chưa nghiệm thu audio, wake word, AI_SERVER hoặc OTA. BOOT GPIO vẫn chưa biết.
+Xem `docs/sd2-flash-check-2026-11-04.md` và README của board SD2.
