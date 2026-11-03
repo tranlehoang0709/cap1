@@ -55,19 +55,19 @@ export class DevicesRepository {
   }
 
   async createPairingCode(deviceId: string, hash: string, expiresAt: Date): Promise<void> {
-    await this.db.execute('UPDATE device_pairing_codes SET revoked_at = CURRENT_TIMESTAMP WHERE device_id = ? AND consumed_at IS NULL AND revoked_at IS NULL', [deviceId]);
+    await this.db.execute('UPDATE device_pairing_codes SET revoked_at = UTC_TIMESTAMP() WHERE device_id = ? AND consumed_at IS NULL AND revoked_at IS NULL', [deviceId]);
     await this.db.execute(
-      'INSERT INTO device_pairing_codes (device_id, code_hash, expires_at, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)', [deviceId, hash, expiresAt],
+      'INSERT INTO device_pairing_codes (device_id, code_hash, expires_at, created_at) VALUES (?, ?, ?, UTC_TIMESTAMP())', [deviceId, hash, expiresAt],
     );
   }
 
   async consumePairingCode(hash: string): Promise<{ id: string; device_id: string } | null> {
     const [rows] = await this.db.execute<PairingCodeRow[]>(
       `SELECT id, device_id FROM device_pairing_codes WHERE code_hash = ? AND consumed_at IS NULL AND revoked_at IS NULL
-       AND expires_at > CURRENT_TIMESTAMP LIMIT 1 FOR UPDATE`, [hash],
+       AND expires_at > UTC_TIMESTAMP() LIMIT 1 FOR UPDATE`, [hash],
     );
     if (!rows[0]) return null;
-    await this.db.execute('UPDATE device_pairing_codes SET consumed_at = CURRENT_TIMESTAMP WHERE id = ?', [rows[0].id]);
+    await this.db.execute('UPDATE device_pairing_codes SET consumed_at = UTC_TIMESTAMP() WHERE id = ?', [rows[0].id]);
     return { id: String(rows[0].id), device_id: String(rows[0].device_id) };
   }
 
@@ -109,7 +109,7 @@ export class DevicesRepository {
       [request.device_id, request.user_id, request.id, adminId],
     );
     await this.db.execute(
-      `INSERT INTO device_assignment_history (device_id, user_id, pairing_request_id, assigned_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+      `INSERT INTO device_assignment_history (device_id, user_id, pairing_request_id, assigned_at) VALUES (?, ?, ?, UTC_TIMESTAMP())`,
       [request.device_id, request.user_id, request.id],
     );
     await this.db.execute(`UPDATE devices SET lifecycle_status = 'assigned', updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [request.device_id]);
@@ -146,9 +146,9 @@ export class DevicesRepository {
   async recordHeartbeat(deviceId: string, battery: number | null, rssi: number | null, heap: string | null): Promise<DeviceRecord> {
     await this.db.execute(
       `INSERT INTO device_telemetry (device_id, event_type, wifi_rssi, free_heap_bytes, battery_percent, recorded_at)
-       VALUES (?, 'heartbeat', ?, ?, ?, CURRENT_TIMESTAMP)`, [deviceId, rssi, heap, battery],
+       VALUES (?, 'heartbeat', ?, ?, ?, UTC_TIMESTAMP())`, [deviceId, rssi, heap, battery],
     );
-    await this.db.execute(`UPDATE devices SET connection_status = 'online', last_seen_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [deviceId]);
+    await this.db.execute(`UPDATE devices SET connection_status = 'online', last_seen_at = UTC_TIMESTAMP(), updated_at = UTC_TIMESTAMP() WHERE id = ?`, [deviceId]);
     const device = await this.findById(deviceId); if (!device) throw new Error('Device missing after heartbeat'); return device;
   }
 

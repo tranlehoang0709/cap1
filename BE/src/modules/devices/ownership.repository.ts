@@ -9,7 +9,8 @@ const ownedFrom=`FROM device_assignments a
     AND p.device_id=a.device_id AND p.user_id=a.user_id`;
 // Ownership is current, approved, in a usable lifecycle; connection_status is intentionally absent.
 const valid=`p.status='approved' AND d.lifecycle_status='assigned'
-  AND NOT EXISTS (SELECT 1 FROM device_unlink_operations x WHERE x.device_id=d.id AND x.status<>'completed')
+  AND NOT EXISTS (SELECT 1 FROM device_unlink_operations x WHERE x.device_id=d.id
+    AND (x.status<>'completed' OR x.revoked_at IS NULL OR x.completed_at IS NULL))
   AND NOT EXISTS (SELECT 1 FROM device_reset_jobs j WHERE j.device_id=d.id
     AND j.id=(SELECT MAX(j2.id) FROM device_reset_jobs j2 WHERE j2.device_id=d.id)
     AND (j.status<>'acknowledged' OR j.acknowledged_at IS NULL))`;

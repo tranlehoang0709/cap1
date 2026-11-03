@@ -19,6 +19,7 @@ class BackendSettings(BaseSettings):
     device_token: SecretStr | None = Field(default=None, repr=False)
     config_token: SecretStr | None = Field(default=None, repr=False)
     quota_token: SecretStr | None = Field(default=None, repr=False)
+    web_chat_token: SecretStr | None = Field(default=None, repr=False)
     timeout_seconds: float = Field(default=5, gt=0, le=60, allow_inf_nan=False)
     max_connections: int = Field(default=10, ge=1, le=100)
     max_response_bytes: int = Field(default=65536, ge=1024, le=1048576)

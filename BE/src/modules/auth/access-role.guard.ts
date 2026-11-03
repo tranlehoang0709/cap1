@@ -14,9 +14,10 @@ export abstract class AccessRoleGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const secret = this.config.get<string>('ADMIN_ACCESS_JWT_SECRET');
-    const issuer = this.config.get<string>('ADMIN_ACCESS_JWT_ISSUER');
-    const audience = this.config.get<string>('ADMIN_ACCESS_JWT_AUDIENCE');
+    const legacy = this.config.get<string>('ADMIN_ACCESS_JWT_SECRET');
+    const secret = legacy ?? this.config.get<string>('auth.accessTokenSecret');
+    const issuer = legacy ? this.config.get<string>('ADMIN_ACCESS_JWT_ISSUER') : 'aiva-iot';
+    const audience = legacy ? this.config.get<string>('ADMIN_ACCESS_JWT_AUDIENCE') : 'aiva-api';
     const authorization = request.headers.authorization;
     let subject: string;
     try {
@@ -31,6 +32,7 @@ export abstract class AccessRoleGuard implements CanActivate {
       const actual = Buffer.from(signature, 'base64url');
       if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) throw new Error();
       const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+      if (!legacy && claims.typ !== 'access') throw new Error();
       const now = Math.floor(Date.now() / 1000);
       if (!Number.isSafeInteger(claims.exp) || claims.exp <= now
         || (claims.nbf !== undefined && (!Number.isSafeInteger(claims.nbf) || claims.nbf > now))

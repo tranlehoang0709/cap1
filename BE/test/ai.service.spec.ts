@@ -3,7 +3,7 @@ import { AiService } from '../src/modules/ai/ai.service';
 import { SecretCipherService } from '../src/common/crypto/secret-cipher.service';
 
 describe('AiService', () => {
-  const repo = { providerEnabled: jest.fn(), createCredential: jest.fn(), quota: jest.fn(), useCount: jest.fn(), usageSince: jest.fn(), createConversation: jest.fn() };
+  const repo = { providerEnabled: jest.fn(), createCredential: jest.fn() };
   const cipher = { encrypt: jest.fn((value: string) => `encrypted:${value}`) };
   const service = new AiService(repo as unknown as AiRepository, cipher as unknown as SecretCipherService);
   beforeEach(() => jest.clearAllMocks());
@@ -13,9 +13,9 @@ describe('AiService', () => {
     expect(cipher.encrypt).toHaveBeenCalledWith('secret-1234');
     expect(repo.createCredential).toHaveBeenCalledWith('1', '2', 'Personal key', 'encrypted:secret-1234', '1234');
   });
-  it('enforces request-per-minute quota before calling the chat adapter', async () => {
-    repo.providerEnabled.mockResolvedValue({ id: '1', name: 'Local AI', is_enabled: true }); repo.quota.mockResolvedValue({ requests_per_minute: 2, requests_per_day: null, tokens_per_month: null }); repo.usageSince.mockResolvedValue({ requests: 2, tokens: 0 });
-    await expect(service.chat('2', 'hello', '1')).rejects.toMatchObject({ code: 'QUOTA_EXCEEDED' });
-    expect(repo.createConversation).not.toHaveBeenCalled();
+  it('fails closed instead of generating mock chat replies or estimated usage', async () => {
+    let error: unknown;
+    try { service.chat('2', 'hello', '1'); } catch (caught) { error = caught; }
+    expect(error).toMatchObject({ code: 'AI_PIPELINE_UNAVAILABLE' });
   });
 });

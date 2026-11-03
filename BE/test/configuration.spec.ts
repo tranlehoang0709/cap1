@@ -15,6 +15,21 @@ const validEnvironment = (): Record<string, unknown> => ({
 });
 
 describe('validateEnvironment', () => {
+  it('permits only explicitly opted-in isolated MySQL test schemas',()=>{
+    const env={...validEnvironment(),NODE_ENV:'test',MYSQL_INTEGRATION_TESTS:'true',DB_NAME:'aiva_iot_test_local'};
+    expect(validateEnvironment(env)).toEqual(env);
+    expect(()=>validateEnvironment({...env,NODE_ENV:'production'})).toThrow('DB_NAME');
+    expect(()=>validateEnvironment({...env,MYSQL_INTEGRATION_TESTS:'false'})).toThrow('DB_NAME');
+  });
+  it('validates independent internal service tokens and explicit usage deadline', () => {
+    const env={...validEnvironment(),DEVICE_AUTH_CONTRACT_APPROVED:'true',AI_CONFIG_CONTRACT_APPROVED:'true',AI_QUOTA_CONTRACT_APPROVED:'true',
+      AI_DEVICE_SERVICE_TOKEN:'d'.repeat(43),AI_CONFIG_SERVICE_TOKEN:'e'.repeat(43),AI_QUOTA_SERVICE_TOKEN:'f'.repeat(43),AI_USAGE_REPORT_TIMEOUT_SECONDS:'30'};
+    expect(validateEnvironment(env)).toEqual(env);
+    expect(()=>validateEnvironment({...env,AI_CONFIG_SERVICE_TOKEN:env.AI_DEVICE_SERVICE_TOKEN})).toThrow('independent');
+    expect(()=>validateEnvironment({...env,AI_QUOTA_SERVICE_TOKEN:'bad'})).toThrow('AI_QUOTA_SERVICE_TOKEN');
+    expect(()=>validateEnvironment({...env,AI_USAGE_REPORT_TIMEOUT_SECONDS:''})).toThrow('AI_USAGE_REPORT_TIMEOUT_SECONDS');
+    expect(()=>validateEnvironment({...env,AI_USAGE_REPORT_SWEEPER_ENABLED:'yes'})).toThrow('AI_USAGE_REPORT_SWEEPER_ENABLED');
+  });
   it('accepts a complete V1.5 database configuration', () => {
     expect(validateEnvironment(validEnvironment())).toEqual(validEnvironment());
   });

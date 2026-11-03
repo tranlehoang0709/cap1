@@ -1,0 +1,35 @@
+{
+  "success": false,
+  "totalSuites": 23,
+  "passedSuites": 21,
+  "failedSuites": 2,
+  "totalTests": 457,
+  "passedTests": 445,
+  "failedTests": 12,
+  "pendingTests": 0,
+  "failedFiles": [
+    {
+      "file": "BE\\test\\application-wiring.spec.ts",
+      "failedTests": [
+        "Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E) boots all real modules and routes a static Pairing path ahead of dynamic device ID",
+        "Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E) wires /admin/devices to real guard/controller/service/repository",
+        "Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E) wires /admin/pairing-requests to real guard/controller/service/repository",
+        "Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E) wires /user/devices to real guard/controller/service/repository",
+        "Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E) wires /user/dashboard/access to real guard/controller/service/repository",
+        "Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E) wires /user/ai/profile to real guard/controller/service/repository",
+        "Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E) wires /user/ai/credentials to real guard/controller/service/repository",
+        "Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E) wires /admin/ai/credentials to real guard/controller/service/repository",
+        "Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E) finds /admin/devices/42/recovery and returns business 404, not a missing route",
+        "Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E) finds /admin/devices/42/reset-status and returns business 404, not a missing route",
+        "Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E) keeps internal contract gated /internal/device-reset-jobs/claim",
+        "Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E) User cannot bypass Admin role through the full application graph"
+      ],
+      "collectionFailure": false
+    },
+    {
+      "file": "BE\\test\\devices.spec.ts",
+      "failedTests": [],
+      "collectionFailure": true
+    }
+  ]
+}

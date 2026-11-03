@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x15 xr xr6 xr10 xr2" xmlns:x15="http://schemas.microsoft.com/office/spreadsheetml/2010/11/main" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr6="http://schemas.microsoft.com/office/spreadsheetml/2016/revision6" xmlns:xr10="http://schemas.microsoft.com/office/spreadsheetml/2016/revision10" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2"><fileVersion appName="xl" lastEdited="7" lowestEdited="7" rupBuild="30527"/><workbookPr/><mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"><mc:Choice Requires="x15"><x15ac:absPath url="E:\learn\AI_Project\cap1\" xmlns:x15ac="http://schemas.microsoft.com/office/spreadsheetml/2010/11/ac"/></mc:Choice></mc:AlternateContent><xr:revisionPtr revIDLastSave="0" documentId="8_{C9CA9B67-E4B1-4F7B-A349-D35008B84064}" xr6:coauthVersionLast="47" xr6:coauthVersionMax="47" xr10:uidLastSave="{00000000-0000-0000-0000-000000000000}"/><bookViews><workbookView xWindow="11184" yWindow="0" windowWidth="19632" windowHeight="16656" activeTab="2" xr2:uid="{00000000-000D-0000-FFFF-FFFF00000000}"/></bookViews><sheets><sheet name="Main" sheetId="1" r:id="rId1"/><sheet name="Sprint 1 Backlog" sheetId="2" r:id="rId2"/><sheet name="Sprint Backlog 2" sheetId="6" r:id="rId3"/><sheet name="Sprint 3 Backlog" sheetId="4" r:id="rId4"/><sheet name="Report" sheetId="7" r:id="rId5"/></sheets><definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="1" hidden="1">'Sprint 1 Backlog'!$B$7:$AM$71</definedName></definedNames><calcPr calcId="191029"/><extLst><ext uri="{B58B0392-4F1F-4190-BB64-5DF3571DCE5F}" xmlns:xcalcf="http://schemas.microsoft.com/office/spreadsheetml/2018/calcfeatures"><xcalcf:calcFeatures><xcalcf:feature name="microsoft.com:RD"/><xcalcf:feature name="microsoft.com:Single"/><xcalcf:feature name="microsoft.com:FV"/><xcalcf:feature name="microsoft.com:CNMTM"/><xcalcf:feature name="microsoft.com:LET_WF"/></xcalcf:calcFeatures></ext><ext uri="GoogleSheetsCustomDataVersion2"><go:sheetsCustomData r:id="rId9" roundtripDataChecksum="ap6KgJWy43alXB5hq3q2asC8WbdYFXDELvx0LY0BZu0=" xmlns:go="http://customooxmlschemas.google.com/"/></ext></extLst></workbook>
+
+SHEET xl/worksheets/sheet2.xml
+B5=Sprint 1 Backlog
+B7=Sprint Id | C7=Backlog Id | D7=Description | E7=Owner | F7=Status | G7=Estimate (Hours) | H7=Completed | I7=Pending | J7=Total effort | K7=Effort vs Estimate | L7=46285 | M7=46286 | N7=46287 | O7=46288 | P7=46289 | Q7=46290 | R7=46291 | S7=46292 | T7=46293 | U7=46294 | V7=46295 | W7=46296 | X7=46297 | Y7=46298 | Z7=46299 | AA7=46300 | AB7=46301 | AC7=46302 | AD7=46303 | AE7=46304 | AF7=46305 | AG7=46306 | AH7=46307 | AI7=46308 | AJ7=46309 | AK7=46310 | AL7=46311 | AM7=46312
+B8=1.1 | C8=Planning | D8=Sprint 1 Planning Meeting - Confirm Sprint Goal and Work Assignments | E8=All | F8=Done | G8=10 | H8=10 | I8=0 | J8=10 | K8=0 | L8=5 | M8=5
+B9=1.2 | C9=Planning | D9=Review Sprint Backlog and Define Acceptance Criteria | E9=Tri | F9=Done | G9=4 | H9=4 | I9=0 | J9=4 | K9=0 | N9=4
+B10=1.3 | C10=Planning | D10=Review Technical Dependencies and Development Environment | E10=Hoang | F10=Done | G10=3 | H10=3 | I10=0 | J10=3 | K10=0 | N10=3
+B11=1.4 | C11=Design | D11=Design NestJS Backend Module Architecture | E11=Tri | F11=Done | G11=3 | H11=3 | I11=0 | J11=3 | K11=0 | N11=3
+B12=1.5 | C12=Design | D12=Design MySQL Database Connection and Entity Mapping | E12=Long | F12=Done | G12=4 | H12=4 | I12=0 | J12=4 | K12=0 | O12=2 | P12=2
+B13=1.6 | C13=Design | D13=Design Authentication and JWT Session Flow | E13=Hoang | F13=Done | G13=4 | H13=4 | I13=0 | J13=4 | K13=0 | O13=3 | Q13=1
+B14=1.7 | C14=Design | D14=Design ADMIN and USER Role Permission Matrix | E14=Long | F14=Done | G14=3 | H14=3 | I14=0 | J14=3 | K14=0 | N14=3
+B15=1.8 | C15=Design | D15=Design Admin and User Login Interface | E15=Thinh | F15=Done | G15=3 | H15=3 | I15=0 | J15=3 | K15=0 | O15=3
+B16=1.9 | C16=Design | D16=Design User Registration Interface | E16=Thinh | F16=Done | G16=3 | H16=3 | I16=0 | J16=3 | K16=0 | R16=3
+B17=1.10 | C17=Design | D17=Design AI Server WebSocket Protocol and Device Session | E17=Hoang | F17=Done | G17=5 | H17=5 | I17=0 | J17=6 | K17=1 | T17=3 | U17=3
+B18=1.11 | C18=Design | D18=Design Xiaozhi ESP32 Board Configuration and I2S Audio Flow | E18=Quang | F18=Done | G18=4 | H18=4 | I18=0 | J18=4 | K18=0 | S18=3 | T18=1
+B19=1.12 | C19=Code | D19=Initialize NestJS Backend Project | E19=Tri | F19=Done | G19=2 | H19=2 | I19=0 | J19=2 | K19=0 | O19=2
+B20=1.13 | C20=Code | D20=Configure NestJS Modules and Application Structure | E20=Tri | F20=Done | G20=2 | H20=2 | I20=0 | J20=2 | K20=0 | P20=2
+B21=1.14 | C21=Code | D21=Configure MySQL Database Connection | E21=Long | F21=Done | G21=3 | H21=3 | I21=0 | J21=3 | K21=0 | O21=3
+B22=1.15 | C22=Code | D22=Implement Backend Environment and Health Check | E22=Long | F22=Done | G22=2 | H22=2 | I22=0 | J22=2 | K22=0 | R22=2
+B23=1.16 | C23=Code | D23=Implement User Registration API | E23=Tri | F23=Done | G23=5 | H23=5 | I23=0 | J23=5 | K23=0 | T23=5
+B24=1.17 | C24=Code | D24=Implement Password Hashing and Verification | E24=Long | F24=Done | G24=4 | H24=4 | I24=0 | J24=4 | K24=0 | V24=1 | X24=3
+B25=1.18 | C25=Code | D25=Implement User Login API | E25=Tri | F25=Done | G25=6 | H25=6 | I25=0 | J25=6 | K25=0 | S25=2 | U25=4
+B26=1.19 | C26=Code | D26=Implement User Logout and Session Revocation API | E26=Long | F26=Done | G26=4 | H26=4 | I26=0 | J26=4 | K26=0 | V26=4
+B27=1.20 | C27=Code | D27=Implement JWT Authentication Guard | E27=Long | F27=Done | G27=5 | H27=5 | I27=0 | J27=5 | K27=0 | W27=3 | X27=2
+B28=1.21 | C28=Code | D28=Implement ADMIN and USER RBAC Guard | E28=Long | F28=Done | G28=5 | H28=5 | I28=0 | J28=5 | K28=0 | Z28=3 | AA28=2
+B29=1.22 | C29=Code | D29=Implement Global DTO Validation | E29=Tri | F29=Done | G29=3 | H29=3 | I29=0 | J29=3 | K29=0 | W29=1 | AA29=2
+B30=1.23 | C30=Code | D30=Implement Backend Exception Filter | E30=Long | F30=Done | G30=2 | H30=2 | I30=0 | J30=2 | K30=0 | AB30=2
+B31=1.24 | C31=Code | D31=Initialize Next.js Frontend Project | E31=Thinh | F31=Done | G31=2 | H31=2 | I31=0 | J31=2 | K31=0 | T31=2
+B32=1.25 | C32=Code | D32=Develop Admin Login UI | E32=Thinh | F32=Done | G32=4 | H32=4 | I32=0 | J32=4 | K32=0 | U32=2 | V32=2
+B33=1.26 | C33=Code | D33=Develop User Login UI | E33=Thinh | F33=Done | G33=4 | H33=4 | I33=0 | J33=4 | K33=0 | U33=2 | V33=2
+B34=1.27 | C34=Code | D34=Develop User Registration UI | E34=Tri | F34=Done | G34=4 | H34=4 | I34=0 | J34=5 | K34=1 | X34=1 | Y34=4
+B35=1.28 | C35=Code | D35=Integrate Frontend Login API | E35=Thinh | F35=Done | G35=5 | H35=5 | I35=0 | J35=7 | K35=2 | X35=2 | Y35=3 | Z35=2
+B36=1.29 | C36=Code | D36=Integrate Frontend Registration API | E36=Thinh | F36=Done | G36=3 | H36=3 | I36=0 | J36=4 | K36=1 | W36=2 | Y36=2
+B37=1.30 | C37=Code | D37=Implement Frontend Protected Routes | E37=Thinh | F37=Done | G37=4 | H37=4 | I37=0 | J37=4 | K37=0 | X37=2 | AB37=2
+B38=1.31 | C38=Code | D38=Initialize Realtime AI Server | E38=Hoang | F38=Done | G38=3 | H38=3 | I38=0 | J38=3 | K38=0 | X38=1 | AA38=2
+B39=1.32 | C39=Code | D39=Develop AI Server WebSocket Endpoint | E39=Hoang | F39=Done | G39=3 | H39=3 | I39=0 | J39=3 | K39=0 | Y39=3
+B40=1.33 | C40=Code | D40=Implement WebSocket Device Handshake | E40=Hoang | F40=Done | G40=6 | H40=6 | I40=0 | J40=6 | K40=0 | W40=2 | AA40=4
+B41=1.34 | C41=Code | D41=Implement Backend Device Authorization Check | E41=Hoang | F41=Done | G41=7 | H41=7 | I41=0 | J41=7 | K41=0 | X41=2 | Z41=2 | AB41=3
+B42=1.35 | C42=Code | D42=Implement AI Server Session Lifecycle | E42=Hoang | F42=Done | G42=5 | H42=5 | I42=0 | J42=5 | K42=0 | W42=1 | Z42=4
+B43=1.36 | C43=Code | D43=Configure ESP-IDF Firmware Build and Board Profiles | E43=Quang | F43=Done | G43=4 | H43=4 | I43=0 | J43=4 | K43=0 | Q43=2 | R43=1 | S43=1
+B44=1.37 | C44=Code | D44=Implement ESP32 Wi-Fi Connection | E44=Quang | F44=Done | G44=4 | H44=4 | I44=0 | J44=4 | K44=0 | V44=2 | W44=2
+B45=1.38 | C45=Code | D45=Implement ESP32 WebSocket Client | E45=Quang | F45=Done | G45=6 | H45=6 | I45=0 | J45=6 | K45=0 | X45=2 | Y45=1 | Z45=3
+B46=1.39 | C46=Code | D46=Implement ESP32 Microphone I2S Capture | E46=Quang | F46=Done | G46=7 | H46=7 | I46=0 | J46=9 | K46=2 | AA46=2 | AB46=2 | AC46=2 | AD46=2 | AE46=1
+B47=1.40 | C47=Code | D47=Implement ESP32 Speaker I2S Playback | E47=Quang | F47=Done | G47=7 | H47=7 | I47=0 | J47=7 | K47=0 | Z47=2 | AA47=2 | AB47=3
+B48=1.41 | C48=Code | D48=Implement ESP32 Device Identity and Authentication Handshake | E48=Hoang | F48=Done | G48=4 | H48=4 | I48=0 | J48=4 | K48=0 | AD48=4
+B49=1.42 | C49=Testing | D49=Test User Registration API | E49=Tri | F49=Done | G49=3 | H49=3 | I49=0 | J49=3 | K49=0 | Y49=2 | AF49=1
+B50=1.43 | C50=Testing | D50=Test Login and Logout APIs | E50=Long | F50=Done | G50=4 | H50=4 | I50=0 | J50=4 | K50=0 | Y50=2 | AD50=2
+B51=1.44 | C51=Testing | D51=Test JWT Authentication and RBAC Authorization | E51=Tri | F51=Done | G51=4 | H51=4 | I51=0 | J51=4 | K51=0 | X51=2 | AB51=2
+B52=1.45 | C52=Testing | D52=Test Frontend Login and Registration Flow | E52=Thinh | F52=Done | G52=4 | H52=4 | I52=0 | J52=4 | K52=0 | Y52=2 | AE52=2
+B53=1.46 | C53=Testing | D53=Test AI Server WebSocket Handshake and Authorization | E53=Hoang | F53=Done | G53=5 | H53=5 | I53=0 | J53=3 | K53=-2 | AF53=2 | AH53=1
+B54=1.47 | C54=Testing | D54=Test AI Server Session Creation and Disconnection | E54=Hoang | F54=Done | G54=4 | H54=4 | I54=0 | J54=4 | K54=0 | AF54=1 | AH54=1 | AJ54=2
+B55=1.48 | C55=Testing | D55=Test Xiaozhi Wi-Fi and WebSocket Connection | E55=Quang | F55=Done | G55=3 | H55=3 | I55=0 | J55=3 | K55=0 | AF55=2 | AI55=1
+B56=1.49 | C56=Testing | D56=Test Xiaozhi Microphone and Speaker on Both Boards | E56=Quang | F56=Done | G56=3 | H56=3 | I56=0 | J56=3 | K56=0 | AF56=2 | AI56=1
+B57=1.50 | C57=Fix Bug | D57=Fix Registration and Login API Defects | E57=Long | F57=Done | G57=3 | H57=3 | I57=0 | J57=3 | K57=0 | Z57=2 | AF57=1
+B58=1.51 | C58=Fix Bug | D58=Fix JWT, RBAC and Session Defects | E58=Hoang | F58=Done | G58=4 | H58=4 | I58=0 | J58=4 | K58=0 | AG58=3 | AJ58=1
+B59=1.52 | C59=Fix Bug | D59=Fix Frontend Authentication UI and API Integration | E59=Thinh | F59=Done | G59=4 | H59=4 | I59=0 | J59=4 | K59=0 | Z59=2 | AA59=2
+B60=1.53 | C60=Fix Bug | D60=Fix AI Server WebSocket and Session Errors | E60=Hoang | F60=Done | G60=5 | H60=5 | I60=0 | J60=4 | K60=-1 | AG60=1 | AI60=3
+B61=1.54 | C61=Fix Bug | D61=Fix ESP32 Wi-Fi, I2S and WebSocket Defects | E61=Quang | F61=Done | G61=4 | H61=4 | I61=0 | J61=4 | K61=0 | AG61=3 | AH61=1
+B62=1.55 | C62=Demo | D62=Sprint 1 Demo and Review - Authentication and Xiaozhi WebSocket | E62=All | F62=Done | G62=10 | H62=10 | I62=0 | J62=7 | K62=-3 | AJ62=4 | AK62=3
+B63=1.56 | C63=Report | D63=Write Sprint 1 Progress Report | E63=Quang | F63=Done | G63=4 | H63=4 | I63=0 | J63=3 | K63=-1 | AL63=3
+B64=1.57 | C64=Report | D64=Document Sprint 1 Test Results and Remaining Defects | E64=Tri | F64=Done | G64=3 | H64=3 | I64=0 | J64=3 | K64=0 | AL64=3
+B65=1.58 | C65=Report | D65=Sprint 1 Retrospective Meeting | E65=All | F65=Done | G65=5 | H65=5 | I65=0 | J65=5 | K65=0 | AL65=2 | AM65=3
+B66=Member | C66=Total effort | D66=working hours per week
+B67=Thinh, Ngoc Do | C67=61 | D67=23 | E67=Total | G67=243 | H67=243 | I67=0 | J67=243 | K67=0 | L67=5 | M67=5 | N67=13 | O67=13 | P67=4 | Q67=3 | R67=6 | S67=6 | T67=11 | U67=11 | V67=11 | W67=11 | X67=17 | Y67=19 | Z67=20 | AA67=16 | AB67=14 | AC67=2 | AD67=8 | AE67=3 | AF67=9 | AG67=7 | AH67=3 | AI67=5 | AJ67=7 | AK67=3 | AL67=8 | AM67=3
+B68=Hoang, Tran Le | C68=78 | D68=30 | E68=Actual | L68=238 | M68=233 | N68=220 | O68=207 | P68=203 | Q68=200 | R68=194 | S68=188 | T68=177 | U68=166 | V68=155 | W68=144 | X68=127 | Y68=108 | Z68=88 | AA68=72 | AB68=58 | AC68=56 | AD68=48 | AE68=45 | AF68=36 | AG68=29 | AH68=26 | AI68=21 | AJ68=14 | AK68=11 | AL68=3 | AM68=0
+B69=Long, Hoang Pham | C69=61 | D69=23 | E69=Estimation | L69=234 | M69=226 | N69=217 | O69=208 | P69=200 | Q69=191 | R69=182 | S69=174 | T69=165 | U69=156 | V69=148 | W69=139 | X69=130 | Y69=122 | Z69=113 | AA69=104 | AB69=95 | AC69=87 | AD69=78 | AE69=69 | AF69=61 | AG69=52 | AH69=43 | AI69=35 | AJ69=26 | AK69=17 | AL69=9 | AM69=0
+B70=Quang,Pham Dinh | C70=69 | D70=27
+B71=Tri, Nguyen Huynh | C71=62 | D71=24
+
+SHEET xl/worksheets/sheet3.xml
+A5=            Sprint 2 Backlog
+B7=Sprint Id | C7=Backlog Id | D7=Description | E7=Owner | F7=Status | G7=Estimate (Hours) | H7=Completed | I7=Pending | J7=Total effort | K7=Effort vs Estimate | L7=46313 | M7=46314 | N7=46315 | O7=46316 | P7=46317 | Q7=46318 | R7=46319 | S7=46320 | T7=46321 | U7=46322 | V7=46323 | W7=46324 | X7=46325 | Y7=46326 | Z7=46327 | AA7=46328 | AB7=46329 | AC7=46330 | AD7=46331 | AE7=46332 | AF7=46333 | AG7=46334 | AH7=46335
+B8=2.1 | C8=Planning | D8=Sprint 2 Planning Meeting | E8=All | F8=Planned | G8=10 | H8=2 | I8=0 | J8=2 | K8=-8 | L8=2
+B9=2.2000000000000002 | C9=Planning | D9=Review Cloud AI Scope and API Dependencies | E9=Trí | F9=Planned | G9=8 | H9=12 | I9=0 | J9=12 | K9=4 | N9=2 | S9=2 | V9=2 | AA9=3 | AD9=3
+B10=2.2999999999999998 | C10=Design | D10=Design Cloud STT LLM TTS Pipeline | E10=Hoàng | F10=Planned | G10=9 | H10=2 | I10=0 | J10=2 | K10=-7 | L10=2
+B11=2.4 | C11=Design | D11=Design Streaming Audio Protocol | E11=Hoàng | F11=Planned | G11=7 | H11=3 | I11=0 | J11=3 | K11=-4 | L11=3
+B12=2.5 | C12=Design | D12=Design Pairing and Device Ownership Flow | E12=Long | F12=Planned | G12=6 | H12=1 | I12=0 | J12=1 | K12=-5 | L12=1
+B13=2.6 | C13=Design | D13=Design API Key Quota and Provider Flow | E13=Long | F13=Planned | G13=6 | H13=3 | I13=0 | J13=4 | K13=-2 | O13=4
+B14=2.7 | C14=Design | D14=Design User Portal and Web Chat Layout | E14=Thịnh | F14=Planned | G14=5 | H14=4 | I14=0 | J14=4 | K14=-1 | O14=4
+B15=2.8 | C15=Code | D15=Configure STT Provider and Audio Decoder | E15=Hoàng | F15=Planned | G15=7 | H15=6 | I15=0 | J15=6 | K15=-1 | W15=4 | X15=2
+B16=2.9 | C16=Code | D16=Integrate Cloud STT and Error Handling | E16=Hoàng | F16=Planned | G16=8 | H16=4 | I16=0 | J16=4 | K16=-4 | O16=4
+B17=2.1 | C17=Code | D17=Integrate OpenAI LLM API | E17=Hoàng | F17=Planned | G17=7 | H17=3 | I17=0 | J17=3 | K17=-4 | O17=3
+B18=2.11 | C18=Code | D18=Implement Conversation Context and LLM Timeout | E18=Thịnh | F18=Planned | G18=6 | H18=2 | I18=0 | J18=2 | K18=-4 | O18=2
+B19=2.12 | C19=Code | D19=Integrate Cloud TTS and Audio Encoding | E19=Thịnh | F19=Planned | G19=7 | H19=3 | I19=0 | J19=3 | K19=-4 | T19=3
+B20=2.13 | C20=Code | D20=Implement STT LLM TTS Orchestration | E20=Hoàng | F20=Planned | G20=9 | H20=4 | I20=0 | J20=5 | K20=-4 | T20=3 | U20=2
+B21=2.14 | C21=Code | D21=Stream Voice Response over AI Server WebSocket | E21=Quang | F21=Planned | G21=8 | H21=10 | I21=0 | J21=10 | K21=2 | O21=2 | P21=1 | Q21=4 | Y21=3
+B22=2.15 | C22=Code | D22=Develop User Profile and Account Status APIs | E22=Trí | F22=Planned | G22=5 | H22=8 | I22=0 | J22=8 | K22=3 | P22=2 | Z22=6
+B23=2.16 | C23=Code | D23=Develop Device List and Detail APIs | E23=Trí | F23=Planned | G23=5 | H23=8 | I23=0 | J23=10 | K23=5 | W23=5 | X23=2 | Y23=1 | Z23=2
+B24=2.17 | C24=Code | D24=Develop Pairing Request API | E24=Long | F24=Planned | G24=6 | H24=6 | I24=0 | J24=6 | K24=0 | Q24=4 | Y24=2
+B25=2.1800000000000002 | C25=Code | D25=Develop Pairing Approval and Ownership APIs | E25=Long | F25=Planned | G25=8 | H25=6 | I25=0 | J25=6 | K25=-2 | T25=3 | U25=3
+B26=2.19 | C26=Code | D26=Develop API Key Create Rotate and Revoke APIs | E26=Long | F26=Planned | G26=8 | H26=6 | I26=0 | J26=6 | K26=-2 | P26=5 | Q26=1
+B27=2.2000000000000002 | C27=Code | D27=Develop Provider Configuration API | E27=Trí | F27=Planned | G27=5 | H27=6 | I27=0 | J27=5 | K27=0 | P27=1 | Q27=4
+B28=2.21 | C28=Code | D28=Implement Quota Rate Limit and Usage Ledger | E28=Long | F28=Planned | G28=10 | H28=5 | I28=0 | J28=6 | K28=-4 | AC28=6
+B29=2.2200000000000002 | C29=Code | D29=Develop AI Profile and History APIs | E29=Trí | F29=Planned | G29=6 | H29=10 | I29=0 | J29=8 | K29=2 | M29=5 | N29=3
+B30=2.23 | C30=Code | D30=Develop Web Chat Session API | E30=Hoàng | F30=Planned | G30=5 | H30=8 | I30=0 | J30=8 | K30=3 | U30=2 | V30=2 | AB30=4
+B31=2.2400000000000002 | C31=Code | D31=Develop Device List and Pairing UI | E31=Trí | F31=Planned | G31=6 | H31=8 | I31=0 | J31=8 | K31=2 | O31=3 | P31=2 | Q31=3
+B32=2.25 | C32=Code | D32=Integrate Device and Pairing Frontend APIs | E32=Trí | F32=Planned | G32=7 | H32=6 | I32=0 | J32=6 | K32=-1 | Q32=2 | Y32=4
+B33=2.2599999999999998 | C33=Code | D33=Develop AI Profile Settings UI | E33=Thịnh | F33=Planned | G33=6 | H33=5 | I33=0 | J33=5 | K33=-1 | P33=2 | AB33=3
+B34=2.27 | C34=Code | D34=Develop API Key Management UI | E34=Thịnh | F34=Planned | G34=5 | H34=4 | I34=0 | J34=4 | K34=-1 | T34=3 | U34=1
+B35=2.2799999999999998 | C35=Code | D35=Develop Web Chat Interface | E35=Thịnh | F35=Planned | G35=8 | H35=4 | I35=0 | J35=4 | K35=-4 | P35=4
+B36=2.29 | C36=Code | D36=Integrate Web Chat with AI Server | E36=Thịnh | F36=Planned | G36=8 | H36=4 | I36=0 | J36=4 | K36=-4 | W36=4
+B37=2.2999999999999998 | C37=Code | D37=Develop Conversation History UI | E37=Thịnh | F37=Planned | G37=6 | H37=8 | I37=0 | J37=8 | K37=2 | M37=5 | N37=3
+B38=2.31 | C38=Code | D38=Implement ESP32 Microphone Audio Upload | E38=Quang | F38=Planned | G38=9 | H38=4 | I38=0 | J38=3 | K38=-6 | AB38=3
+B39=2.3199999999999998 | C39=Code | D39=Implement ESP32 TTS Audio Receive and Playback | E39=Quang | F39=Planned | G39=10 | H39=10 | I39=0 | J39=10 | K39=0 | X39=5 | Y39=2 | Z39=3
+B40=2.33 | C40=Code | D40=Implement ESP32 Heartbeat and Audio Buffer | E40=Quang | F40=Planned | G40=7 | H40=6 | I40=0 | J40=7 | K40=0 | T40=3 | U40=4
+B41=2.34 | C41=Testing | D41=Test Cloud STT LLM TTS Pipeline | E41=Hoàng | F41=Planned | G41=7 | H41=3 | I41=0 | J41=3 | K41=-4 | S41=3
+B42=2.35 | C42=Testing | D42=Test Pairing API Key Quota and RBAC | E42=Long | F42=Planned | G42=7 | H42=4 | I42=0 | J42=4 | K42=-3 | S42=4
+B43=2.36 | C43=Testing | D43=Test Device and Pairing Portal | E43=Trí | F43=Planned | G43=7 | H43=6 | I43=0 | J43=7 | K43=0 | AA43=7
+B44=2.37 | C44=Testing | D44=Test Web Chat AI Profile and History | E44=Thịnh | F44=Planned | G44=7 | H44=2 | I44=0 | J44=2 | K44=-5 | S44=2
+B45=2.38 | C45=Testing | D45=Test ESP32 Audio Upload and Playback | E45=Quang | F45=Planned | G45=7 | H45=2 | I45=0 | J45=2 | K45=-5 | V45=2
+B46=2.39 | C46=Testing | D46=Test Real Device End to End Voice Roundtrip | E46=Quang | F46=Planned | G46=7 | H46=2 | I46=0 | J46=2 | K46=-5 | R46=2
+B47=2.4 | C47=Fix Bug | D47=Fix Cloud Voice Pipeline and WebSocket | E47=Hoàng | F47=Planned | G47=6 | H47=2 | I47=0 | J47=2 | K47=-4 | R47=2
+B48=2.41 | C48=Fix Bug | D48=Fix Pairing API Key and Quota Issues | E48=Long | F48=Planned | G48=6 | H48=6 | I48=0 | J48=5 | K48=-1 | N48=2 | Z48=3
+B49=2.42 | C49=Fix Bug | D49=Fix Portal and Web Chat Integration | E49=Thịnh | F49=Planned | G49=6 | H49=4 | I49=0 | J49=3 | K49=-3 | V49=3
+B50=2.4300000000000002 | C50=Fix Bug | D50=Fix ESP32 Audio and Heartbeat Issues | E50=Quang | F50=Planned | G50=7 | H50=4 | I50=0 | J50=4 | K50=-3 | R50=2 | S50=2
+B51=2.44 | C51=Demo | D51=Prepare Cloud AI and Device Demo | E51=Quang | F51=Planned | G51=2 | H51=2 | I51=0 | J51=2 | K51=0 | S51=2
+B52=2.4500000000000002 | C52=Demo | D52=Sprint 2 Demo and Review | E52=All | F52=Planned | G52=10 | H52=2 | I52=0 | J52=2 | K52=-8 | S52=2
+B53=2.46 | C53=Report | D53=Write Sprint 2 API and Cloud AI Report | E53=Long | F53=Planned | G53=5 | H53=2 | I53=0 | J53=2 | K53=-3 | V53=2
+B54=2.4700000000000002 | C54=Report | D54=Document Test Results and Defects | E54=Trí | F54=Planned | G54=5 | H54=2 | I54=0 | J54=2 | K54=-3 | R54=2
+B55=2.48 | C55=Report | D55=Sprint 2 Retrospective | E55=All | F55=Planned | G55=5 | H55=2 | I55=0 | J55=2 | K55=-3 | R55=2
+N56=2
+AD57=2
+AA58=3
+V59=2
+AE60=2
+AE61=2
+B63=Member | C63=Total effort | D63=working hours per week | E63=Total | G63=327 | H63=226 | I63=0 | J63=227 | K63=-100 | L63=8 | M63=10 | N63=12 | O63=22 | P63=17 | Q63=18 | R63=10 | S63=17 | T63=15 | U63=12 | V63=13 | W63=13 | X63=9 | Y63=12 | Z63=14 | AA63=13 | AB63=10 | AC63=6 | AD63=5 | AE63=4
+B64=Hieu, Vo Trung | C64=6 | D64=2 | E64=Actual | L64=319 | M64=309 | N64=297 | O64=275 | P64=258 | Q64=240 | R64=230 | S64=213 | T64=198 | U64=186 | V64=173 | W64=160 | X64=151 | Y64=139 | Z64=125 | AA64=112 | AB64=102 | AC64=96 | AD64=91 | AE64=87
+B65=Tuyen, Hoang Minh | C65=6 | D65=2 | E65=Estimation | L65=311 | M65=294 | N65=278 | O65=262 | P65=245 | Q65=229 | R65=213 | S65=196 | T65=180 | U65=164 | V65=147 | W65=131 | X65=114 | Y65=98 | Z65=82 | AA65=65 | AB65=49 | AC65=33 | AD65=16 | AE65=0
+B66=Quyet, Bui Quang | C66=6 | D66=2
+B67=Hieu, Nguyen The | C67=6 | D67=2
+B68=Phat, Ho Tuan | C68=4 | D68=2
+
+SHEET xl/worksheets/sheet4.xml
+B5=Sprint 3 Backlog
+B7=Sprint Id | C7=Backlog Id | D7=Description | E7=Owner | F7=Status | G7=Estimate (Hours) | H7=Completed | I7=Pending | J7=Total effort | K7=Effort vs Estimate | L7=Day-1
+13/04/2026 | M7=Day-2
+14/04/2026 | N7=Day-3
+15/04/2026 | O7=Day-4
+16/04/2026 | P7=Day-5
+17/04/2026 | Q7=Day-6
+20/04/2026 | R7=Day-7
+21/04/2026 | S7=Day-8
+22/04/2026 | T7=Day-9
+23/04/2026 | U7=Day-10
+24/04/2026 | V7=Day-11
+27/04/2026 | W7=Day-12
+28/04/2026 | X7=Day-13
+29/04/2026 | Y7=Day-14
+30/04/2026 | Z7=Day-15
+01/05/2026 | AA7=Day-16
+04/05/2026 | AB7=Day-17
+05/05/2026 | AC7=Day-18
+06/05/2026 | AD7=Day-19
+07/05/2026 | AE7=Day-20
+08/05/2026
+B8=3.1 | C8=Document | D8=Sprint 3 Planning Meeting | E8=All | F8=Done | G8=2 | H8=2 | I8=0 | J8=2 | K8=0 | L8=2
+B9=3.2 | D9=Create Test Case for Sprint 3 | E9=All | F9=Done | G9=12 | H9=12 | I9=0 | J9=12 | K9=0 | U9=3 | W9=3 | AA9=3 | AD9=3
+B10=3.3 | D10=Update Test Plan Document | E10=Trung Hieu | F10=Done | G10=1 | H10=1 | I10=0 | J10=2 | K10=1 | L10=2
+B11=3.4 | D11=Update Interface Design Document | E11=Quyet | F11=Done | G11=1 | H11=1 | I11=0 | J11=1 | K11=0 | L11=1
+B12=3.5 | D12=Update Meeting Minute Document | E12=Phat | F12=Done | G12=1 | H12=1 | I12=0 | J12=1 | K12=0 | L12=1
+B13=3.6 | C13=Design | D13=Design UI for Order a Technician | E13=Phat | F13=Done | G13=5 | H13=5 | I13=0 | J13=4 | K13=-1 | R13=4
+B14=3.7 | D14=Design UI for Viewing all Technician | E14=The Hieu | F14=Done | G14=3 | H14=3 | I14=0 | J14=3 | K14=0 | S14=3
+B15=3.8 | D15=Design UI for Update Status Order ( Reject or Complete) | E15=Phat | F15=Done | G15=3 | H15=3 | I15=0 | J15=3 | K15=0 | AB15=3
+B16=3.9 | D16=Design UI for Autofind Function | E16=Phat | F16=Done | G16=4 | H16=4 | I16=0 | J16=4 | K16=0 | Z16=4
+B17=3.10 | D17=Design UI for Viewing Order detail | E17=Phat | F17=Done | G17=3 | H17=3 | I17=0 | J17=4 | K17=1 | R17=2 | S17=2
+B18=3.11 | D18=Design UI for Viewing History Order | E18=The Hieu | F18=Done | G18=4 | H18=4 | I18=0 | J18=4 | K18=0 | X18=4
+B19=3.12 | D19=Design UI for Viewing Reject Order | E19=The Hieu | F19=Done | G19=2 | H19=2 | I19=0 | J19=2 | K19=0 | X19=2
+B20=3.13 | D20=Design UI for Viewing Cancal Order | E20=The Hieu | F20=Done | G20=2 | H20=2 | I20=0 | J20=2 | K20=0 | X20=2
+B21=3.14 | D21=Design UI for Rating | E21=Quyet | F21=Done | G21=4 | H21=4 | I21=0 | J21=5 | K21=1 | V21=5
+B22=3.15 | D22=Design UI for Customer's Profile | E22=Quyet | F22=Done | G22=3 | H22=3 | I22=0 | J22=3 | K22=0 | R22=1 | S22=2
+B23=3.16 | C23=Code | D23=Develop UI for Order a Technician and fetch API | E23=Phat | F23=Done | G23=10 | H23=10 | I23=0 | J23=8 | K23=-2 | O23=3 | S23=1 | T23=4
+B24=3.17 | D24=Develop UI for Viewing all Technician and fetch API | E24=The Hieu | F24=Done | G24=8 | H24=8 | I24=0 | J24=7 | K24=-1 | P24=3 | S24=2 | T24=2
+B25=3.18 | D25=Develop UI for Update Status Order ( Reject or Complete) and fetch API | E25=Phat | F25=Done | G25=6 | H25=6 | I25=0 | J25=6 | K25=0 | AC25=6
+B26=3.19 | D26=Develop UI for Autofind Function and fetch API | E26=Phat | F26=Done | G26=8 | H26=8 | I26=0 | J26=7 | K26=-1 | AA26=3 | AB26=4
+B27=3.20 | D27=Develop UI for Viewing Order detail and fetch API | E27=Phat | F27=Done | G27=3 | H27=3 | I27=0 | J27=3 | K27=0 | T27=3
+B28=3.21 | D28=Develop UI for Viewing History Order and fetch API | E28=The Hieu | F28=Done | G28=6 | H28=6 | I28=0 | J28=6 | K28=0 | X28=5 | Y28=1
+B29=3.22 | D29=Develop UI for Viewing Reject Order and fetch API | E29=The Hieu | F29=Done | G29=4 | H29=4 | I29=0 | J29=4 | K29=0 | Y29=4
+B30=3.23 | D30=Develop UI for Viewing Cancal Order and fetch API | E30=The Hieu | F30=Done | G30=4 | H30=4 | I30=0 | J30=4 | K30=0 | Y30=4
+B31=3.24 | D31=Develop UI for Rating and fetch API | E31=The Hieu | F31=Done | G31=6 | H31=6 | I31=0 | J31=6 | K31=0 | V31=2 | W31=4
+B32=3.25 | D32=Develop UI for Customer's Profile and fetch API | E32=Quyet | F32=Done | G32=4 | H32=4 | I32=0 | J32=4 | K32=0 | T32=4
+B33=3.26 | D33=Training AI and Develop API for AI | E33=Trung Hieu, Tuyen | F33=Done | G33=42 | H33=42 | I33=0 | J33=44 | K33=2 | M33=8 | N33=6 | O33=7 | P33=9 | Q33=4 | R33=5 | T33=5
+B34=3.27 | D34=Develop APIs for Order a Technician | E34=Trung Hieu | F34=Done | G34=10 | H34=10 | I34=0 | J34=10 | K34=0 | N34=4 | O34=1 | Q34=4 | R34=1
+B35=3.28 | D35=Develop APIs for Viewing all Technician | E35=Trung Hieu | F35=Done | G35=6 | H35=6 | I35=0 | J35=5 | K35=-1 | Q35=2 | S35=3
+B36=3.29 | D36=Develop APIs for Update Status Order ( Reject or Complete) | E36=Trung Hieu | F36=Done | G36=6 | H36=6 | I36=0 | J36=5 | K36=-1 | Y36=4 | AC36=1
+B37=3.30 | D37=Develop APIs for Autofind Function | E37=Trung Hieu | F37=Done | G37=8 | H37=8 | I37=0 | J37=11 | K37=3 | AA37=2 | AB37=3 | AC37=6
+B38=3.31 | D38=Develop APIs for  Viewing Order detail | E38=Trung Hieu | F38=Done | G38=3 | H38=3 | I38=0 | J38=3 | K38=0 | S38=3
+B39=3.32 | D39=Develop APIs for Viewing History Order | E39=Tuyen | F39=Done | G39=4 | H39=4 | I39=0 | J39=4 | K39=0 | Y39=1 | Z39=3
+B40=3.33 | D40=Develop APIs for Viewing Reject Order | E40=Tuyen | F40=Done | G40=4 | H40=4 | I40=0 | J40=4 | K40=0 | Y40=2 | Z40=2
+B41=3.34 | D41=Develop APIs for Viewing Cancal Order | E41=Tuyen | F41=Done | G41=4 | H41=4 | I41=0 | J41=4 | K41=0 | Y41=2 | Z41=2
+B42=3.35 | D42=Develop APIs for Rating | E42=Trung Hieu | F42=Done | G42=8 | H42=8 | I42=0 | J42=7 | K42=-1 | V42=3 | W42=4
+B43=3.36 | D43=Develop APIs for Search and Filter | E43=Tuyen | F43=Done | G43=3 | H43=3 | I43=0 | J43=3 | K43=0 | Y43=3
+B44=3.37 | D44=Develop APIs for Customer's Profile | E44=Tuyen | F44=Done | G44=2 | H44=2 | I44=0 | J44=2 | K44=0 | T44=2
+B45=3.38 | C45=Test & Fix Bug | D45=[Test] & [Fix] Order a Technician UI  | E45=Phat | F45=Done | G45=3 | H45=3 | I45=0 | J45=3 | K45=0 | U45=3
+B46=3.39 | D46=[Test] & [Fix] Viewing all Technicians UI  | E46=The Hieu | F46=Done | G46=3 | H46=3 | I46=0 | J46=3 | K46=0 | U46=3
+B47=3.40 | D47=[Test] & [Fix]  Update Status Order ( Reject or Complete) UI  | E47=Phat | F47=Done | G47=4 | H47=4 | I47=0 | J47=3 | K47=-1 | AD47=3
+B48=3.41 | D48=[Test] & [Fix] Autofind Technician UI  | E48=Phat | F48=Done | G48=3 | H48=3 | I48=0 | J48=3 | K48=0 | AD48=3
+B49=3.42 | D49=[Test] & [Fix] Viewing Order detail UI | E49=Phat | F49=Done | G49=4 | H49=4 | I49=0 | J49=4 | K49=0 | U49=4
+B50=3.43 | D50=[Test] & [Fix] Viewing History Orde UI  | E50=The Hieu | F50=Done | G50=3 | H50=3 | I50=0 | J50=3 | K50=0 | AA50=3
+B51=3.44 | D51=[Test] & [Fix] Viewing Reject Order UI  | E51=The Hieu | F51=Done | G51=2 | H51=2 | I51=0 | J51=2 | K51=0 | AA51=2
+B52=3.45 | D52=[Test] & [Fix] Viewing Cancal Order UI  | E52=The Hieu | F52=Done | G52=2 | H52=2 | I52=0 | J52=2 | K52=0 | AA52=2
+B53=3.46 | D53=[Test] & [Fix] Rating UI  | E53=Quyet | F53=Done | G53=4 | H53=4 | I53=0 | J53=4 | K53=0 | W53=4
+B54=3.47 | D54=[Test] & [Fix] Customer's Profile UI  | E54=Quyet | F54=Done | G54=3 | H54=3 | I54=0 | J54=2 | K54=-1 | W54=2
+B55=3.48 | D55=[Test] & [Fix]  Ouput AI and API | E55=Trung Hieu, Tuyen | F55=Done | G55=1 | H55=1 | I55=0 | J55=2 | K55=1 | U55=2
+B56=3.49 | D56=[Test] & [Fix] Order a Technician APIs | E56=Trung Hieu | F56=Done | G56=2 | H56=2 | I56=0 | J56=2 | K56=0 | U56=2
+B57=3.50 | D57=[Test] & [Fix] Viewing all Technician APIs | E57=Quyet | F57=Done | G57=3 | H57=3 | I57=0 | J57=3 | K57=0 | U57=3
+B58=3.51 | D58=[Test] & [Fix] Update Status Order ( Reject or Complete) APIs | E58=Quyet | F58=Done | G58=4 | H58=4 | I58=0 | J58=4 | K58=0 | AD58=4
+B59=3.52 | D59=[Test] & [Fix] Autofind Function APIs | E59=Quyet | F59=Done | G59=4 | H59=4 | I59=0 | J59=5 | K59=1 | AC59=3 | AD59=2
+B60=3.53 | D60=[Test] & [Fix] Viewing Order detail APIs | E60=Quyet | F60=Done | G60=5 | H60=5 | I60=0 | J60=6 | K60=1 | T60=2 | U60=4
+B61=3.54 | D61=[Test] & [Fix] Viewing History Order APIs | E61=Tuyen | F61=Done | G61=4 | H61=4 | I61=0 | J61=4 | K61=0 | AA61=4
+B62=3.55 | D62=[Test] & [Fix] Viewing Reject Order APIs | E62=Tuyen | F62=Done | G62=2 | H62=2 | I62=0 | J62=2 | K62=0 | AA62=2
+B63=3.56 | D63=[Test] & [Fix] Viewing Cancal OrderAPIs | E63=Tuyen | F63=Done | G63=2 | H63=2 | I63=0 | J63=2 | K63=0 | AA63=2
+B64=3.57 | D64=[Test] & [Fix] Rating APIs | E64=Tuyen | F64=Done | G64=4 | H64=4 | I64=0 | J64=4 | K64=0 | W64=4
+B65=3.58 | D65=[Test]  & [Fix] Search and Filter APIs | E65=Quyet | F65=Done | G65=3 | H65=3 | I65=0 | J65=2 | K65=-1 | AA65=2
+B66=3.59 | D66=[Test] & [Fix] Customer's Profile APIs | E66=Quyet | F66=Done | G66=2 | H66=2 | I66=0 | J66=2 | K66=0 | U66=2
+B67=3.60 | C67=Release Sprint 3 | D67=Sprint 3 Retrospective | E67=All | F67=Done | G67=2 | H67=2 | I67=0 | J67=2 | K67=0 | AE67=2
+B68=3.61 | D68=Sprint 3 Review Meeting | E68=All | F68=Done | G68=2 | H68=2 | I68=0 | J68=2 | K68=0 | AE68=2
+B70=Member | C70=Total effort | D70=Working hours per week | E70=Total | G70=280 | H70=280 | I70=0 | J70=280 | K70=0 | L70=6 | M70=8 | N70=10 | O70=11 | P70=12 | Q70=10 | R70=13 | S70=16 | T70=22 | U70=26 | V70=10 | W70=21 | X70=13 | Y70=21 | Z70=11 | AA70=25 | AB70=10 | AC70=16 | AD70=15 | AE70=4
+B71=Hieu, Vo Trung | C71=109 | D71=42 | E71=Actual | L71=274 | M71=266 | N71=256 | O71=245 | P71=233 | Q71=223 | R71=210 | S71=194 | T71=172 | U71=146 | V71=136 | W71=115 | X71=102 | Y71=81 | Z71=70 | AA71=45 | AB71=35 | AC71=19 | AD71=4 | AE71=0
+B72=Tuyen, Hoang Minh | C72=93 | D72=36 | E72=Estimation | L72=266 | M72=252 | N72=238 | O72=224 | P72=210 | Q72=196 | R72=182 | S72=168 | T72=154 | U72=140 | V72=126 | W72=112 | X72=98 | Y72=84 | Z72=70 | AA72=56 | AB72=42 | AC72=28 | AD72=14 | AE72=0
+B73=Quyet, Bui Quang | C73=59 | D73=23
+B74=Hieu, Nguyen The | C74=66 | D74=25
+B75=Phat, Ho Tuan | C75=71 | D75=27
+
+SHEET xl/worksheets/sheet5.xml
+B1=Day-1
+16/02/2026 | C1=Day-2
+17/02/2026 | D1=Day-3
+18/02/2026 | E1=Day-4
+19/02/2026 | F1=Day-5
+20/02/2026 | G1=Day-6
+23/02/2026 | H1=Day-7
+24/02/2026 | I1=Day-8
+25/02/2026 | J1=Day-9
+26/02/2026 | K1=Day-10
+27/02/2026 | L1=Day-11
+02/03/2026 | M1=Day-12
+03/03/2026 | N1=Day-13
+04/03/2026 | O1=Day-14
+05/03/2026 | P1=Day-15
+06/03/2026 | Q1=Day-16
+09/03/2026 | R1=Day-17
+10/03/2026 | S1=Day-18
+11/03/2026 | T1=Day-19
+12/03/2026 | U1=Day-20
+13/03/2026 | AA1=Day-1
+16/03/2026 | AB1=Day-2
+17/03/2026 | AC1=Day-3
+18/03/2026 | AD1=Day-4
+19/03/2026 | AE1=Day-5
+20/03/2026 | AF1=Day-6
+23/03/2026 | AG1=Day-7
+24/03/2026 | AH1=Day-8
+25/03/2026 | AI1=Day-9
+26/03/2026 | AJ1=Day-10
+27/03/2026 | AK1=Day-11
+30/03/2026 | AL1=Day-12
+31/03/2026 | AM1=Day-13
+01/04/2026 | AN1=Day-14
+02/04/2026 | AO1=Day-15
+03/04/2026 | AP1=Day-16
+06/04/2026 | AQ1=Day-17
+07/04/2026 | AR1=Day-18
+08/04/2026 | AS1=Day-19
+09/04/2026 | AT1=Day-20
+10/04/2026
+A2=Actual | B2=4 | C2=0 | D2=0 | E2=0 | F2=0 | G2=0 | H2=0 | I2=0 | J2=0 | K2=0 | L2=0 | M2=0 | N2=0 | O2=0 | P2=0 | Q2=0 | R2=0 | S2=0 | T2=0 | U2=0 | Z2=Actual | AA2=319 | AB2=309 | AC2=297 | AD2=275 | AE2=258 | AF2=240 | AG2=230 | AH2=213 | AI2=198 | AJ2=186 | AK2=173 | AL2=160 | AM2=151 | AN2=139 | AO2=125 | AP2=112 | AQ2=102 | AR2=96 | AS2=91 | AT2=87
+A3=Estimation | B3=4 | C3=4 | D3=3 | E3=3 | F3=3 | G3=3 | H3=3 | I3=2 | J3=2 | K3=2 | L3=2 | M3=2 | N3=1 | O3=1 | P3=1 | Q3=1 | R3=1 | S3=0 | T3=0 | U3=0 | Z3=Estimation | AA3=311 | AB3=294 | AC3=278 | AD3=262 | AE3=245 | AF3=229 | AG3=213 | AH3=196 | AI3=180 | AJ3=164 | AK3=147 | AL3=131 | AM3=114 | AN3=98 | AO3=82 | AP3=65 | AQ3=49 | AR3=33 | AS3=16 | AT3=0
+B11=Day-1
+13/04/2026 | C11=Day-2
+14/04/2026 | D11=Day-3
+15/04/2026 | E11=Day-4
+16/04/2026 | F11=Day-5
+17/04/2026 | G11=Day-6
+20/04/2026 | H11=Day-7
+21/04/2026 | I11=Day-8
+22/04/2026 | J11=Day-9
+23/04/2026 | K11=Day-10
+24/04/2026 | L11=Day-11
+27/04/2026 | M11=Day-12
+28/04/2026 | N11=Day-13
+29/04/2026 | O11=Day-14
+30/04/2026 | P11=Day-15
+01/05/2026 | Q11=Day-16
+04/05/2026 | R11=Day-17
+05/05/2026 | S11=Day-18
+06/05/2026 | T11=Day-19
+07/05/2026 | U11=Day-20
+08/05/2026
+A12=Actual | B12=274 | C12=266 | D12=256 | E12=245 | F12=233 | G12=223 | H12=210 | I12=194 | J12=172 | K12=146 | L12=136 | M12=115 | N12=102 | O12=81 | P12=70 | Q12=45 | R12=35 | S12=19 | T12=4 | U12=0
+A13=Estimation | B13=266 | C13=252 | D13=238 | E13=224 | F13=210 | G13=196 | H13=182 | I13=168 | J13=154 | K13=140 | L13=126 | M13=112 | N13=98 | O13=84 | P13=70 | Q13=56 | R13=42 | S13=28 | T13=14 | U13=0
+
+SHEET xl/worksheets/sheet1.xml
+B7=Project | I7=Sprint Plan
+B8=Id | C8=Description | D8=Start | E8=End | F8=Status | G8=Remarks | I8=Sprint | J8=Start | K8=End | L8=Status | M8=Work / Estimates Committed | N8=Work Spent Delivered | O8=Remarks
+B9=1 | C9=Initial release | D9=43472 | E9=43539 | F9=In Progress | I9=1 | J9=46285 | K9=46312 | L9=Pending verification | M9=243h | N9=— | O9=Foundation, Backend, Frontend, Firmware, WebSocket
+I10=2 | J10=46313 | K10=46335 | L10=Planned | M10=327h | N10=— | O10=Cloud AI, Device Management, API Key, Quota
+I11=3 | J11=46336 | K11=46359 | L11=Planned | M11=411h | N11=— | O11=Local AI, OTA, Testing, Fix Bug, Final Demo

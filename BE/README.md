@@ -79,14 +79,14 @@ Device credentials and pairing codes are generated with cryptographically secure
 | GET/PATCH | `/ai/profile` | Authenticated | Read/update caller assistant profile |
 | GET/POST | `/api-keys` | Authenticated | List/create personal provider key |
 | DELETE | `/api-keys/{id}` | Owner | Revoke personal provider key |
-| POST | `/web-chat/messages` | Authenticated | Create a WEB conversation and mock adapter reply |
+| POST | `/web-chat/messages` | Authenticated | Returns 503 while real provider execution and approved quota/usage settlement are unavailable |
 | GET | `/conversations` | Owner | Paginated caller conversation list |
 | GET/DELETE | `/conversations/{id}` | Owner | Read or soft-delete conversation |
 | GET | `/quotas` | Authenticated | Read caller quota policies |
 | GET | `/admin/quotas` | Admin | List all quota policies |
 | POST | `/admin/quotas` | Admin | Create a quota policy |
 
-Personal API keys are encrypted at rest with AES-256-GCM using `APP_ENCRYPTION_KEY`; only a final-four hint is returned. The phase-3 chat adapter is explicitly a mock and does not call an AI provider or AI Server. It persists the user and mock assistant messages and writes basic LLM usage. Request-per-minute quota is checked when an active policy exists. Daily and monthly token policies need aggregation work before they can be enforced.
+Personal API keys are encrypted at rest with AES-256-GCM using `APP_ENCRYPTION_KEY`; only a final-four hint is returned. The chat route is fail-closed and does not persist fabricated assistant messages or estimated token usage. Live chat is unavailable until real provider execution, approved quota admission, and actual usage settlement are ready.
 
 ### Admin operations and OTA
 

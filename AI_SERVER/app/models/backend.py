@@ -122,6 +122,9 @@ class HeartbeatResult(ContractModel):
 class ConfigRequest(ContractModel):
     userId: str
     deviceId: str | None = None
+    providerId: str | None = None
+    modelId: str | None = None
+    includeCredential: bool = False
 
 
 class Provider(ContractModel):
@@ -157,6 +160,7 @@ class ResolvedConfig(ContractModel):
     profile: Profile
     credentialScope: Literal["USER", "SYSTEM", "NONE"]
     credentialReference: CredentialReference | None
+    credential: SecretStr | None = Field(default=None, repr=False)
 
     @model_validator(mode="after")
     def coherent(self):

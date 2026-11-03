@@ -1,0 +1,111 @@
+[
+  {
+    "label": "health",
+    "route": "/health",
+    "status": 200,
+    "code": null
+  },
+  {
+    "label": "invalid JWT",
+    "route": "/web-chat/messages",
+    "status": 401,
+    "code": "UNAUTHORIZED"
+  },
+  {
+    "label": "invalid service token",
+    "route": "/internal/devices/authorize",
+    "status": 401,
+    "code": "SERVICE_UNAUTHORIZED"
+  },
+  {
+    "label": "invalid service token",
+    "route": "/internal/ai/resolve-config",
+    "status": 401,
+    "code": "SERVICE_UNAUTHORIZED"
+  },
+  {
+    "label": "invalid service token",
+    "route": "/internal/ai/authorize-request",
+    "status": 401,
+    "code": "SERVICE_UNAUTHORIZED"
+  },
+  {
+    "label": "invalid service token",
+    "route": "/internal/ai/usage",
+    "status": 401,
+    "code": "SERVICE_UNAUTHORIZED"
+  },
+  {
+    "label": "Admin login",
+    "route": "/auth/login",
+    "status": 200,
+    "code": null
+  },
+  {
+    "label": "Admin identity",
+    "route": "/auth/me",
+    "status": 200,
+    "code": null
+  },
+  {
+    "label": "Admin",
+    "identity": "1",
+    "role": "ADMIN"
+  },
+  {
+    "label": "Admin",
+    "route": "/ai/profile",
+    "status": 200,
+    "code": null
+  },
+  {
+    "label": "Admin",
+    "route": "/ai/providers",
+    "status": 200,
+    "code": null
+  },
+  {
+    "label": "Admin",
+    "route": "/api-keys",
+    "status": 200,
+    "code": null
+  },
+  {
+    "label": "Admin",
+    "route": "/quotas",
+    "status": 200,
+    "code": null
+  },
+  {
+    "label": "Admin",
+    "route": "/conversations",
+    "status": 200,
+    "code": null
+  },
+  {
+    "label": "Admin chat",
+    "route": "/web-chat/messages",
+    "status": 503,
+    "code": "AI_PIPELINE_UNAVAILABLE"
+  },
+  {
+    "label": "Admin admin read",
+    "route": "/admin/quotas",
+    "status": 200,
+    "code": null
+  },
+  {
+    "label": "Admin logout",
+    "route": "/auth/logout",
+    "status": 200,
+    "code": null
+  },
+  {
+    "label": "User A",
+    "status": "BLOCKED_ACCOUNT_NOT_CONFIGURED"
+  },
+  {
+    "label": "User B",
+    "status": "BLOCKED_ACCOUNT_NOT_CONFIGURED"
+  }
+]

@@ -38,7 +38,9 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
   if (!Number.isInteger(databasePort) || databasePort < 1 || databasePort > 65535) {
     throw new Error('DB_PORT must be an integer between 1 and 65535');
   }
-  if (environment.DB_NAME !== 'aiva_iot') {
+  const isolatedTest = environment.NODE_ENV === 'test' && environment.MYSQL_INTEGRATION_TESTS === 'true'
+    && typeof environment.DB_NAME === 'string' && /^aiva_iot_test(?:_[a-z0-9_]+)?$/.test(environment.DB_NAME);
+  if (environment.DB_NAME !== 'aiva_iot' && !isolatedTest) {
     throw new Error('DB_NAME must be aiva_iot; this backend is restricted to the existing V1.5 database');
   }
 
@@ -81,6 +83,27 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
       throw new Error(`${key} must be an integer of at least 60 seconds`);
     }
   }
+
+  const contracts = [
+    ['DEVICE_AUTH_CONTRACT_APPROVED', 'AI_DEVICE_SERVICE_TOKEN'],
+    ['AI_CONFIG_CONTRACT_APPROVED', 'AI_CONFIG_SERVICE_TOKEN'],
+    ['AI_QUOTA_CONTRACT_APPROVED', 'AI_QUOTA_SERVICE_TOKEN'],
+  ];
+  for (const [flag, token] of contracts) {
+    if (environment[flag] !== undefined && !['true','false'].includes(String(environment[flag]))) throw new Error(`${flag} must be true or false`);
+    if (environment[flag] === 'true' && (typeof environment[token] !== 'string' || !/^[A-Za-z0-9_-]{43,128}$/.test(environment[token] as string))) throw new Error(`${token} must be an independent base64url service token`);
+  }
+  const configuredTokens = contracts.map(([,key])=>environment[key]).filter(value=>typeof value==='string' && value!=='');
+  if (new Set(configuredTokens).size !== configuredTokens.length) throw new Error('Internal service tokens must be independent');
+  for (const token of configuredTokens) if ([environment.JWT_ACCESS_SECRET,environment.JWT_REFRESH_SECRET,environment.ADMIN_ACCESS_JWT_SECRET].includes(token)) throw new Error('Service tokens must differ from JWT secrets');
+  if (environment.AI_QUOTA_CONTRACT_APPROVED === 'true' || environment.AI_USAGE_REPORT_SWEEPER_ENABLED === 'true') {
+    const timeout = environment.AI_USAGE_REPORT_TIMEOUT_SECONDS;
+    if (typeof timeout !== 'string' || !/^[1-9][0-9]*$/.test(timeout) || Number(timeout)>2147483) throw new Error('AI_USAGE_REPORT_TIMEOUT_SECONDS must be 1..2147483');
+  }
+  if (environment.AI_USAGE_REPORT_SWEEPER_ENABLED !== undefined && !['true','false'].includes(String(environment.AI_USAGE_REPORT_SWEEPER_ENABLED))) throw new Error('AI_USAGE_REPORT_SWEEPER_ENABLED must be true or false');
+  if (environment.HEARTBEAT_TIMEOUT_SECONDS !== undefined && (typeof environment.HEARTBEAT_TIMEOUT_SECONDS !== 'string'
+    || !/^[1-9][0-9]*$/.test(environment.HEARTBEAT_TIMEOUT_SECONDS) || Number(environment.HEARTBEAT_TIMEOUT_SECONDS)>2147483)) throw new Error('HEARTBEAT_TIMEOUT_SECONDS must be 1..2147483');
+  if (environment.HEARTBEAT_SWEEPER_ENABLED !== undefined && !['true','false'].includes(String(environment.HEARTBEAT_SWEEPER_ENABLED))) throw new Error('HEARTBEAT_SWEEPER_ENABLED must be true or false');
 
   const corsOrigins = environment.CORS_ORIGINS === undefined
     ? []

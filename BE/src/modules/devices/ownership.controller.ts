@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../auth/access-role.guard';
 import { UserPairingGuard } from '../pairing/user-pairing.guard';
 import { InternalDeviceGuard } from './internal-device.guard';
 import { OwnershipService } from './ownership.service';
+import { Public } from '../../common/decorators/public.decorator';
 
 @Controller('user/devices')
 @UseGuards(UserPairingGuard)
@@ -27,6 +28,7 @@ export class DashboardAccessController {
 }
 
 @Controller('internal/devices')
+@Public()
 @UseGuards(InternalDeviceGuard)
 export class InternalDevicesController {
   constructor(private readonly ownership:OwnershipService) {}

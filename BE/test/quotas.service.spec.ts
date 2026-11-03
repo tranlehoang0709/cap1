@@ -30,6 +30,7 @@ describe('QuotasService with durable transaction state model (not MySQL engine p
       findUserRoles:jest.fn(async(id:string)=>[{code:id==='1'?'ADMIN':'USER'}])},provider:jest.fn(async()=>({id:'2',code:'LOCAL',isEnabled:1})),
       ownership:{devices:{findDeviceById:jest.fn(async()=>({id:'42'}))},verifyDeviceOwnership:jest.fn(async()=>({id:'42'}))}},
       now:jest.fn(async()=>state.now),policies:jest.fn(async()=>copy(state.policies)),totals:jest.fn(async()=>totals()),
+      userMinuteRequests:jest.fn(async()=>totals().minuteRequests),
       context:jest.fn(async(i:any)=>i.conversationId),request:jest.fn(async(id:string)=>copy(state.records.find((r:UsageRow)=>r.requestId===id)??null)),
       admit:jest.fn(async(i:any,hash:string,policyId:string,credentialId:string|null,conversationId:string|null,now:Date,due:Date)=>{
         if(state.records.some((r:UsageRow)=>r.requestId===i.requestId))throw Object.assign(new Error('duplicate'),{code:'ER_DUP_ENTRY'});
@@ -48,7 +49,8 @@ describe('QuotasService with durable transaction state model (not MySQL engine p
     let tail=Promise.resolve();repository={assertSchema:jest.fn(),transaction:jest.fn(async(work:any)=>{
       const previous=tail;let release!:()=>void;tail=new Promise<void>(r=>release=r);await previous;const before=copy(state);
       try{return await work(tx);}catch(error){state=before;throw error;}finally{release();}}),
-      overdueRequestIds:jest.fn(async()=>state.records.filter((r:UsageRow)=>r.status==='admitted'&&!r.finalizedAt&&r.reportDueAt&&r.reportDueAt<=state.now).map((r:UsageRow)=>r.requestId))};
+      overdueRequestIds:jest.fn(async()=>state.records.filter((r:UsageRow)=>r.status==='admitted'&&!r.finalizedAt&&r.reportDueAt&&r.reportDueAt<=state.now).map((r:UsageRow)=>r.requestId)),
+      locateRequest:jest.fn(async(id:string)=>copy(state.records.find((r:UsageRow)=>r.requestId===id)??null))};
     providers={checkProviderPermission:jest.fn(async()=>({provider:{id:'2'},model:{id:'3'},credentialScope:'NONE',credentialReference:null}))};
     service=new QuotasService(repository,providers,config);
   });
@@ -61,7 +63,7 @@ describe('QuotasService with durable transaction state model (not MySQL engine p
   });
   it('UNLIMITED bypasses quotas while retaining authentication and usage logging',async()=>{
     state.policies=[{...initial,requestsPerMinute:null,requestsPerDay:null,tokensPerMonth:null}];
-    const {maxTotalTokens,...input}=request();expect(await service.authorizeAIRequest(input)).toMatchObject({allowed:true,mode:'UNLIMITED',remainingQuota:{requestsPerMinute:null,requestsPerDay:null,tokensPerMonth:null}});
+    const {maxTotalTokens,...input}=request();expect(await service.authorizeAIRequest(input)).toMatchObject({allowed:true,mode:'UNLIMITED',remainingQuota:{requestsPerMinute:'11',requestsPerDay:null,tokensPerMonth:null}});
     expect(state.records).toHaveLength(1);expect(state.records[0].reservedTokens).toBeNull();
     state.active=false;await expect(service.authorizeAIRequest(request(2))).rejects.toMatchObject({status:403});expect(state.records).toHaveLength(1);
   });

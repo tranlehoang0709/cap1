@@ -36,7 +36,9 @@ describe('Presence calculation and input contract',()=>{
     expect(()=>heartbeatInput({...event(),deviceId:'42'})).toThrow();
   });
   it('validates timeout config without inventing one from transport ping',()=>{
-    const env={DB_HOST:'local',DB_PORT:'3306',DB_USER:'aiva',DB_PASSWORD:'',DB_NAME:'aiva_iot'};
+    const env={DB_HOST:'local',DB_PORT:'3306',DB_USER:'aiva',DB_PASSWORD:'',DB_NAME:'aiva_iot',
+      JWT_ACCESS_SECRET:'a'.repeat(43),JWT_REFRESH_SECRET:'b'.repeat(43),APP_ENCRYPTION_KEY:'c'.repeat(43),
+      ADMIN_EMAIL:'fixture@example.invalid',ADMIN_PASSWORD:'fixture-password',ADMIN_DISPLAY_NAME:'Fixture'};
     expect(validateEnvironment({...env,HEARTBEAT_TIMEOUT_SECONDS:'60'})).toBeDefined();
     for(const timeout of ['0','abc','2147484','1.5',''])expect(()=>validateEnvironment({...env,HEARTBEAT_TIMEOUT_SECONDS:timeout})).toThrow('HEARTBEAT_TIMEOUT');
     expect(()=>validateEnvironment({...env,HEARTBEAT_SWEEPER_ENABLED:'yes'})).toThrow('HEARTBEAT_SWEEPER');
