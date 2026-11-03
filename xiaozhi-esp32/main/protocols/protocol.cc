@@ -107,3 +107,20 @@ bool Protocol::IsTimeout() const {
     }
     return timeout;
 }
+
+bool Protocol::SendPlaybackEvent(const char* state, const std::string& turn,
+                                 const std::string& playback, uint32_t chunks) {
+    if (!HasHalfDuplexPlayback()) return false;
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "type", "playback");
+    cJSON_AddStringToObject(root, "state", state);
+    cJSON_AddStringToObject(root, "session_id", session_id_.c_str());
+    cJSON_AddStringToObject(root, "turn_id", turn.c_str());
+    cJSON_AddStringToObject(root, "playback_id", playback.c_str());
+    cJSON_AddNumberToObject(root, "audio_chunks", chunks);
+    char* encoded = cJSON_PrintUnformatted(root);
+    bool sent = encoded != nullptr && SendText(encoded);
+    cJSON_free(encoded);
+    cJSON_Delete(root);
+    return sent;
+}

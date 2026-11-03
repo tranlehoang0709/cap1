@@ -1,5 +1,24 @@
 menu "Xiaozhi Assistant"
 
+config AIVA_DEV_VOICE
+    bool "AIVA private development voice transport (NO Backend)"
+    default n
+    help
+        Explicit development mode. Skip OTA/activation HTTP bootstrap, use the
+        existing NVS websocket url/token/version and negotiated playback ACK.
+        Provision a private server URL, development-only token and version 1/2/3.
+        Never store a Cloud API key on the device. Existing board pins unchanged.
+
+config AIVA_I2S_TX_DRAIN_PROOF
+    bool "Experimental I2S TX EOF completion proof (ESP-IDF 6.0.2 only)"
+    depends on AIVA_DEV_VOICE && IDF_TARGET_ESP32S3
+    default n
+    help
+        NoAudioCodec only. Track two complete sets of DMA buffer TX EOF events
+        after the last successful write, using the existing auto-clearing ring.
+        Requires ESP-IDF 6.0.2 and hardware/ISR validation before enabling.
+        Unsupported drivers/SDKs fail closed; no delay or estimated duration ACK.
+
 config OTA_URL
     string "Default OTA URL"
     default "https://api.tenclass.net/xiaozhi/ota/"

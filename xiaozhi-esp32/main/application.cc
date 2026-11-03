@@ -88,6 +88,9 @@ void Application::Initialize() {
     callbacks.on_playback_progress = [this](uint32_t playback_id, uint32_t media_position_ms) {
         notify_player_.OnPlaybackProgress(playback_id, media_position_ms);
     };
+    callbacks.on_playback_output = [this](uint32_t id, bool success) {
+        voice_playback_.Played(id, success);
+    };
     audio_service_.SetCallbacks(callbacks);
 
     // Add state change listeners
@@ -210,6 +213,7 @@ void Application::Run() {
         }
 
         if (bits & MAIN_EVENT_PLAYBACK_DRAINED) {
+            CheckVoicePlayback();
             if (audio_service_.IsPlaybackIdle()) {
                 notify_player_.OnPlaybackDrained();
             }
@@ -236,6 +240,8 @@ void Application::Run() {
 
         if (bits & MAIN_EVENT_SEND_AUDIO) {
             while (auto packet = audio_service_.PopPacketFromSendQueue()) {
+                if (protocol_ && protocol_->HasHalfDuplexPlayback() &&
+                    GetDeviceState() != kDeviceStateListening) continue;
                 if (protocol_ && !protocol_->SendAudio(std::move(packet))) {
                     // Drop the remaining packets. Leaving them in the queue would
                     // stall the Opus codec task (it waits for queue space), which in
@@ -269,6 +275,7 @@ void Application::Run() {
         }
 
         if (bits & MAIN_EVENT_CLOCK_TICK) {
+            CheckVoicePlayback();
             clock_ticks_++;
             auto display = Board::GetInstance().GetDisplay();
             display->UpdateStatusBar();
@@ -355,11 +362,11 @@ void Application::ActivationTask() {
     // Create OTA object for activation process
     ota_ = std::make_unique<Ota>();
 
-    // Check for new assets version
+    // Explicit local development never contacts activation/OTA services.
+#if !CONFIG_AIVA_DEV_VOICE
     CheckAssetsVersion();
-
-    // Check for new firmware version
     CheckNewVersion();
+#endif
 
     // Initialize the protocol
     InitializeProtocol();
@@ -524,6 +531,9 @@ void Application::InitializeProtocol() {
 
     display->SetStatus(Lang::Strings::LOADING_PROTOCOL);
 
+#if CONFIG_AIVA_DEV_VOICE
+    protocol_ = std::make_unique<WebsocketProtocol>();
+#else
     if (ota_->HasMqttConfig()) {
         protocol_ = std::make_unique<MqttProtocol>();
     } else if (ota_->HasWebsocketConfig()) {
@@ -532,6 +542,8 @@ void Application::InitializeProtocol() {
         ESP_LOGW(TAG, "No protocol specified in the OTA config, using MQTT");
         protocol_ = std::make_unique<MqttProtocol>();
     }
+
+#endif
 
     protocol_->OnConnected([this]() { DismissAlert(); });
 
@@ -542,7 +554,17 @@ void Application::InitializeProtocol() {
 
     protocol_->OnIncomingAudio([this](std::unique_ptr<AudioStreamPacket> packet) {
         if (GetDeviceState() == kDeviceStateSpeaking) {
-            audio_service_.PushPacketToDecodeQueue(std::move(packet));
+            if (protocol_->HasHalfDuplexPlayback()) {
+                auto id = voice_playback_.Receive();
+                if (!id) return;
+                packet->playback_id = id;
+                if (!audio_service_.PushPacketToDecodeQueue(std::move(packet))) {
+                    voice_playback_.Played(id, false);
+                    Schedule([this]() { CheckVoicePlayback(); });
+                }
+            } else {
+                audio_service_.PushPacketToDecodeQueue(std::move(packet));
+            }
         }
     });
 
@@ -557,10 +579,12 @@ void Application::InitializeProtocol() {
     });
 
     protocol_->OnAudioChannelClosed([this, &board]() {
+        voice_playback_.Cancel();
         board.SetPowerSaveLevel(PowerSaveLevel::LOW_POWER);
         Schedule([this]() {
             auto display = Board::GetInstance().GetDisplay();
             display->SetChatMessage("system", "");
+            if (protocol_ && protocol_->HasHalfDuplexPlayback()) audio_service_.ResetDecoder();
             SetDeviceState(kDeviceStateIdle);
         });
     });
@@ -608,6 +632,34 @@ void Application::InitializeProtocol() {
         } else if (strcmp(type->valuestring, "tts") == 0) {
             auto state = cJSON_GetObjectItem(root, "state");
             if (!cJSON_IsString(state)) {
+                return;
+            }
+            if (protocol_->HasHalfDuplexPlayback()) {
+                auto session = cJSON_GetObjectItem(root, "session_id");
+                auto turn = cJSON_GetObjectItem(root, "turn_id");
+                auto playback = cJSON_GetObjectItem(root, "playback_id");
+                if (!cJSON_IsString(session) || protocol_->session_id() != session->valuestring ||
+                    !cJSON_IsString(turn) || !cJSON_IsString(playback)) return;
+                auto chunks = cJSON_GetObjectItem(root, "audio_chunks");
+                uint32_t count = cJSON_IsNumber(chunks) && chunks->valuedouble >= 1 &&
+                    chunks->valuedouble <= 100000 && chunks->valuedouble == chunks->valueint ?
+                    static_cast<uint32_t>(chunks->valueint) : 0;
+                Schedule([this, action = std::string(state->valuestring),
+                          turn = std::string(turn->valuestring),
+                          playback = std::string(playback->valuestring), count]() {
+                    if (action == "start") {
+                        if (voice_playback_.Begin(turn, playback)) {
+                            aborted_ = false;
+                            if (!SetDeviceState(kDeviceStateSpeaking)) voice_playback_.Cancel();
+                        }
+                    } else if (action == "stop") {
+                        if (voice_playback_.Stop(turn, playback, count)) CheckVoicePlayback();
+                    } else if (action == "abort" && voice_playback_.Matches(turn, playback)) {
+                        voice_playback_.Cancel();
+                        audio_service_.ResetDecoder();
+                        SetDeviceState(kDeviceStateIdle);
+                    }
+                });
                 return;
             }
             if (strcmp(state->valuestring, "start") == 0) {
@@ -763,6 +815,7 @@ void Application::StopListening() { xEventGroupSetBits(event_group_, MAIN_EVENT_
 
 void Application::HandleToggleChatEvent() {
     auto state = GetDeviceState();
+    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking) return;
 
     if (state == kDeviceStateNotifying) {
         StopNotification();
@@ -827,6 +880,7 @@ void Application::ContinueOpenAudioChannel(ListeningMode mode) {
 
 void Application::HandleStartListeningEvent() {
     auto state = GetDeviceState();
+    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking) return;
 
     if (state == kDeviceStateNotifying) {
         StopNotification();
@@ -863,6 +917,7 @@ void Application::HandleStartListeningEvent() {
 
 void Application::HandleStopListeningEvent() {
     auto state = GetDeviceState();
+    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking) return;
 
     if (state == kDeviceStateNotifying) {
         StopNotification();
@@ -884,6 +939,7 @@ void Application::HandleWakeWordDetectedEvent() {
     }
 
     auto state = GetDeviceState();
+    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking) return;
     auto wake_word = audio_service_.GetLastWakeWord();
     ESP_LOGI(TAG, "Wake word detected: %s (state: %d)", wake_word.c_str(), (int)state);
 
@@ -959,6 +1015,11 @@ void Application::ContinueWakeWordInvoke(const std::string& wake_word) {
         }
     }
 
+    if (protocol_->HasHalfDuplexPlayback()) {
+        while (audio_service_.PopWakeWordPacket()) {}
+        SetListeningMode(kListeningModeAutoStop);
+        return;
+    }
     ESP_LOGI(TAG, "Wake word detected: %s", wake_word.c_str());
 #if CONFIG_SEND_WAKE_WORD_DATA
     // Encode and send the wake word data to the server
@@ -1027,9 +1088,11 @@ void Application::HandleStateChangedEvent() {
             if (listening_mode_ != kListeningModeRealtime) {
                 audio_service_.EnableVoiceProcessing(false);
                 // Only AFE wake word can be detected in speaking mode
-                audio_service_.EnableWakeWordDetection(audio_service_.IsAfeWakeWord());
+                audio_service_.EnableWakeWordDetection(
+                    (!protocol_ || !protocol_->HasHalfDuplexPlayback()) && audio_service_.IsAfeWakeWord());
             }
             audio_service_.ResetDecoder();
+            CheckVoicePlayback();
             break;
         case kDeviceStateNotifying:
             display->SetStatus(Lang::Strings::SPEAKING);
@@ -1163,7 +1226,26 @@ void Application::SetListeningMode(ListeningMode mode) {
     SetDeviceState(kDeviceStateListening);
 }
 
+void Application::CheckVoicePlayback() {
+    if (!protocol_ || !protocol_->HasHalfDuplexPlayback()) return;
+    auto event = voice_playback_.Poll(audio_service_.IsPlaybackIdle(),
+        Board::GetInstance().GetAudioCodec()->IsOutputDrained());
+    if (event.state == VoicePlaybackGuard::State::None) return;
+    const char* state = event.state == VoicePlaybackGuard::State::Ready ? "ready" :
+        event.state == VoicePlaybackGuard::State::Complete ? "complete" : "failed";
+    bool sent = protocol_->SendPlaybackEvent(state, event.turn, event.playback, event.chunks);
+    if (event.state == VoicePlaybackGuard::State::Complete && sent) {
+        if (listening_mode_ == kListeningModeManualStop) SetDeviceState(kDeviceStateIdle);
+        else SetListeningMode(kListeningModeAutoStop);
+    } else if (!sent || event.state == VoicePlaybackGuard::State::Failed) {
+        voice_playback_.Cancel();
+        audio_service_.ResetDecoder();
+        SetDeviceState(kDeviceStateIdle);
+    }
+}
+
 ListeningMode Application::GetDefaultListeningMode() const {
+    if (protocol_ && protocol_->HasHalfDuplexPlayback()) return kListeningModeAutoStop;
     return aec_mode_ == kAecOff ? kListeningModeAutoStop : kListeningModeRealtime;
 }
 
@@ -1248,6 +1330,7 @@ void Application::WakeWordInvoke(const std::string& wake_word) {
     }
 
     auto state = GetDeviceState();
+    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking) return;
 
     if (state == kDeviceStateIdle) {
         // May be called from outside the main task (e.g. board button

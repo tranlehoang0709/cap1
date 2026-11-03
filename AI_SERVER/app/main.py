@@ -8,6 +8,8 @@ from app.api.device_profiles import router as device_profiles_router
 from app.api.health import router
 from app.api.websocket import router as websocket_router
 from app.core.config import Settings, get_settings
+from app.core.robot_config import RobotSettings
+from app.api.robot_websocket import router as robot_router
 from app.core.logging import configure_logging, get_logger
 
 logger = get_logger()
@@ -36,9 +38,17 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
 def create_app(settings: Settings | None = None) -> FastAPI:
     application = FastAPI(title="AIVA-IoT AI Server", lifespan=lifespan)
     application.state.settings = settings if settings is not None else get_settings()
+    application.state.robot_settings = RobotSettings()
+    import asyncio
+    application.state.robot_slots = asyncio.Semaphore(application.state.robot_settings.max_sessions)
+    if application.state.robot_settings.enabled:
+        from app.services.llm import LLMRunner
+        from app.core.llm_config import LLMSettings
+        application.state.robot_llm_runner = LLMRunner(LLMSettings())
     application.include_router(router)
     application.include_router(websocket_router)
     application.include_router(device_profiles_router)
+    application.include_router(robot_router)
     return application
 
 

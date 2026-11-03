@@ -337,7 +337,12 @@ void AudioService::AudioOutputTask() {
             callbacks_.on_playback_progress(task->playback_id, task->media_position_ms);
         }
 
-        codec_->OutputData(task->pcm);
+        if (task->playback_id >= 0x80000000 && callbacks_.on_playback_output) {
+            bool success = codec_->OutputDataChecked(task->pcm);
+            callbacks_.on_playback_output(task->playback_id, success);
+        } else {
+            codec_->OutputData(task->pcm);
+        }
 
         /* Update the last output time */
         last_output_time_ = std::chrono::steady_clock::now();

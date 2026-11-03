@@ -66,6 +66,8 @@ public:
     virtual void SendStopListening();
     virtual void SendAbortSpeaking(AbortReason reason);
     virtual void SendMcpMessage(const std::string& message);
+    virtual bool HasHalfDuplexPlayback() const { return false; }
+    bool SendPlaybackEvent(const char* state, const std::string& turn, const std::string& playback, uint32_t chunks);
 
 protected:
     std::function<void(const cJSON* root)> on_incoming_json_;

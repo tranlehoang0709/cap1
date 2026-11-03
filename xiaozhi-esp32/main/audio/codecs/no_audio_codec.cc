@@ -1,11 +1,51 @@
 #include "no_audio_codec.h"
 
+#include <esp_attr.h>
 #include <esp_log.h>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
 
 #define TAG "NoAudioCodec"
+
+void NoAudioCodec::Start() {
+    AudioCodec::Start();
+#if AIVA_HAS_I2S_TX_DRAIN_PROOF
+    static_assert(AUDIO_CODEC_DMA_DESC_NUM == I2sTxDrainFence::kDescriptors);
+    if (!drain_callback_registered_) {
+        i2s_event_callbacks_t callbacks = {};
+        callbacks.on_sent = OnTxSent;
+        drain_callback_registered_ =
+            i2s_channel_register_event_callback(tx_handle_, &callbacks, this) == ESP_OK;
+        if (!drain_callback_registered_)
+            ESP_LOGW(TAG, "TX drain callback unavailable");
+    }
+#endif
+}
+
+bool NoAudioCodec::IsOutputDrained() const {
+#if AIVA_HAS_I2S_TX_DRAIN_PROOF
+    portENTER_CRITICAL(&drain_mux_);
+    bool drained = drain_callback_registered_ && drain_fence_.Drained();
+    portEXIT_CRITICAL(&drain_mux_);
+    return drained;
+#else
+    return false;
+#endif
+}
+
+#if AIVA_HAS_I2S_TX_DRAIN_PROOF
+bool IRAM_ATTR NoAudioCodec::OnTxSent(i2s_chan_handle_t handle, i2s_event_data_t* event,
+                                      void* context) {
+    auto* codec = static_cast<NoAudioCodec*>(context);
+    if (handle != codec->tx_handle_ || event == nullptr)
+        return false;
+    portENTER_CRITICAL_ISR(&codec->drain_mux_);
+    codec->drain_fence_.OnSent(reinterpret_cast<uintptr_t>(event->dma_buf));
+    portEXIT_CRITICAL_ISR(&codec->drain_mux_);
+    return false;  // No task wake-up from ISR; application polls existing events.
+}
+#endif
 
 NoAudioCodec::~NoAudioCodec() {
     if (rx_handle_ != nullptr) {
@@ -233,8 +273,22 @@ int NoAudioCodec::Write(const int16_t* data, int samples) {
         }
     }
 
-    size_t bytes_written;
-    ESP_ERROR_CHECK(i2s_channel_write(tx_handle_, buffer.data(), samples * sizeof(int32_t), &bytes_written, portMAX_DELAY));
+    size_t bytes_written = 0;
+#if AIVA_HAS_I2S_TX_DRAIN_PROOF
+    portENTER_CRITICAL(&drain_mux_);
+    drain_fence_.BeginWrite();
+    portEXIT_CRITICAL(&drain_mux_);
+    auto result = i2s_channel_write(tx_handle_, buffer.data(), samples * sizeof(int32_t),
+                                    &bytes_written, portMAX_DELAY);
+    portENTER_CRITICAL(&drain_mux_);
+    drain_fence_.EndWrite(result == ESP_OK && bytes_written == samples * sizeof(int32_t));
+    portEXIT_CRITICAL(&drain_mux_);
+    if (result != ESP_OK)
+        return 0;
+#else
+    ESP_ERROR_CHECK(i2s_channel_write(tx_handle_, buffer.data(), samples * sizeof(int32_t),
+                                      &bytes_written, portMAX_DELAY));
+#endif
     return bytes_written / sizeof(int32_t);
 }
 
@@ -270,6 +324,13 @@ void NoAudioCodec::EnableInput(bool enable) {
 
 void NoAudioCodec::EnableOutput(bool enable) {
     std::lock_guard<std::mutex> lock(data_if_mutex_);
+#if AIVA_HAS_I2S_TX_DRAIN_PROOF
+    if (!enable) {
+        portENTER_CRITICAL(&drain_mux_);
+        drain_fence_.Invalidate();
+        portEXIT_CRITICAL(&drain_mux_);
+    }
+#endif
     if (enable == output_enabled_) {
         return;
     }

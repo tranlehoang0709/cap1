@@ -1,0 +1,167 @@
+{
+  "document_version": "1.0.0-source-audit-d2-s2-05-fix",
+  "captured_date": "2026-11-03",
+  "firmware_project_version": "2.4.2",
+  "git_commit": null,
+  "workspace_checkout_commit": "4da096230d1bf1bacb3a34166a7ae083d720cac6",
+  "source_selection": "Reviewed local voice extension and TX EOF experiment; official ML307 archive restored with provenance. Protocol and physical board approval remain PENDING.",
+  "dev3_protocol_confirmation": "PENDING",
+  "board_and_build_configuration": "PENDING",
+  "files": [
+    {
+      "path": "../xiaozhi-esp32/main/idf_component.yml",
+      "sha256": "8668afa5b3823adf4808a83a00f1a3f8ca5592212ef39ff2e29185d812450452",
+      "previous_sha256": "8668afa5b3823adf4808a83a00f1a3f8ca5592212ef39ff2e29185d812450452",
+      "evidence": "Unchanged historical snapshot bytes."
+    },
+    {
+      "path": "../xiaozhi-esp32/CMakeLists.txt",
+      "sha256": "264ef1b0ceb890d5e93ad7bff93d310b861c88d61da6e29bd261c1139582f145",
+      "previous_sha256": "264ef1b0ceb890d5e93ad7bff93d310b861c88d61da6e29bd261c1139582f145",
+      "evidence": "Unchanged historical snapshot bytes."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/protocols/protocol.h",
+      "sha256": "a64cc8c45adc588e65ec8be8eb6756f04d483737c7e2cc24feff916858cb072f",
+      "previous_sha256": "1e14d6e34525c64dcfc5a00c74f36cae54dd071ae66ed337dbf952d6d20a58f0",
+      "evidence": "Reviewed negotiated local voice changes; see test-report-d2-s2-05.md and test-report-d2-s2-05-fix.md. Not a build/physical approval."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/protocols/protocol.cc",
+      "sha256": "3cf0e7fca3186b4a1650c31801c057788dc1c3ad34fc4b1c93633e06d594eaea",
+      "previous_sha256": "9b42610253f5bd91c79e6ce5f1d4d7b34b01d6aa66f4eba38e5eabd2cd91dcae",
+      "evidence": "Reviewed negotiated local voice changes; see test-report-d2-s2-05.md and test-report-d2-s2-05-fix.md. Not a build/physical approval."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/protocols/websocket_protocol.h",
+      "sha256": "953e67dbe5905c08324345c9ff76caa2ab8b403bc3892130512412a71a964353",
+      "previous_sha256": "273ac38ade4598b241988e66898e59521931ed03635aef354d6332aff9a21d95",
+      "evidence": "Reviewed negotiated local voice changes; see test-report-d2-s2-05.md and test-report-d2-s2-05-fix.md. Not a build/physical approval."
+    },
+    {
+      "path": "../xiaozhi-esp32/managed_components/78__esp-ml307/idf_component.yml",
+      "sha256": "0a57a79752066530dc83dc9744f248ffa9a4edfa9631430decd4beff04526dd1",
+      "previous_sha256": "966175e680e95f6f1700dd69136efbc9b65c6cfd2483752525ff58c0d84922b1",
+      "evidence": "Official registry 3.6.6 archive, checked by restore_firmware_dependency.py; no vendor source edits."
+    },
+    {
+      "path": "../xiaozhi-esp32/managed_components/78__esp-ml307/include/web_socket.h",
+      "sha256": "89575b7197fdc66472571b97257284e92195f7506f10ca33e7adfeb4b7f7ab59",
+      "previous_sha256": "89575b7197fdc66472571b97257284e92195f7506f10ca33e7adfeb4b7f7ab59",
+      "evidence": "Official registry 3.6.6 archive, checked by restore_firmware_dependency.py; no vendor source edits."
+    },
+    {
+      "path": "../xiaozhi-esp32/managed_components/78__esp-ml307/src/web_socket.cc",
+      "sha256": "b7709bfcc4db43e554b8f06d310553aa3663207935b06bef41bd98765517b852",
+      "previous_sha256": "b7709bfcc4db43e554b8f06d310553aa3663207935b06bef41bd98765517b852",
+      "evidence": "Official registry 3.6.6 archive, checked by restore_firmware_dependency.py; no vendor source edits."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/protocols/websocket_protocol.cc",
+      "sha256": "a7cab33e6d8be3cefea096a0760c5c0c93662b9214aeb174b8b28e4891f250ba",
+      "previous_sha256": "ea4f50e20fafc81d23cacf4d98c0a7d29bd4e39a0b91c120a08fe824d50fc620",
+      "evidence": "Reviewed negotiated local voice changes; see test-report-d2-s2-05.md and test-report-d2-s2-05-fix.md. Not a build/physical approval."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/application.cc",
+      "sha256": "fa00fc9c2b33b66dcb1f32a4b1645d93cf9fc341a784b0d99b13ab13e3729d4e",
+      "previous_sha256": "614c09d4a2f7cd9d2288c3184b576cdc171edb1befec86c76f6045c378c11952",
+      "evidence": "Reviewed negotiated local voice changes; see test-report-d2-s2-05.md and test-report-d2-s2-05-fix.md. Not a build/physical approval."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/audio/audio_service.h",
+      "sha256": "d1861d818b1302760edeb54e9313bb594b30a451fa1c8b44dfe402369cc21496",
+      "previous_sha256": "c2094f56a493cb13b431ceae23da437a29316658881199c4fe3d0f843ee50f88",
+      "evidence": "Reviewed negotiated local voice changes; see test-report-d2-s2-05.md and test-report-d2-s2-05-fix.md. Not a build/physical approval."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/audio/audio_service.cc",
+      "sha256": "3e48c0e66742943817a1cf0aa0f18a628a7f70f14d7b366c1d8fc500a2d63292",
+      "previous_sha256": "4f01aa91597173256f19751620c20c6ba28f4fab6ade744ae75a91ab24b6d425",
+      "evidence": "Reviewed negotiated local voice changes; see test-report-d2-s2-05.md and test-report-d2-s2-05-fix.md. Not a build/physical approval."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/ota.cc",
+      "sha256": "7b046477f51deace32169f177c69c368cb6a94294305910f62078410f43893cf",
+      "previous_sha256": "7b046477f51deace32169f177c69c368cb6a94294305910f62078410f43893cf",
+      "evidence": "Unchanged historical snapshot bytes."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/protocols/text_glyph_payload.cc",
+      "sha256": "c215074e4da41516dfecc37d0a3edbbc57a2c544bcae289d0cb3fc9b91213916",
+      "previous_sha256": "c215074e4da41516dfecc37d0a3edbbc57a2c544bcae289d0cb3fc9b91213916",
+      "evidence": "Unchanged historical snapshot bytes."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/assets.cc",
+      "sha256": "2220fa2d24ebdc2ddcef4d438f3a2a6c3ef0647c084def921354ac5ff5f739a9",
+      "previous_sha256": "2220fa2d24ebdc2ddcef4d438f3a2a6c3ef0647c084def921354ac5ff5f739a9",
+      "evidence": "Unchanged historical snapshot bytes."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/audio/audio_codec.h",
+      "sha256": "8916a09dd7c1e93042f9cd6ee5197bba7ef93b16d1061ffaf5e8ff37c2944171",
+      "evidence": "Source audit only; hardware mapping/SDK build remain unverified."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/audio/audio_codec.cc",
+      "sha256": "23dcb10ef5dd841682c05580cb037dc3252339f54648460ef9df232ed3563043",
+      "evidence": "Source audit only; hardware mapping/SDK build remain unverified."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/audio/codecs/no_audio_codec.h",
+      "sha256": "0dbfb2a3342dd2e919ec26a1f0d656e876525f3edfe31a4d3b875b2b05f6c9fd",
+      "evidence": "Source audit only; hardware mapping/SDK build remain unverified."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/audio/codecs/no_audio_codec.cc",
+      "sha256": "32d91a402a12b9e3364b56bd891e34a1b7f86eb8a3a311088aaa26badca64c7b",
+      "evidence": "TX EOF experiment and clang-format 23.1.3 on touched code only; SDK build/hardware acceptance remain BLOCKED."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/audio/i2s_tx_drain_fence.h",
+      "sha256": "42867e3e33cd2a40e17fc3e401d3f716f6647ee5e2811c3e9947bab52d7d3772",
+      "evidence": "TX EOF experiment and clang-format 23.1.3 on touched code only; SDK build/hardware acceptance remain BLOCKED."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/protocols/voice_playback_guard.h",
+      "sha256": "60f0e746faa05157e31662d84ed8fcd3f17f9e12c32896d566d80be1f1360d95",
+      "evidence": "Source audit only; hardware mapping/SDK build remain unverified."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/Kconfig.projbuild",
+      "sha256": "f14a630c4b60a03f59eeff0a04527d40882b2fbe50129d8b8e81c787f1b2c7bf",
+      "evidence": "Source audit only; hardware mapping/SDK build remain unverified."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/application.h",
+      "sha256": "c43c89ebcbb8d6b221e35790dbfef7f1e472ca066ec38c90ee53c89ffa2e426b",
+      "evidence": "Source audit only; hardware mapping/SDK build remain unverified."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/boards/custom/xiaozhi-s3-tft/config.h",
+      "sha256": "929b0b8f965bbcec028c180cf30b481946d7d3107f07b93ee7098aa94891ee47",
+      "evidence": "Source audit only; hardware mapping/SDK build remain unverified."
+    },
+    {
+      "path": "../xiaozhi-esp32/main/boards/custom/xiaozhi-s3-tft/config.json",
+      "sha256": "3f723f62e3afc4a6c9ccf4baa1a874d23bc0dade3cbd171bb3166db89917ae1c",
+      "evidence": "Source audit only; hardware mapping/SDK build remain unverified."
+    }
+  ],
+  "baseline_status": "SOURCE_HASHES_ONLY_NOT_BUILD_OR_HARDWARE_APPROVAL",
+  "previous_snapshot": {
+    "path": "firmware-snapshot-d2-s1-05.json",
+    "sha256": "21dcd2c7e1083704385365298820c871767e96f4cd9283fc985f2cc8d0464930"
+  },
+  "dependency_provenance": {
+    "component": "78/esp-ml307",
+    "version": "3.6.6",
+    "repository_commit": "9f2a278ac6bf4ca3d6bc5057e8fcf10097cc583f",
+    "archive_url": "https://components.espressif.com/api/downloads/?object_id=7e5cb124-dcbf-48f6-83de-d18e75069f4c&object_type=component",
+    "archive_sha256": "6fc750a6dfe8e5723ea8884bb7f5296a3cc03d1f2d4226f742c4be860dc6e6d0",
+    "manifest_note": "Registry-packaged YAML includes repository_info; public WebSocket source hashes exactly match historical snapshot.",
+    "historical_manifest_origin": "UNKNOWN: old manifest hash matches neither official registry archive nor the repository manifest at the archive commit.",
+    "upstream_manifest_sha256": "62663199f5b9e14629bead9e1026968f017815626d71f5e262939e9cf967acfe"
+  }
+}

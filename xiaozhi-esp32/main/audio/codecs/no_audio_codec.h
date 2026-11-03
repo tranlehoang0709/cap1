@@ -6,10 +6,23 @@
 #include <driver/gpio.h>
 #include <driver/i2s_pdm.h>
 #include <mutex>
+#include "audio/i2s_tx_drain_fence.h"
+
+#if CONFIG_AIVA_I2S_TX_DRAIN_PROOF && ESP_IDF_VERSION == ESP_IDF_VERSION_VAL(6, 0, 2)
+#define AIVA_HAS_I2S_TX_DRAIN_PROOF 1
+#else
+#define AIVA_HAS_I2S_TX_DRAIN_PROOF 0
+#endif
 
 class NoAudioCodec : public AudioCodec {
 protected:
     std::mutex data_if_mutex_;
+#if AIVA_HAS_I2S_TX_DRAIN_PROOF
+    mutable portMUX_TYPE drain_mux_ = portMUX_INITIALIZER_UNLOCKED;
+    I2sTxDrainFence drain_fence_;
+    bool drain_callback_registered_ = false;
+    static bool OnTxSent(i2s_chan_handle_t handle, i2s_event_data_t* event, void* context);
+#endif
 
     virtual int Write(const int16_t* data, int samples) override;
     virtual int Read(int16_t* dest, int samples) override;
@@ -18,6 +31,8 @@ protected:
 
 public:
     virtual ~NoAudioCodec();
+    void Start() override;
+    bool IsOutputDrained() const override;
 };
 
 class NoAudioCodecDuplex : public NoAudioCodec {

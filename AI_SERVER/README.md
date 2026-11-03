@@ -4,9 +4,226 @@ Server độc lập bằng Python/FastAPI: cấu hình, vòng đời, `GET /heal
 và WebSocket echo Development. Health xác nhận ứng dụng đang chạy;
 không kiểm tra MySQL, Backend, thiết bị hoặc AI provider.
 
-Chưa triển khai giao thức robot, device authentication, session, heartbeat,
-STT/LLM/TTS hoặc API AI. Log ứng dụng hiện chỉ hỗ trợ sự kiện vòng đời và
+Chưa tích hợp giao thức robot, device authentication, session, heartbeat,
+STT/LLM/TTS hoặc API AI vào ứng dụng. Sprint 2 Task 02 bổ sung foundation
+Audio Input/STT độc lập, chỉ được gọi trong test; xem mục bên dưới.
+Log ứng dụng hiện chỉ hỗ trợ sự kiện vòng đời và
 WebSocket Development; không coi đó là log/auth/session/heartbeat đầy đủ cho robot.
+
+## Sprint 2 Task 02 — Audio Input & STT foundation
+
+Không thêm robot endpoint hoặc provider thật. `/ws/dev-echo` giữ nguyên.
+
+- `app/models/audio.py`: metadata không có default codec/rate, frame bất biến,
+  partial/final transcript và lỗi typed với thông điệp cố định.
+- `app/protocol/audio_framing.py`: `FramingConfig(version, max_payload_bytes)`
+  bắt buộc chọn version; `validate_audio_frame()` nhận một binary message đã
+  ghép fragment. V1 payload trực tiếp; v2 header network-order 16 byte;
+  v3 header network-order 4 byte. Chỉ nhận audio type 0/reserved 0 như firmware
+  đang gửi; kiểm tra size chính xác và giới hạn trước khi tách payload.
+  Đây là policy foundation bám source, chưa phải protocol approval.
+- `app/services/audio_input.py`: interface `AudioInput` và `BoundedAudioInput`,
+  giới hạn cả số frame lẫn byte payload; overflow bị từ chối, không âm thầm drop.
+  Metadata của một input cố định, mỗi instance dành riêng một turn/single consumer.
+  `finish()` cho drain rồi EOF; `aclose()`/cancel xóa buffer ngay.
+- `app/services/audio_context.py`: `AudioContext` dùng absolute monotonic deadline
+  và cancellation event, không reset deadline giữa partials; đóng input khi thao tác
+  phát hiện hết hạn. Context/input dùng cùng event loop, không thread-safe.
+- `app/services/stt.py`: `STTAdapter`, `stream_transcription()` (optional partials,
+  đúng một final), `transcribe()` (chỉ lấy final); cleanup trong `finally`.
+  Khi consumer dừng sớm, dùng `contextlib.aclosing(stream_transcription(...))`.
+  Adapter phải hợp tác với asyncio cancellation, cleanup không được block vô hạn.
+
+Buffer/framing không decode Opus, không chuyển PCM/resample và không xác minh
+bitstream codec. Audio metadata do caller cung cấp, không suy từ wire bytes.
+Caller tương lai phải ràng buộc metadata với hello/profile đã duyệt và áp
+transport message limit trước khi nhận toàn bộ message. Không truyền PCM cho STT
+trừ khi format/conversion của adapter được xác nhận.
+
+`tests/test_audio_foundation.py` chứa mock STT trả text cố định và fixture envelope
+nhị phân tổng hợp, **không phải nhận dạng giọng nói thật hoặc audio Opus được decode**.
+Không có mock/provider nào được gắn vào runtime app. Lệnh test từ `AI_SERVER/`:
+
+```bash
+python -m pytest tests/test_audio_foundation.py -q
+python -m pytest tests -q --tb=short
+```
+
+Xem [báo cáo Task 02](docs/test-report-d2-s2-02.md) về kết quả thực thi,
+snapshot dependency thiếu và các quyết định chờ duyệt trước STT thật.
+
+## Sprint 2 Task 02B — Turn Detection foundation
+
+`app/services/turn_detection.py` nhận speech activity và partial/final transcript,
+trả `WAIT`, `END` hoặc `UNCERTAIN`. `TurnDetector` không nhận audio bytes và không
+chạy VAD/STT. `TextRules` nhận danh sách dấu kết câu/từ đuôi do caller cấp; đây là
+heuristic thử nghiệm, không phải mô hình hiểu câu tiếng Việt. Thiếu bằng chứng
+ngôn ngữ thì không END dù có final transcript hoặc im lặng dài.
+
+`app/services/turn_input.py` cung cấp bridge một turn `HalfDuplexTurn`: khi END,
+gọi `BoundedAudioInput.finish()` rồi emit một `TurnEnded` cho sink Orchestrator
+được inject. PROCESSING/SPEAKING/CLOSED drop mic trước VAD và input.feed, không
+có replay buffer hoặc tự mở turn mới. Chưa có Orchestrator/robot endpoint thật.
+
+Người dùng duyệt **thử nghiệm**: silence 700 ms, stability 300 ms, max duration
+15000 ms; không phải thông số Xiaozhi chính thức. Không có default startup.
+Để caller thử nghiệm nạp `TurnDetectionConfig.from_env()`, cần đủ ba biến:
+
+```bash
+export AI_SERVER_TURN_MIN_SILENCE_MS=700
+export AI_SERVER_TURN_TRANSCRIPT_STABILITY_MS=300
+export AI_SERVER_TURN_MAX_DURATION_MS=15000
+```
+
+Chỉ export không bật detector trong ứng dụng. Tăng silence lên 1000 ms là biến
+thể thử nghiệm khi có cắt lời; chưa có dữ liệu robot để quyết định thay cấu hình.
+Config không đầy đủ/sai bị từ chối, không fallback. Luật ngôn ngữ phải inject rõ.
+
+Caller cung cấp monotonic `at_ms` và tick định kỳ khi im lặng; khi cùng timestamp,
+cập nhật VAD trước khi tick/ra quyết định. Không dùng timestamp wire thay trực tiếp
+cho clock này. Khi tới 15000 ms, policy là UNCERTAIN + `TurnTimedOut`, hủy input
+và context, không END/gọi LLM/tự mở turn mới, kể cả mic đang có speech.
+Deadline `AudioContext` hết trước thì giữ typed error/cancellation của Task 02.
+
+Lệnh test từ `AI_SERVER/`:
+
+```bash
+python -m pytest tests/test_turn_detection.py tests/test_audio_foundation.py -q
+python -m pytest tests/test_turn_detection.py::test_synthetic_endpoint_metrics -q -s
+python -m pytest tests -q --tb=short
+```
+
+Xem [báo cáo tiếng Việt Task 02B](docs/test-report-d2-s2-02b.md): test chỉ dùng
+mock speech events, chưa đo tỷ lệ cắt câu/latency trên mic, decoder hoặc VAD thật.
+
+## Sprint 2 Task 03 — OpenAI LLM adapter
+
+Foundation độc lập, chưa gắn vào robot endpoint/app startup. `LLMAdapter` dùng
+typed request/delta/done; `OpenAILLMAdapter` dùng SDK OpenAI chính thức Responses
+SSE, `store=False`, `max_retries=0`. API key là tham số bắt buộc từ caller tin cậy;
+không tự đọc DB, credential reference hoặc secret từ `.env`. Không có live CLI
+để bypass secret delivery contract đang chờ duyệt.
+
+Cấu hình ban đầu được người dùng duyệt; `LLMSettings` đọc environment, có
+validation, không chứa key và không tự bật OpenAI khi server startup:
+
+```bash
+export AI_SERVER_LLM_MODEL=gpt-6-luna
+export AI_SERVER_LLM_REASONING_EFFORT=none
+export AI_SERVER_LLM_MAX_OUTPUT_TOKENS=256
+export AI_SERVER_LLM_MAX_OUTPUT_CHARS=500
+export AI_SERVER_LLM_MAX_CONCURRENT_REQUESTS=5
+export AI_SERVER_LLM_RESPONSE_LANGUAGE=vi
+```
+
+`LLMRunner` dùng semaphore, fail-fast khi hết slot (không queue/retry), giới hạn
+theo một runner dùng chung trong một process. `Conversation` riêng theo
+User/Session/Device, snapshot history bất biến; caller phải truyền retention
+budgets `max_turns`/`max_history_chars` rõ ràng, chưa có default production được
+duyệt. Không auto trim history. Khi session PROCESSING/SPEAKING, không claim turn
+mới hoặc retry cùng turn; phải close turn rồi release conversation rõ ràng.
+
+Text chunks được buffer tới ranh giới dấu câu, giữ thứ tự; đây là heuristic,
+chưa phải parser ngữ nghĩa. `tts_safe=True` chỉ cho đoạn có dấu kết câu; đuôi
+không dấu của response hoàn tất có `tts_safe=False`. Khi tới character/token
+limit, bỏ đuôi chưa hoàn chỉnh, trả final `complete=False`, không commit history.
+Character limit tính code point Unicode, không slice giữa word/grapheme để ép
+đủ 500. Usage có thể là `None` nếu stream bị đóng trước khi Provider báo số liệu.
+
+Từ `AI_SERVER/`, sau khi cài `requirements-dev.txt`:
+
+```bash
+.venv/bin/python scripts/llm_mock_demo.py
+.venv/bin/python -m pytest tests/test_llm.py -q
+.venv/bin/python -m pytest tests -q --tb=short
+.venv/bin/python scripts/run_dev.py
+```
+
+Server vẫn chỉ phục vụ các endpoint cũ; start server không gọi LLM. Demo là text
+scripted + usage giả, không phải OpenAI inference. Khi consumer dừng streaming
+sớm, dùng `contextlib.aclosing(runner.stream(...))`; disconnect phải close/cancel
+turn để context chung hủy request. Adapter phải hợp tác asyncio cancellation.
+
+Xem [báo cáo Task 03](docs/test-report-d2-s2-03.md) về test SDK với HTTP mock,
+kết quả regression, cách xem streaming và blockers trước live API.
+
+## Sprint 2 Task 04 — TTS & playback foundation
+
+Chưa chọn Cloud TTS provider/model/voice/audio profile; người dùng duyệt chỉ
+interface + mock. `TTSAdapter` stream audio có metadata và định dạng dữ liệu;
+`AudioConverter`/`AudioOutput` là interface cho conversion/output được duyệt sau.
+Không có Opus converter hoặc robot transport mới, không tự gọi Cloud.
+
+`PlaybackScheduler` nhận các `TextChunk.tts_safe` đã chia câu ở Task 03, kiểm tra
+index/final để tránh lặp/thiếu đoạn. Một synthesis stream và một output consumer
+chạy đồng thời; tổng hợp tuần tự, phát tuần tự. Queue giới hạn cả byte/chunk,
+đầy thì backpressure tới producer. Caller bắt buộc truyền TTSConfig/PlaybackLimits,
+không có profile hoặc queue limit production mặc định.
+
+Khi có audio đầu, chuyển turn sang SPEAKING; mic bị chặn bởi HalfDuplexTurn cũ.
+Stream LLM đã chạy được phép tiếp tục cho cùng turn trong SPEAKING; claim request
+LLM mới vẫn bị chặn. Gửi hết audio/`finish()` không có nghĩa playback hoàn tất.
+Scheduler đợi bằng chứng riêng, ràng buộc User/Session/Device/Turn/generation.
+Hiện chỉ chấp nhận proof `mock-only`; `tts.stop`/queue drain/send success không
+được chấp nhận làm ACK. Robot ACK contract chưa có nên robot playback BLOCKED.
+
+Sau proof hợp lệ, đóng turn cũ và trả receipt cho phép Orchestrator tạo turn
+LISTENING mới; không reset detector cũ hoặc tự tạo turn. Nếu timeout/cancel/lỗi,
+clear queue, hủy context/output, giữ scheduler blocked; không dùng hết timeout
+làm bằng chứng playback xong. Recovery/drain policy thật còn chờ duyệt.
+
+Từ AI_SERVER, trong venv đã cài requirements-dev:
+
+```bash
+.venv/bin/python scripts/tts_mock_demo.py
+.venv/bin/python -m pytest tests/test_tts.py tests/test_llm.py -q
+.venv/bin/python -m pytest tests -q --tb=short
+```
+
+Demo tạo `.test-artifacts/tts-mock-demo.wav`: tone tổng hợp PCM 8 kHz/mono/s16le,
+chỉ là audio fixture, không phải production format hoặc firmware PCM wire.
+MockAudioOutput không phát loa; xác nhận playback là thao tác mock riêng trong
+demo. Xem [báo cáo Task 04](docs/test-report-d2-s2-04.md) về cấu hình fixture,
+queue bounds, trạng thái test và các blocker Cloud/codec/ACK/robot.
+
+## D2-S2-API — Backend integration foundation
+
+Chỉ thay đổi AI_SERVER; Backend/Firmware chỉ được đọc để đối chiếu. Không thêm
+robot WebSocket path, không bật contract gates và không tự chọn MAC mapping.
+
+- `app/clients/backend.py`: async HTTPX client dùng chung connection pool, timeout
+  tổng, concurrency/response-size bounds, TLS verification, không redirect/proxy
+  theo environment và không retry. HTTP local chỉ cho loopback khi caller opt-in.
+- `app/models/backend.py`: request/response typed theo DTO/service thực tế; BIGINT
+  IDs là string, credential là SecretStr, reject extra fields/duplicate JSON keys.
+- `app/services/device_auth.py`: Backend allow mới tạo AuthorizedSession; bind
+  deviceId/ownerUserId từ response vào key nội bộ mới. Không dùng wire session ID.
+  Session facade chặn start/mic sau invalidate; bind Orchestrator theo đúng key.
+- `app/services/backend_execution.py`: mock-only quota wrapper chạy admission trước
+  delegate, no replay execution; UsageReporter coalesce report giống nhau, reject
+  conflict. Unknown actual usage giữ pending, không tự báo 0. State này bounded
+  nhưng chỉ trong RAM, chưa phải durable report outbox.
+
+Client hỗ trợ POST authorize/heartbeat/resolve-config/authorize-request/usage theo
+BE/API_CONTRACT.md và source. Reset/conversation/Cloud secret chưa được nối vì
+không có firmware proof, conversation API hoặc secret delivery contract phù hợp.
+Config/voice/model được trả về typed; mock binding kiểm tra đúng model/prompt,
+không tự fallback provider/key. Gate false/network/response lỗi -> fail closed.
+
+Lệnh từ AI_SERVER (venv đã cài requirements-dev):
+
+```bash
+.venv/bin/python -m pytest tests/test_backend_client.py -q --tb=short
+.venv/bin/python -m pytest tests -q --tb=short
+```
+
+Test Backend dùng HTTPX MockTransport và HTTP server giả qua TCP loopback thật,
+không gọi BE/Nest/MySQL/Cloud thật. App startup vẫn giữ các endpoint cũ và không
+tự tạo client/đọc service token. Caller phải truyền service tokens riêng, budgets
+và base origin rõ ràng; không đặt secret literal vào source/command line/log.
+
+Xem [báo cáo API integration](docs/test-report-d2-s2-api.md) về bảng contract,
+runbook macOS và các blocker để kết nối firmware thật.
 
 ## Hồ sơ phần cứng theo sơ đồ
 
@@ -320,3 +537,44 @@ Auth, session và heartbeat chưa có runtime nên event tương ứng chưa đ�
 Không tìm thấy Proposal/Feature List xác nhận phiên bản V1.5. Có tài liệu
 Proposal cũ trong `../xiaozhi-esp32/` nhưng không xác nhận đó là V1.5.
 Phạm vi triển khai theo yêu cầu D2-S1-01 của người dùng.
+
+## D2-S2-05 — Private robot development gateway
+
+`/ws/dev-robot` đã nối các foundation hiện có với native libopus và mock
+STT/LLM/TTS; OFF mặc định, private-IP allowlist + token local bắt buộc, không
+sử dụng Backend hoặc Cloud API. Hai session TCP đồng thời đã được kiểm thử.
+Mock TTS chỉ là tone, mock ACK không phải robot playback.
+
+Hướng dẫn cài libopus, export cấu hình, chạy server/demo, test và tình trạng hai
+board: [báo cáo Task 05](docs/test-report-d2-s2-05.md).
+
+```bash
+.venv/bin/python -m pytest tests/test_robot_gateway.py -q --tb=short
+.venv/bin/python scripts/robot_mock_client.py
+.venv/bin/python scripts/audit_firmware_boards.py
+```
+
+Trong `xiaozhi-esp32/main/boards/custom/` hiện chỉ có `xiaozhi-s3-tft`; chưa
+xác định profile thứ hai/serial. Firmware completion ACK còn chờ driver TX/DMA
+evidence (`IsOutputDrained` fail closed). ESP-IDF build/hai robot/Cloud chưa đạt
+DoD. Kết quả lịch sử Task 05 là 375 PASS, 1 FAIL snapshot; FIX bên dưới đã xử lý
+source baseline/dependency có provenance, không skip test.
+
+
+## D2-S2-05-FIX — Readiness hiện hành
+
+Xem [báo cáo FIX](docs/test-report-d2-s2-05-fix.md): dependency ML307 3.6.6 được
+khôi phục từ archive chính thức, snapshot nguồn có provenance riêng và giữ
+snapshot lịch sử. Có NoAudioCodec TX EOF proof thử nghiệm, OFF mặc định, chỉ
+SDK 6.0.2/S3; chưa build/kiểm thử phần cứng. Gateway vẫn mock AI, private/OFF
+mặc định. Cancel khi chờ socket lock và native encoder cleanup đã có regression.
+
+```bash
+python3 scripts/audit_firmware_snapshot.py
+.venv/bin/python -m pytest tests -q --tb=short
+```
+
+Không coi source snapshot PASS là protocol/board/hardware approval. Chưa có hai
+board đã xác minh, ESP-IDF active hoặc Cloud credentials; không flash/gọi Backend.
+
+Kết quả FIX cuối: **384 pytest PASS**, **70 firmware host tests PASS**. Hardware/Cloud vẫn BLOCKED.

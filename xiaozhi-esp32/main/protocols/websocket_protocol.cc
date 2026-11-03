@@ -59,7 +59,7 @@ bool WebsocketProtocol::SendText(const std::string& text) {
     }
 
     if (!websocket_->Send(text)) {
-        ESP_LOGE(TAG, "Failed to send text: %s", text.c_str());
+        ESP_LOGE(TAG, "Failed to send control message");
         SetError(Lang::Strings::SERVER_ERROR);
         return false;
     }
@@ -85,6 +85,15 @@ bool WebsocketProtocol::OpenAudioChannel() {
         version_ = version;
     }
 
+    half_duplex_ = false;
+    session_id_.clear();
+#if CONFIG_AIVA_DEV_VOICE
+    if (url.empty() || token.empty() || version < 1 || version > 3) {
+        SetError(Lang::Strings::SERVER_ERROR);
+        return false;
+    }
+#endif
+
     error_occurred_ = false;
 
     auto network = Board::GetInstance().GetNetwork();
@@ -109,28 +118,37 @@ bool WebsocketProtocol::OpenAudioChannel() {
         if (binary) {
             if (on_incoming_audio_ != nullptr) {
                 if (version_ == 2) {
-                    BinaryProtocol2* bp2 = (BinaryProtocol2*)data;
-                    bp2->version = ntohs(bp2->version);
-                    bp2->type = ntohs(bp2->type);
-                    bp2->timestamp = ntohl(bp2->timestamp);
-                    bp2->payload_size = ntohl(bp2->payload_size);
-                    auto payload = (uint8_t*)bp2->payload;
+                    if (len < sizeof(BinaryProtocol2)) { SetError(Lang::Strings::SERVER_ERROR); return; }
+                    BinaryProtocol2 header;
+                    memcpy(&header, data, sizeof(header));
+                    auto payload_size = ntohl(header.payload_size);
+                    if (ntohs(header.version) != 2 || ntohs(header.type) != 0 || header.reserved != 0 ||
+                        payload_size == 0 || payload_size != len - sizeof(header) || payload_size > 4096) {
+                        SetError(Lang::Strings::SERVER_ERROR); return;
+                    }
+                    auto payload = (const uint8_t*)data + sizeof(header);
                     on_incoming_audio_(std::make_unique<AudioStreamPacket>(AudioStreamPacket{
                         .sample_rate = server_sample_rate_,
                         .frame_duration = server_frame_duration_,
-                        .timestamp = bp2->timestamp,
-                        .payload = std::vector<uint8_t>(payload, payload + bp2->payload_size)}));
+                        .timestamp = ntohl(header.timestamp),
+                        .payload = std::vector<uint8_t>(payload, payload + payload_size)}));
                 } else if (version_ == 3) {
-                    BinaryProtocol3* bp3 = (BinaryProtocol3*)data;
-                    bp3->type = bp3->type;
-                    bp3->payload_size = ntohs(bp3->payload_size);
-                    auto payload = (uint8_t*)bp3->payload;
+                    if (len < sizeof(BinaryProtocol3)) { SetError(Lang::Strings::SERVER_ERROR); return; }
+                    BinaryProtocol3 header;
+                    memcpy(&header, data, sizeof(header));
+                    auto payload_size = ntohs(header.payload_size);
+                    if (header.type != 0 || header.reserved != 0 || payload_size == 0 ||
+                        payload_size != len - sizeof(header) || payload_size > 4096) {
+                        SetError(Lang::Strings::SERVER_ERROR); return;
+                    }
+                    auto payload = (const uint8_t*)data + sizeof(header);
                     on_incoming_audio_(std::make_unique<AudioStreamPacket>(AudioStreamPacket{
                         .sample_rate = server_sample_rate_,
                         .frame_duration = server_frame_duration_,
                         .timestamp = 0,
-                        .payload = std::vector<uint8_t>(payload, payload + bp3->payload_size)}));
+                        .payload = std::vector<uint8_t>(payload, payload + payload_size)}));
                 } else {
+                    if (len == 0 || len > 4096) { SetError(Lang::Strings::SERVER_ERROR); return; }
                     on_incoming_audio_(std::make_unique<AudioStreamPacket>(AudioStreamPacket{
                         .sample_rate = server_sample_rate_,
                         .frame_duration = server_frame_duration_,
@@ -151,7 +169,7 @@ bool WebsocketProtocol::OpenAudioChannel() {
                     }
                 }
             } else {
-                ESP_LOGE(TAG, "Missing message type, data: %s", std::string(data, len).c_str());
+                ESP_LOGE(TAG, "Missing message type");
             }
             cJSON_Delete(root);
         }
@@ -165,7 +183,7 @@ bool WebsocketProtocol::OpenAudioChannel() {
         }
     });
 
-    ESP_LOGI(TAG, "Connecting to websocket server: %s with version: %d", url.c_str(), version_);
+    ESP_LOGI(TAG, "Connecting to configured websocket server, version: %d", version_);
     if (!websocket_->Connect(url.c_str())) {
         ESP_LOGE(TAG, "Failed to connect to websocket server, code=%d", websocket_->GetLastError());
         SetError(Lang::Strings::SERVER_NOT_CONNECTED);
@@ -201,6 +219,9 @@ std::string WebsocketProtocol::GetHelloMessage() {
     cJSON_AddStringToObject(root, "type", "hello");
     cJSON_AddNumberToObject(root, "version", version_);
     cJSON* features = cJSON_CreateObject();
+#if CONFIG_AIVA_DEV_VOICE
+    cJSON_AddBoolToObject(features, "aiva_half_duplex_v1", true);
+#endif
 #if CONFIG_USE_SERVER_AEC
     cJSON_AddBoolToObject(features, "aec", true);
 #endif
@@ -223,8 +244,8 @@ std::string WebsocketProtocol::GetHelloMessage() {
 
 void WebsocketProtocol::ParseServerHello(const cJSON* root) {
     auto transport = cJSON_GetObjectItem(root, "transport");
-    if (transport == nullptr || strcmp(transport->valuestring, "websocket") != 0) {
-        ESP_LOGE(TAG, "Unsupported transport: %s", transport->valuestring);
+    if (!cJSON_IsString(transport) || strcmp(transport->valuestring, "websocket") != 0) {
+        ESP_LOGE(TAG, "Unsupported transport");
         return;
     }
 
@@ -234,7 +255,25 @@ void WebsocketProtocol::ParseServerHello(const cJSON* root) {
         ESP_LOGI(TAG, "Session ID: %s", session_id_.c_str());
     }
 
+#if CONFIG_AIVA_DEV_VOICE
+    auto features = cJSON_GetObjectItem(root, "features");
+    half_duplex_ = cJSON_IsObject(features) && cJSON_IsTrue(cJSON_GetObjectItem(features, "aiva_half_duplex_v1"));
+    if (!half_duplex_ || session_id_.empty()) return;
+#endif
+
     auto audio_params = cJSON_GetObjectItem(root, "audio_params");
+#if CONFIG_AIVA_DEV_VOICE
+    auto version = cJSON_GetObjectItem(root, "version");
+    auto format = cJSON_GetObjectItem(audio_params, "format");
+    auto rate = cJSON_GetObjectItem(audio_params, "sample_rate");
+    auto channels = cJSON_GetObjectItem(audio_params, "channels");
+    auto duration = cJSON_GetObjectItem(audio_params, "frame_duration");
+    if (!cJSON_IsNumber(version) || version->valuedouble != version_ ||
+        !cJSON_IsString(format) || strcmp(format->valuestring, "opus") != 0 ||
+        !cJSON_IsNumber(rate) || rate->valuedouble != 16000 ||
+        !cJSON_IsNumber(channels) || channels->valuedouble != 1 ||
+        !cJSON_IsNumber(duration) || duration->valuedouble != OPUS_FRAME_DURATION_MS) return;
+#endif
     if (cJSON_IsObject(audio_params)) {
         auto sample_rate = cJSON_GetObjectItem(audio_params, "sample_rate");
         if (cJSON_IsNumber(sample_rate)) {

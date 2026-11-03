@@ -12,7 +12,8 @@ import re
 
 SERVER_ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE_ROOT = SERVER_ROOT.parent
-SNAPSHOT = SERVER_ROOT / "docs" / "firmware-snapshot-d2-s1-05.json"
+SNAPSHOT = SERVER_ROOT / "docs" / "firmware-snapshot-d2-s2-05-fix.json"
+HISTORICAL_SNAPSHOT = SERVER_ROOT / "docs" / "firmware-snapshot-d2-s1-05.json"
 PROTOCOL = SERVER_ROOT / "docs" / "protocol.md"
 
 
@@ -22,14 +23,19 @@ def test_firmware_snapshot_hashes_match_workspace_sources():
     assert snapshot["board_and_build_configuration"] == "PENDING"
     assert snapshot["files"]
 
+    assert snapshot["baseline_status"] == "SOURCE_HASHES_ONLY_NOT_BUILD_OR_HARDWARE_APPROVAL"
+    assert hashlib.sha256(HISTORICAL_SNAPSHOT.read_bytes()).hexdigest() == snapshot["previous_snapshot"]["sha256"]
+    problems = []
     for source in snapshot["files"]:
         path = (SERVER_ROOT / source["path"]).resolve()
         assert path.is_relative_to(WORKSPACE_ROOT.resolve())
-        # Git checkout may convert LF to CRLF on Windows. Hash canonical LF
-        # content so the recorded source identity is independent of checkout.
+        if not path.is_file():
+            problems.append(f"MISSING: {source['path']}")
+            continue
         canonical = path.read_bytes().replace(b"\r\n", b"\n")
-        digest = hashlib.sha256(canonical).hexdigest()
-        assert digest == source["sha256"], source["path"]
+        if hashlib.sha256(canonical).hexdigest() != source["sha256"]:
+            problems.append(f"CHANGED: {source['path']}")
+    assert not problems, "\n".join(problems)
 
 
 def test_documented_json_examples_are_valid_json():

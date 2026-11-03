@@ -20,11 +20,13 @@ public:
     bool OpenAudioChannel() override;
     void CloseAudioChannel(bool send_goodbye = true) override;
     bool IsAudioChannelOpened() const override;
+    bool HasHalfDuplexPlayback() const override { return half_duplex_; }
 
 private:
     EventGroupHandle_t event_group_handle_;
     std::unique_ptr<WebSocket> websocket_;
     int version_ = 1;
+    bool half_duplex_ = false;
 
     void ParseServerHello(const cJSON* root);
     bool SendText(const std::string& text) override;

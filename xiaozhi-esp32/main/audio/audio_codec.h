@@ -35,6 +35,9 @@ public:
     virtual void EnableOutput(bool enable);
 
     virtual void OutputData(std::vector<int16_t>& data);
+    virtual bool OutputDataChecked(std::vector<int16_t>& data);
+    // Fail closed until a concrete driver supplies verified DMA/output evidence.
+    virtual bool IsOutputDrained() const { return false; }
     virtual bool InputData(std::vector<int16_t>& data);
     virtual void Start();
 

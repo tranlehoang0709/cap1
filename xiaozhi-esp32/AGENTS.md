@@ -194,3 +194,26 @@ The build script changes local `sdkconfig` and build state. Do not assume the bu
 - CI matrix: `.github/workflows/build.yml`
 
 Keep detailed or fast-changing information in those files, not here. Add a nested `AGENTS.md` only when a subsystem needs specialized instructions.
+
+
+## Hiện trạng Task 05 local voice (03/11/2026)
+
+Có extension development `aiva_half_duplex_v1`, chỉ quảng bá khi bật
+`CONFIG_AIVA_DEV_VOICE` (default n), dùng NVS WebSocket thay activation/OTA.
+Guard và server transport được kiểm thử host/mock; chưa build ESP-IDF hoặc flash.
+Trong `boards/custom/` chỉ có `xiaozhi-s3-tft` provisional; không tự coi các
+profile 1.54 inch khác là board D1 của dự án. Chưa có driver override
+`AudioCodec::IsOutputDrained()`; giữ false và BLOCKED hardware completion.
+Không dùng software queue drain hoặc tts.stop thay TX/DMA proof. Xem
+`docs/aiva-dev-voice.md` và `../AI_SERVER/docs/test-report-d2-s2-05.md`.
+
+
+## D2-S2-05-FIX — TX evidence experiment
+
+NoAudioCodec có IsOutputDrained override sau flag riêng
+CONFIG_AIVA_I2S_TX_DRAIN_PROOF (OFF, S3, đúng SDK 6.0.2). Callback on_sent/fence
+hai pass địa chỉ DMA đã có host tests, chưa build/validate ISR trên mạch.
+Driver khác và cấu hình mặc định vẫn false. Không bật flag trước khi kiểm tra
+SDK/board/ISR. ML307 được restore nguyên archive registry 3.6.6 với checksum;
+chưa resolve toàn bộ dependencies hoặc có lock. Snapshot FIX là source audit,
+không phải physical/protocol approval. Xem ../AI_SERVER/docs/test-report-d2-s2-05-fix.md.

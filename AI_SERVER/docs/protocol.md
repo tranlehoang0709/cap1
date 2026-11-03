@@ -451,6 +451,21 @@ state machine hoặc xác nhận “valid/invalid robot message” bằng Pydant
 cú pháp JSON của ví dụ; kết quả đó **không phải kiểm thử validator hoặc robot thật**.
 Client script giữ nguyên echo, không tự gửi hello/reboot/audio.
 
+**Bổ sung Sprint 2 Task 02 (03/11/2026):** module độc lập
+`app/protocol/audio_framing.py` kiểm tra envelope audio v1/v2/v3 từ source
+`protocol.h`/`WebsocketProtocol::SendAudio()`, không được endpoint gọi và không
+thay đổi trạng thái schema runtime robot PENDING. Caller bắt buộc chọn version
+và max payload; validator chỉ chấp nhận type 0/reserved 0 như source sender.
+Payload không rỗng, size khai báo phải khớp chính xác và trong limit. Đây là
+policy foundation/test, không tuyên bố profile đã được Dev 3 duyệt hay bitstream
+Opus hợp lệ. Metadata upload quan sát được vẫn Opus/16 kHz/mono/60 ms; chưa có
+decoder, resampler, PCM wire hoặc STT provider được tích hợp.
+
+Checkout kiểm tra Task 02 thiếu ba file managed dependency trong snapshot cũ;
+auto-Pong/library transport ở mục 7 hiện chỉ có bằng chứng tài liệu lịch sử,
+chưa thể xác minh lại tại checkout này. Test hash snapshot cũ không được bỏ qua
+hoặc sửa thành PASS; xem báo cáo Task 02.
+
 ## 9. Checklist xác nhận Dev 3 / Dev 1
 
 Tất cả ô dưới là **PENDING**, chưa ghi nhận xác nhận từ Dev 3:
@@ -494,3 +509,59 @@ DoD phần tài liệu/snapshot được báo riêng trong
 [`test-report-d2-s1-05.md`](test-report-d2-s1-05.md). Schema runtime, auth,
 session, heartbeat, close policy robot và tương thích phần cứng còn PENDING;
 **D2-S1-05 chưa được nghiệm thu như một giao thức robot hoàn chỉnh**.
+
+## D2-S2-05 — Extension development được triển khai hai phía
+
+Phần này bổ sung runtime private development, không đổi trạng thái phê duyệt
+production/upstream của các bản draft/snapshot lịch sử ở trên.
+Endpoint `/ws/dev-robot` OFF mặc định; không dùng Backend. Xem
+`test-report-d2-s2-05.md` và `../../xiaozhi-esp32/docs/aiva-dev-voice.md`.
+
+Hello yêu cầu `Protocol-Version` header bằng hello.version (1/2/3), Bearer token
+local, Device-Id/Client-Id metadata, profile đúng source firmware:
+
+```json
+{"type":"hello","version":1,"transport":"websocket","features":{"aiva_half_duplex_v1":true},"audio_params":{"format":"opus","sample_rate":16000,"channels":1,"frame_duration":60}}
+```
+
+Server cấp session_id mới, trả cùng feature và audio profile. V1 raw Opus; V2
+header `!HHIII` (version=2/type=0/reserved=0/timestamp/length); V3 `!BBH`
+(type=0/reserved=0/length). Native codec kiểm tra Opus/frame duration độc lập
+với envelope validator. PCM fixture không được gửi trực tiếp lên wire.
+
+Đây là extension do hai phía cùng triển khai, không coi là message ACK đã có
+sẵn trong Xiaozhi upstream. Server gửi start có binding:
+
+```json
+{"type":"tts","state":"start","session_id":"session","turn_id":"turn","playback_id":"generation"}
+```
+
+Firmware chỉ ready sau chuyển SPEAKING/reset decoder/old software drain:
+
+```json
+{"type":"playback","state":"ready","session_id":"session","turn_id":"turn","playback_id":"generation","audio_chunks":0}
+```
+
+Sau ordered audio, server gửi scoped stop kèm tổng số packets:
+
+```json
+{"type":"tts","state":"stop","session_id":"session","turn_id":"turn","playback_id":"generation","audio_chunks":2}
+```
+
+Firmware chỉ được gửi sự kiện sau đây nếu đủ counts, software drain và driver
+TX completion proof; **driver proof thử nghiệm OFF mặc định, hardware BLOCKED**:
+
+```json
+{"type":"playback","state":"complete","session_id":"session","turn_id":"turn","playback_id":"generation","audio_chunks":2}
+```
+
+Mock client tạo ACK mô phỏng có nhãn, không chứng minh firmware/loa thật. Sai
+scope/count/state hoặc duplicate completion bị reject. Timeout/cancel/disconnect
+cleanup và đóng session; không tự coi abort, queue drain, thời lượng audio hoặc
+tts.stop là proof để mở nghe. PROCESSING/SPEAKING drop mic trước decode/VAD/STT.
+Không hỗ trợ voice barge-in/realtime ở endpoint này. Legacy echo giữ nguyên.
+
+
+Cập nhật FIX: NoAudioCodec có TX EOF experiment riêng OFF mặc định, SDK 6.0.2/S3.
+Proof/count/scope JSON không đổi. Snapshot FIX có provenance source và dependency
+restore; snapshot PASS không duyệt hardware/protocol. Xem test-report-d2-s2-05-fix.md.
