@@ -4,10 +4,15 @@ import ipaddress
 from typing import Literal
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from app.core.config import PROJECT_ROOT
 
 
 class RobotSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="AI_SERVER_ROBOT_", hide_input_in_errors=True)
+    model_config = SettingsConfigDict(
+        env_prefix="AI_SERVER_ROBOT_", env_file=PROJECT_ROOT / ".env",
+        env_file_encoding="utf-8", env_ignore_empty=True, extra="ignore",
+        hide_input_in_errors=True,
+    )
     enabled: bool = False
     ai_mode: Literal["mock", "gemini"] = "mock"
     token: SecretStr | None = Field(default=None, repr=False)

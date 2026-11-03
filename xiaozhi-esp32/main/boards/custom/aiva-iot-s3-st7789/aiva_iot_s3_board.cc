@@ -11,6 +11,15 @@
 #include <esp_lcd_panel_vendor.h>
 #include <esp_log.h>
 
+#if CONFIG_AIVA_SD2_USB_DEV_CONSOLE
+#include <esp_system.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <cstdio>
+#include <sstream>
+#include "settings.h"
+#endif
+
 #if defined(LCD_TYPE_ILI9341_SERIAL)
 #include "esp_lcd_ili9341.h"
 #endif
@@ -128,6 +137,89 @@ private:
         });
     }
 
+#if CONFIG_AIVA_SD2_USB_DEV_CONSOLE
+    static void HandleUsbCommand(const std::string& command) {
+        auto& app = Application::GetInstance();
+        if (command == "status") {
+            Settings settings("websocket", false);
+            ESP_LOGI(TAG, "AIVA_STATUS state=%d ws_configured=%d",
+                     static_cast<int>(app.GetDeviceState()),
+                     !settings.GetString("url").empty() && !settings.GetString("token").empty());
+        } else if (command == "record") {
+            app.Schedule([]() {
+                auto& current = Application::GetInstance();
+                if (current.GetDeviceState() == kDeviceStateIdle) {
+                    ESP_LOGI(TAG, "AIVA_RECORD requested (manual stop)");
+                    current.StartListening();
+                } else {
+                    ESP_LOGW(TAG, "AIVA_RECORD rejected: device is busy");
+                }
+            });
+        } else if (command == "stop") {
+            app.Schedule([]() {
+                auto& current = Application::GetInstance();
+                if (current.GetDeviceState() == kDeviceStateListening) {
+                    current.StopListening();
+                    ESP_LOGI(TAG, "AIVA_STOP requested");
+                }
+            });
+        } else if (command == "reboot") {
+            esp_restart();
+        } else if (command.rfind("ws ", 0) == 0) {
+            if (app.GetDeviceState() != kDeviceStateIdle) {
+                ESP_LOGW(TAG, "AIVA_WS rejected: configure while idle");
+                return;
+            }
+            std::istringstream input(command);
+            std::string verb, url, token, version, extra;
+            input >> verb >> url >> token >> version;
+            bool valid_url = url.rfind("ws://", 0) == 0 || url.rfind("wss://", 0) == 0;
+            if (!valid_url || url.size() > 256 || token.size() < 32 || token.size() > 128 ||
+                (version != "1" && version != "2" && version != "3") || input >> extra) {
+                ESP_LOGW(TAG, "AIVA_WS invalid configuration (values hidden)");
+                return;
+            }
+            Settings settings("websocket", true);
+            settings.SetString("url", url);
+            settings.SetString("token", token);
+            settings.SetInt("version", version[0] - '0');
+            ESP_LOGI(TAG, "AIVA_WS saved; reboot before changing an existing connection");
+        } else if (!command.empty()) {
+            ESP_LOGW(TAG, "AIVA_USB unknown command (input hidden)");
+        }
+    }
+
+    void InitializeUsbDevConsole() {
+        xTaskCreate(
+            [](void*) {
+                std::string command;
+                command.reserve(512);
+                bool overflow = false;
+                while (true) {
+                    int value = std::getchar();
+                    if (value == EOF) {
+                        std::clearerr(stdin);
+                        vTaskDelay(pdMS_TO_TICKS(20));
+                        continue;
+                    }
+                    if (value == '\n' || value == '\r') {
+                        if (!overflow)
+                            HandleUsbCommand(command);
+                        command.clear();
+                        overflow = false;
+                    } else if (value >= 32 && value <= 126) {
+                        if (command.size() < 512)
+                            command.push_back(static_cast<char>(value));
+                        else
+                            overflow = true;
+                    }
+                }
+            },
+            "sd2_usb_dev", 4096, nullptr, 3, nullptr);
+        ESP_LOGI(TAG, "AIVA_USB_READY commands: ws, record, stop, status, reboot");
+    }
+#endif
+
     // ç‰©è”ç½‘åˆå§‹åŒ–ï¼Œæ·»åŠ å¯¹ AI
     // å¯è§è®¾å¤‡
 public:
@@ -135,6 +227,9 @@ public:
         InitializeSpi();
         InitializeLcdDisplay();
         InitializeButtons();
+#if CONFIG_AIVA_SD2_USB_DEV_CONSOLE
+        InitializeUsbDevConsole();
+#endif
         if (DISPLAY_BACKLIGHT_PIN != GPIO_NUM_NC) {
             GetBacklight()->RestoreBrightness();
         }

@@ -1,0 +1,3 @@
+-r requirements-dev.txt
+# Native Opus DLL is included by the Windows wheel; the Python wrappers are optional.
+PyOgg==0.6.14a1; sys_platform == "win32"

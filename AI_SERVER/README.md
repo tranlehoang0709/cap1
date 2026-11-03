@@ -610,3 +610,9 @@ The standalone `scripts/gemini_voice_demo.py` streams text through `LLMRunner`, 
 ## D2-S2-10 — File voice pipeline
 
 `scripts/gemini_voice_file_pipeline.py` accepts completed WAV/Ogg Opus utterances and calls Gemini STT adapter, `LLMRunner` with Voice Response Policy V1, then Gemini TTS adapter. Repeat `--audio` for consecutive turns; user/session identity is explicit. It writes validated outputs to `artifacts/`. The diagnostic requires both `--enable` and `AI_SERVER_VOICE_PIPELINE_DEMO_ENABLE=true`, plus `AI_SERVER_BACKEND_MODE=development-mock`; it invokes real adapters only and does not bypass production integrated auth/quota because it is not a runtime route. The workspace has no supplied recording of a user question and current Gemini access failed with network error, so no live pipeline PASS is claimed. See [D2-S2-10 report](docs/test-report-d2-s2-10.md).
+
+
+## SD2 Gemini LAN diagnostic
+
+See [SD2 Gemini LAN setup and test results](docs/sd2-gemini-lan.md) for the local
+`.env`, Windows native audio, USB configuration and observed quota limitation.

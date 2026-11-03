@@ -7,6 +7,7 @@ import pytest
 
 from app.core.config import Settings, get_settings
 from app.core.backend_config import BackendSettings
+from app.core.robot_config import RobotSettings
 
 
 @pytest.fixture(autouse=True)
@@ -18,6 +19,7 @@ def isolated_settings(monkeypatch):
     monkeypatch.setenv("AI_SERVER_BACKEND_MODE", "development-mock")
     monkeypatch.setitem(Settings.model_config, "env_file", None)
     monkeypatch.setitem(BackendSettings.model_config, "env_file", None)
+    monkeypatch.setitem(RobotSettings.model_config, "env_file", None)
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()

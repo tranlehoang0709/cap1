@@ -389,3 +389,32 @@ Set `AI_SERVER_TTS_DIAGNOSTICS=true` for content-free segment timing. The
 interactive first segment has zero measured queue wait and a per-segment
 AudioContext deadline; do not increase it or retry to hide provider stalls.
 Compare with the standalone call path in `docs/test-report-d2-s2-11f.md`.
+
+## SD2 Gemini LAN voice diagnostic (2026-11-04)
+
+| From | Via | Note |
+|---|---|---|
+| `.env` | `RobotSettings` | Read gateway config |
+| `Settings.opus_library` | `OpusCodec` | Explicit native DLL |
+| `run_server.cmd` | `scripts/run_dev.py` | Local process PATH |
+| `sd2_console.py` | SD2 USB console | LAN token, not key |
+| SD2 manual stop | `/ws/dev-robot` | Gemini STT/LLM/TTS |
+| `RobotAudioOutput` | Opus pacing | 60 ms per packet |
+| SD2 DMA evidence | Playback complete | Scope/count required |
+
+Current user naming supersedes old diagram labels: SD1=`xiaozhi-s3-tft`,
+SD2=`aiva-iot-s3-st7789`. The local `.env` was normalized without changing the
+user's Gemini key; secrets and backups remain ignored. The Windows venv has
+the declared dependencies plus PyOgg native Opus and pyserial. The explicit
+DLL setting avoids relying on a broken global PATH. Integrated Backend mode
+remains unchanged; the live test explicitly uses development-mock plus Gemini.
+User-selected knowledge answers do not enable Internet search.
+
+Live LLM probe, LAN HTTP/WebSocket, SD2 connection/input, Gemini STT/LLM/TTS,
+and audible output were observed. User confirmed hearing output; provider
+rate_limited interrupted the last turn, so full-turn/repeated-conversation
+acceptance remains pending quota. No automatic retry. Firmware DMA completion
+worked with mock tone; do not infer production acceptance from that result.
+Server tests: 507 PASS and one pre-existing historical snapshot hash FAIL;
+do not overwrite historical snapshots to force approval. Firmware host build
+and asset tests: 70 PASS. See `docs/sd2-gemini-lan.md`.

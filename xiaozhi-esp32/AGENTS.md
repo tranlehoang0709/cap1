@@ -228,3 +228,12 @@ SD2 đã build bằng ESP-IDF 6.0.2, flash/verify trên COM3 và boot đúng SKU
 quan sát 40 giây không panic/reset loop. Đây chỉ là nghiệm thu nạp/boot,
 chưa nghiệm thu audio, wake word, AI_SERVER hoặc OTA. BOOT GPIO vẫn chưa biết.
 Xem `docs/sd2-flash-check-2026-11-04.md` và README của board SD2.
+
+SD2 now also has an explicit `aiva-iot-s3-st7789-dev-voice` variant for private
+LAN tests. It enables AIVA transport, USB record/stop/configuration and the
+ESP-IDF 6.0.2 TX/DMA experiment. Physical GPIOs and the stable variant are
+unchanged. USB receives only the LAN token; Gemini keys stay in AI_SERVER.
+Build/flash, real device connection/input and mock hardware playback completion
+were verified; the user heard Gemini output, but rate_limited interrupted the
+turn. Do not claim stable/full Cloud conversation acceptance yet. See
+`../AI_SERVER/docs/sd2-gemini-lan.md` for settings and known test limitations.

@@ -4,9 +4,22 @@ import ctypes as c
 import ctypes.util
 import struct
 
+from app.core.config import get_settings
+
 
 class CodecError(ValueError):
     pass
+
+
+def _load_opus_library():
+    # An explicit local DLL path avoids relying on a global Windows PATH.
+    path = get_settings().opus_library or ctypes.util.find_library("opus")
+    if not path:
+        raise CodecError("libopus unavailable")
+    try:
+        return c.CDLL(str(path))
+    except OSError:
+        raise CodecError("libopus unavailable") from None
 
 
 def resample_pcm16(pcm: bytes, source_rate: int, target_rate: int) -> bytes:
@@ -36,10 +49,7 @@ class OpusCodec:
     def __init__(self, rate: int, frame_ms: int):
         if type(rate) is not int or rate not in (8000, 12000, 16000, 24000, 48000) or type(frame_ms) is not int or frame_ms not in (10, 20, 40, 60):
             raise CodecError("Unsupported Opus profile")
-        path = ctypes.util.find_library("opus")
-        if not path:
-            raise CodecError("libopus unavailable")
-        self.lib = c.CDLL(path)
+        self.lib = _load_opus_library()
         self.rate, self.frame_ms, self.samples = rate, frame_ms, rate * frame_ms // 1000
         self.decoder = self.encoder = None
         self.lib.opus_decoder_create.argtypes = [c.c_int, c.c_int, c.POINTER(c.c_int)]

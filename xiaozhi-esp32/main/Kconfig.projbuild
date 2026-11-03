@@ -19,6 +19,14 @@ config AIVA_I2S_TX_DRAIN_PROOF
         Requires ESP-IDF 6.0.2 and hardware/ISR validation before enabling.
         Unsupported drivers/SDKs fail closed; no delay or estimated duration ACK.
 
+config AIVA_SD2_USB_DEV_CONSOLE
+    bool "SD2 USB commands for private voice diagnostics"
+    depends on AIVA_DEV_VOICE && BOARD_TYPE_AIVA_IOT_S3_ST7789 && ESP_CONSOLE_USB_SERIAL_JTAG
+    default n
+    help
+        Configure the private WebSocket URL/token/version over USB and use
+        record/stop commands without assigning an unverified physical button.
+
 config OTA_URL
     string "Default OTA URL"
     default "https://api.tenclass.net/xiaozhi/ota/"

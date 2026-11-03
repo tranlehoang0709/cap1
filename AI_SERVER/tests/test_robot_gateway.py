@@ -105,7 +105,11 @@ def test_bad_frame_closes_and_releases(monkeypatch,version):
             session=hello(ws,version)
             ws.send_json(dict(type='listen',state='start',mode='auto',session_id=session))
             ws.send_bytes(b'\xff')
-            assert ws.receive()['type']=='websocket.close'
+            message = ws.receive()
+            if version == 1:
+                assert json.loads(message['text']) == {'type': 'error', 'code': 'OPUS_CODEC_ERROR'}
+                message = ws.receive()
+            assert message['type'] == 'websocket.close'
         assert client.app.state.robot_slots._value==2
 
 @pytest.mark.parametrize('rate',[8000,12000,16000,24000,48000])
@@ -173,7 +177,9 @@ def test_real_tcp_two_clients(tmp_path):
     with socket.socket() as probe:
         probe.bind(('127.0.0.1',0)); port=probe.getsockname()[1]
     env={k:v for k,v in os.environ.items() if not k.upper().startswith('AI_SERVER_')}
-    env.update(AI_SERVER_HOST='127.0.0.1',AI_SERVER_PORT=str(port),AI_SERVER_RELOAD='false',AI_SERVER_ROBOT_ENABLED='true',AI_SERVER_ROBOT_TOKEN=TOKEN,AI_SERVER_ROBOT_ENERGY_THRESHOLD='100')
+    env.update(AI_SERVER_HOST='127.0.0.1',AI_SERVER_PORT=str(port),AI_SERVER_RELOAD='false',AI_SERVER_ROBOT_ENABLED='true',AI_SERVER_ROBOT_TOKEN=TOKEN,AI_SERVER_ROBOT_ENERGY_THRESHOLD='100',
+               AI_SERVER_BACKEND_MODE='development-mock', AI_SERVER_ROBOT_AI_MODE='mock',
+               AI_SERVER_ROBOT_ALLOWED_NETWORKS='["127.0.0.0/8"]')
     with (tmp_path/'tcp.log').open('w+') as log:
         process=subprocess.Popen([sys.executable,str(root/'scripts/run_dev.py')],env=env,stdout=log,stderr=log,cwd=root)
         try:
@@ -194,7 +200,10 @@ def test_real_tcp_two_clients(tmp_path):
             assert all(r['audio_chunks']==2 for r in results)
             print('REAL TCP / MOCK AI:',results)
         finally:
-            process.send_signal(signal.SIGINT)
+            if os.name == 'nt':
+                process.terminate()
+            else:
+                process.send_signal(signal.SIGINT)
             try: process.wait(timeout=8)
             except subprocess.TimeoutExpired: process.kill(); process.wait(); pytest.fail('server cleanup timed out')
         log.seek(0); output=log.read()

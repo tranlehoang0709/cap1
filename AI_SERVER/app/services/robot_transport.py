@@ -118,6 +118,7 @@ class RobotAudioOutput:
         self.count = 0
         self.finished = False
         self.aborted = False
+        self.next_packet_at = 0.0
 
     async def json(self, value):
         async with self.lock:
@@ -136,17 +137,26 @@ class RobotAudioOutput:
         self.complete.clear()
         await self.json(self.control("start"))
         await context.run(self.ready.wait)
+        self.next_packet_at = asyncio.get_running_loop().time()
 
     async def write(self, audio, context):
         context.check()
         if audio.scope != self.scope or self.finished or self.aborted or not self.ready.is_set():
             raise ValueError("Stale audio")
+        # Native WebSocket sends can outrun the device's bounded decoder queue.
+        # Pace delivery at the negotiated 60 ms frame rate; completion still
+        # requires the separate matching hardware playback proof below.
+        loop = asyncio.get_running_loop()
+        delay = self.next_packet_at - loop.time()
+        if delay > 0:
+            await context.run(lambda: asyncio.sleep(delay))
         packet = encode_audio_frame(AudioFrame(audio.chunk.payload, (self.count * 60) & 0xffffffff), self.framing)
         async with self.lock:
             context.check()
             if audio.scope != self.scope or self.finished or self.aborted:
                 raise ValueError("Stale audio after transport wait")
             await self.ws.send_bytes(packet)
+            self.next_packet_at = max(self.next_packet_at, loop.time()) + .06
         self.count += 1
 
     async def finish(self, scope, context):

@@ -68,3 +68,13 @@ correct SKU and 8 MB PSRAM, initialized LCD and I2S, and reused existing Wi-Fi
 settings. No panic or reset loop was observed. Visual display/audio acceptance
 and connection to the project's AI Server were not tested. See
 [`docs/sd2-flash-check-2026-11-04.md`](../../../../docs/sd2-flash-check-2026-11-04.md).
+
+
+## Private Gemini voice diagnostic
+
+The explicit `aiva-iot-s3-st7789-dev-voice` variant adds private WebSocket and
+USB `ws`/`record`/`stop`/`status`/`reboot` commands without assigning BOOT GPIO.
+Use the guide at `AI_SERVER/docs/sd2-gemini-lan.md` in the workspace root.
+The API key stays on the server. Native TX/DMA proof remains experimental.
+The real trial produced audible Gemini output but was interrupted by provider
+rate_limited; full-turn/repeated-conversation acceptance is still pending.

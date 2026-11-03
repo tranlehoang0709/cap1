@@ -18,6 +18,19 @@ SPEC.loader.exec_module(build)
 
 
 class VersionTests(unittest.TestCase):
+    def test_sd2_voice_variant_is_explicit_and_keeps_stable_build(self):
+        config = json.loads((ROOT / 'main/boards/custom/aiva-iot-s3-st7789/config.json').read_text(encoding='utf-8'))
+        entries = {item['name']: item['sdkconfig_append'] for item in config['builds']}
+        self.assertNotIn('CONFIG_AIVA_DEV_VOICE=y', entries['aiva-iot-s3-st7789'])
+        voice = entries['aiva-iot-s3-st7789-dev-voice']
+        self.assertIn('CONFIG_AIVA_DEV_VOICE=y', voice)
+        self.assertIn('CONFIG_AIVA_SD2_USB_DEV_CONSOLE=y', voice)
+        self.assertIn('CONFIG_AIVA_I2S_TX_DRAIN_PROOF=y', voice)
+        variants = build._collect_variants(idf_version=(6, 0, 2))
+        variant = next(v for v in variants if v['name'] == 'aiva-iot-s3-st7789-dev-voice')
+        self.assertEqual(variant['board'], 'custom/aiva-iot-s3-st7789')
+        self.assertEqual(variant['target'], 'esp32s3')
+
     def test_sd2_build_replaces_sd1_selection_and_keeps_usb_console(self):
         variants = build._collect_variants(idf_version=(6, 0, 2))
         sd1 = next(v for v in variants if v["board"] == "custom/xiaozhi-s3-tft")
