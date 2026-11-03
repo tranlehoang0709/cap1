@@ -10,6 +10,7 @@ from app.models import backend as dto
 from app.models.audio import AudioError, ErrorCode, positive_int
 from app.models.llm import LLMError, LLMErrorCode, ProviderDone
 from app.services.mock_llm import MockLLMAdapter
+from app.services.user_rate_limit import UserRateLimit
 
 
 class UsageReporter:
@@ -24,6 +25,7 @@ class UsageReporter:
         self.client, self.max_entries = client, max_entries
         self._entries = {}
         self.pending = set()
+        self.rate_limit = UserRateLimit()
 
     def reserve(self, request_id):
         if request_id in self._entries:
@@ -80,6 +82,7 @@ class QuotaLLMAdapter:
         if request.turn_id in self._attempted:
             raise BackendError(BackendCode.DUPLICATE)
         request_id = str(uuid4())
+        self.reporter.rate_limit.claim(session.key.user_id)
         self.reporter.reserve(request_id)  # Bound attempts before side effects.
         self._attempted.add(request.turn_id)
         admission = await session.client.admit(dto.Admission(requestId=request_id,

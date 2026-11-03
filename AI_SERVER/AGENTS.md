@@ -184,3 +184,208 @@ manifest lịch sử có nguồn UNKNOWN, không ép hash bằng sửa vendor. F
 NoAudioCodec EOF experiment OFF mặc định; base/driver khác vẫn fail closed.
 Hardware, board mapping và Cloud vẫn BLOCKED. Xem báo cáo FIX, không suy hardware
 PASS từ unit tests hoặc source hashes.
+# Cập nhật tích hợp Backend — 03/11/2026
+
+| Từ | Qua | Ghi chú |
+|---|---|---|
+| `create_app()` | `BackendSettings` | Chọn mode rõ ràng |
+| `robot_endpoint()` | `backend_settings.mode` | Chặn integrated |
+| `BackendSettings.create_client()` | `BackendClient` | Factory chưa nối |
+| `QuotaLLMAdapter.stream()` | `UserRateLimit.claim()` | 12/user/60 giây |
+| `isolated_settings` | `BackendSettings` | Bỏ env file test |
+
+Internal auth controller có source nhưng không được DevicesModule đăng ký;
+AiProvidersModule/QuotasModule rỗng. Integrated chặn trước accept/audio, chưa
+gọi Backend. Factory không tự chạy khi startup. Quota bridge vẫn mock-only;
+limiter chia sẻ qua reporter, không thay admission global. Xem
+`docs/backend-integration-report.md` về các blocker và kết quả test thực tế.
+
+
+## Runtime integration audit update (2026-11-03)
+
+The historical integration notes above are superseded by `docs/runtime-integration-audit.md`. `AI_SERVER_BACKEND_MODE` defaults to `integrated`; use of mocks requires explicit `development-mock`. Integrated `/ws/dev-robot` calls Backend device authorization and resolve-config before accepting audio, then fails closed before audio because real STT/TTS, approved secret delivery, quota-ready persistence, and firmware proof headers are unavailable. Do not report fixture success as live service or hardware success.
+
+## D2-S2-06 — OpenAI live probe update
+
+`OpenAILLMAdapter.stream()` remains the Task 03 Responses streaming foundation. `scripts/test_openai_connection.py` is an isolated one-request live probe that reads `OPENAI_API_KEY`/`OPENAI_MODEL` from environment or `.env`; it uses the OpenAI SDK with zero retries and the existing LLM output-token setting. It does not connect this adapter to WebSocket runtime and does not alter quota/rate limits. Live probe is BLOCKED until a real key is configured. Details: `docs/test-report-d2-s2-06.md`.
+
+## D2-S2-06G — Gemini API
+
+`GeminiLLMAdapter` dùng SDK chính thức `google-genai` và cùng provider-neutral LLM contract với OpenAI; không sửa `OpenAILLMAdapter` và không fallback giữa provider. `scripts/test_gemini_connection.py` chỉ thực hiện một request thật, dùng model từ `GEMINI_MODEL`, giới hạn token LLM hiện có, timeout và retry attempts=1. Gemini free-tier model example: `gemini-3.8-flash`. Live run ngày 03/11/2026 nhận HTTP 503; không có response/usage live để xác nhận quyền truy cập. Backend integrated fail-closed và quota không thay đổi. Xem `docs/test-report-d2-s2-06g.md`.
+
+
+## D2-S2-07 ? Gemini provider adapter diagnostic
+
+| From | Via | Note |
+|---|---|---|
+| `AI_SERVER_LLM_PROVIDER` | `provider_factory` | Selects one provider |
+| `provider_factory` | `GeminiLLMAdapter` | No fallback |
+| `GeminiLLMAdapter` | `LLMRunner` | Streaming/context/usage |
+| `scripts/gemini_adapter_demo.py` | `LLMRunner` | Explicit dev-only live probe |
+| `QuotaLLMAdapter` | `MockLLMAdapter` | Still mock-only |
+
+Gemini is callable through standalone diagnostics, not robot integrated
+runtime. Integrated execution stays fail-closed while Backend admission,
+secret delivery, durable usage/idempotency, real STT/TTS and firmware playback
+proof remain unavailable. Local 12/minute limiter is not Backend policy.
+
+
+## D2-S2-08 - Gemini STT Adapter
+
+| From | Via | Note |
+|---|---|---|
+| `AudioInput` | `GeminiSTTAdapter` | Bounded stream |
+| Raw Opus packet | `OpusCodec.decode` | PCM16 decode |
+| PCM16 | WAV encoder | Mono 16 kHz |
+| Ogg Opus file | Ogg parser | Preserve container |
+| `GeminiSTTAdapter` | `Gemini API` | Transcript only |
+| `scripts/gemini_stt_demo.py` | `transcribe()` | Live file demo |
+
+The adapter is independent and is not wired into `/ws/dev-robot`; Gemini unary
+STT emits a final result after consuming audio, while the current half-duplex
+turn detector requires a transcript before it ends the input turn. Avoid changing
+that contract in this task. Robot playback and WebSocket behavior are unchanged.
+
+## D2-S2-09 - Gemini TTS and voice policy
+
+| From | Via | Note |
+|---|---|---|
+| Voice demo answer | `GeminiTTSAdapter` | Gemini 3.8 TTS WAV |
+| `GeminiTTSAdapter` | `Gemini API` | Explicit model/voice |
+| `voice_system_prompt()` | Voice demo LLM | No text demo change |
+| `scripts/gemini_voice_demo.py` | LLMRunner then TTS | Standalone only |
+
+This adapter is not wired to robot playback; firmware output codec/sample-rate
+and real playback-completion proof require a separate approved integration.
+Backend auth/quota/usage and integrated runtime remain unchanged and fail-closed.
+
+## D2-S2-10 - File voice pipeline
+
+| From | Via | Note |
+|---|---|---|
+| WAV/Ogg file | `FileAudioInput` | Completed utterance |
+| `FileAudioInput` | `GeminiSTTAdapter` | Real STT interface |
+| `GeminiSTTAdapter` | `VoiceFilePipeline` | Final transcript |
+| `VoiceFilePipeline` | `LLMRunner` | Voice policy/history |
+| `VoiceFilePipeline` | `GeminiTTSAdapter` | WAV artifact |
+| `scripts/gemini_voice_file_pipeline.py` | `VoiceFilePipeline` | Explicit opt-in |
+
+The file diagnostic is standalone and does not call Backend auth/quota/usage;
+it requires development-mock plus an explicit opt-in and never invokes mocks.
+Only completed file turns are supported; microphone, VAD and robot playback
+remain unchanged. `Conversation` instances must remain isolated per user/session.
+
+
+## D2-S2-11 - Robot Gemini voice runtime
+
+| From | Via | Note |
+|---|---|---|
+| `/ws/dev-robot` | Device authorize/resolve | Integrated mode remains fail-closed |
+| `/ws/dev-robot` | Gemini STT | Only after explicit manual `listen.stop` |
+| Opus 16 kHz/60 ms | Native libopus | Decode to mono PCM16 16 kHz |
+| Gemini TTS WAV 24 kHz | `GeminiOpusTTSAdapter` | Resample and encode 16 kHz Opus |
+| Firmware playback events | `RobotAudioOutput` | Complete requires matching drained count |
+
+Gemini robot mode requires `AI_SERVER_ROBOT_AI_MODE=gemini`, Gemini provider and
+explicit development-mock Backend mode. It is diagnostic only: Backend auth/config/quota/
+usage is not integrated into the media path, so integrated mode returns unavailable.
+Missing libopus fails closed. No hardware or Cloud live pass is implied by unit tests.
+
+
+## D2-S2-11A - Interactive text voice diagnostic
+
+| From | Via | Note |
+|---|---|---|
+| CMD keyboard | `process_question()` | Empty input skipped |
+| `process_question()` | `LLMRunner` | Gemini only, per-session history |
+| `LLMRunner` | Voice policy + local clock | Recomputed each turn |
+| Gemini answer | `GeminiTTSAdapter` | WAV validated before save |
+| WAV artifact | Windows shell | Default player launch is best effort |
+
+Run only with `--enable`, `AI_SERVER_INTERACTIVE_VOICE_DEMO_ENABLE=true`,
+`AI_SERVER_BACKEND_MODE=development-mock`, and Gemini provider. Every process
+gets a random session ID. This diagnostic does not authenticate/admit/report usage
+to Backend; integrated mode is rejected. Unit fixtures are not live evidence.
+
+
+## D2-S2-11B - RAM-only audio defaults
+
+| From | Via | Note |
+|---|---|---|
+| Robot Opus input | `BoundedAudioInput` | Capped PCM RAM buffer |
+| Gemini STT | PCM/WAV bytes | In-memory provider request |
+| Gemini TTS WAV | `GeminiOpusTTSAdapter` | Bounded bytes then Opus frames |
+| WebSocket output | Playback queue | Bounded, ordered, per session |
+| File voice diagnostics | `--export-wav` | No audio file by default |
+| Interactive voice | RAM + `winsound` | Export is explicit only |
+
+No runtime audio is written to disk. File-based input demos only read the
+chosen source file; response export requires `--export-wav`. Demo WAV writes are
+explicitly separated from provider/playback execution. Default robot session cap
+is 2 (configurable, maximum 16); integrated Backend auth/quota behavior is unchanged.
+
+
+## D2-S2-11B runtime scope update
+
+The current D2-S2-11B report supersedes earlier notes that described runtime WAV
+exports. Robot media remains memory-only; diagnostics use `--export-audio` (legacy
+`--export-wav` alias). `RobotSettings` validates max sessions, per-session input/output
+limits and aggregate audio-memory budget before startup. Default aggregate budget is
+256 MB, default session cap is 2; the configured product of session count and
+conservative per-session peak must fit the budget. Gemini STT clears raw/PCM buffers
+after normalization and on every exit path. No transcript/audio persistence is wired
+to MySQL; integrated media stays unavailable until the approved Backend contract exists.
+
+
+## D2-S2-11C - Gemini low-latency diagnostic
+
+| From | Via | Note |
+|---|---|---|
+| `ProviderDelta` | `LLMRunner` | TTFT measured |
+| First safe sentence | `GeminiTTSAdapter.stream_pcm` | Early TTS |
+| Gemini Interactions | PCM16 24 kHz | RAM chunks |
+| PCM chunk | Windows WinMM | Bounded queue |
+| CLI adapters | Reused async client | Closed at exit |
+| `benchmark_gemini_voice.py` | 3 query classes | 5 real turns each |
+
+The 8-10 second target is not a live pass unless a real Gemini response and
+audio chunk are observed. WinMM submission is not proof of audible hardware
+playback. Interactive mode remains restricted to explicit development-mock;
+integrated Backend authorization/quota/usage stays fail-closed. Unary TTS
+remains supported by existing callers; the keyboard demo uses Interactions
+streaming when selected. See `docs/test-report-d2-s2-11c.md`.
+
+
+## D2-S2-11D - Gemini live diagnostics
+
+| From | Via | Note |
+|---|---|---|
+| `diagnose_gemini_network.py` | DNS/TCP/TLS | No API secret |
+| Gemini LLM stream | `LLMRunner` | Live verified |
+| TTS `AudioDelta` | PCM adapter | Missing MIME accepted |
+| `_WaveFormat` | WinMM | PCM tag included |
+| TTS sentences | Semaphore | Ordered streams |
+
+Sandbox outbound TCP may be denied even when the host network works. The live
+TTS provider has shown successful streams and independent request timeouts;
+benchmark results require five completed turns per class before reporting
+percentiles. WinMM submission is a playback API signal, not acoustic proof.
+See `docs/test-report-d2-s2-11d.md`.
+
+
+## D2-S2-11E - TTFT and TTS stability
+
+`compare_gemini_prompt_latency.py` permits at most two explicit Gemini requests
+through `LLMRunner`; it never retries and refuses integrated Backend mode. One
+prompt pair is diagnostic only, not a percentile benchmark. Metadata model
+listing does not prove project billing tier or generation entitlement. Prior
+consecutive TTS timeouts are not retried; inspect provider quota/usage before
+another live TTS run. See `docs/test-report-d2-s2-11e.md`.
+
+
+## D2-S2-11F - Interactive TTS timing
+
+Set `AI_SERVER_TTS_DIAGNOSTICS=true` for content-free segment timing. The
+interactive first segment has zero measured queue wait and a per-segment
+AudioContext deadline; do not increase it or retry to hide provider stalls.
+Compare with the standalone call path in `docs/test-report-d2-s2-11f.md`.

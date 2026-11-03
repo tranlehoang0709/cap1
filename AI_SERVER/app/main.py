@@ -9,6 +9,7 @@ from app.api.health import router
 from app.api.websocket import router as websocket_router
 from app.core.config import Settings, get_settings
 from app.core.robot_config import RobotSettings
+from app.core.backend_config import BackendSettings, INTEGRATION_BLOCKER
 from app.api.robot_websocket import router as robot_router
 from app.core.logging import configure_logging, get_logger
 
@@ -32,6 +33,9 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
     try:
         yield
     finally:
+        backend_client = getattr(application.state, "backend_client", None)
+        if backend_client is not None:
+            await backend_client.aclose()
         _log_lifecycle(event_level, "AI Server shutdown")
 
 
@@ -39,6 +43,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application = FastAPI(title="AIVA-IoT AI Server", lifespan=lifespan)
     application.state.settings = settings if settings is not None else get_settings()
     application.state.robot_settings = RobotSettings()
+    application.state.backend_settings = BackendSettings()
+    application.state.backend_client = (
+        application.state.backend_settings.create_client()
+        if application.state.backend_settings.mode == "integrated" else None
+    )
+    application.state.backend_integration_blocker = INTEGRATION_BLOCKER
     import asyncio
     application.state.robot_slots = asyncio.Semaphore(application.state.robot_settings.max_sessions)
     if application.state.robot_settings.enabled:

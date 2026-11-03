@@ -15,6 +15,12 @@ class ErrorCode(StrEnum):
     DEADLINE_EXCEEDED = "deadline_exceeded"
     PROVIDER_FAILED = "provider_failed"
     INVALID_TRANSCRIPT = "invalid_transcript"
+    EMPTY_AUDIO = "empty_audio"
+    INVALID_AUDIO = "invalid_audio"
+    AUDIO_TOO_LARGE = "audio_too_large"
+    CODEC_UNAVAILABLE = "codec_unavailable"
+    RATE_LIMIT = "rate_limit"
+    SERVICE_UNAVAILABLE = "service_unavailable"
 
 
 class AudioError(Exception):

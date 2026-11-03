@@ -1,5 +1,6 @@
 """Generate a synthetic tone WAV and test mock playback ordering/proof offline."""
 
+import argparse
 import asyncio
 from pathlib import Path
 import math
@@ -27,18 +28,19 @@ async def source():
     yield LLMResult("Xin chào. Đây là audio giả.", True, "completed", None)
 
 
-async def main():
+async def main(export_wav: bool = False):
     # Demo fixture only. These are NOT production TTS or firmware wire choices.
     sample_rate = 8000
     frame = struct.pack("<80h", *(int(3000 * math.sin(2 * math.pi * 440 * i / sample_rate)) for i in range(80)))
     fixtures = ((frame,) * 10, (frame,) * 10)
     target = Path(__file__).resolve().parents[1] / ".test-artifacts" / "tts-mock-demo.wav"
-    target.parent.mkdir(parents=True, exist_ok=True)
-    with wave.open(str(target), "wb") as wav:
-        wav.setnchannels(1)
-        wav.setsampwidth(2)
-        wav.setframerate(sample_rate)
-        wav.writeframes(b"".join(chunk for segment in fixtures for chunk in segment))
+    if export_wav:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with wave.open(str(target), "wb") as wav:
+            wav.setnchannels(1)
+            wav.setsampwidth(2)
+            wav.setframerate(sample_rate)
+            wav.writeframes(b"".join(chunk for segment in fixtures for chunk in segment))
     fmt = AudioFormat(AudioMetadata("pcm", sample_rate, 1, 10, "s16le"), "raw")
     config = TTSConfig("mock-model", "mock-voice", "vi", fmt)
     audio = BoundedAudioInput(AudioMetadata("opus", 16000, 1, 60),
@@ -55,7 +57,7 @@ async def main():
     task = asyncio.create_task(scheduler.play(MockTTS(fixtures), output, source(), key=key, turn=turn, config=config))
     try:
         await output.finished.wait()
-        print(f"MOCK ONLY; WAV fixture: {target}")
+        print(f"MOCK ONLY; WAV export: {target if export_wav else 'disabled'}")
         print(f"Metadata: {fmt}")
         print(f"Order: {[(item.segment_index, item.chunk.sequence) for item in output.delivered]}")
         print(f"Sent all: phase={turn.phase}, playback_complete={task.done()}")
@@ -73,4 +75,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--export-audio", "--export-wav", dest="export_audio", action="store_true",
+                        help="Explicitly write synthetic test fixture")
+    asyncio.run(main(parser.parse_args().export_audio))

@@ -340,3 +340,34 @@ def test_manual_stop_preserves_silence_threshold_and_drops_mic():
         assert result.state==SessionState.LISTENING and len(llm.requests)==1
         assert vad==[b'speech']
     asyncio.run(scenario())
+
+
+def test_deferred_stt_waits_for_explicit_boundary_and_drops_late_mic():
+    class DeferredSTT(MockSTT):
+        def __init__(self):
+            super().__init__()
+            self.started = asyncio.Event()
+        async def transcribe(self, audio, context):
+            self.started.set()
+            async for result in super().transcribe(audio, context):
+                yield result
+
+    async def scenario():
+        stt = DeferredSTT()
+        items = setup(stt=stt)
+        orch, _, _, llm, _, output, vad = items
+        orch.defer_stt_until_input_complete = True
+        task = orch.start_turn("explicit-boundary")
+        assert orch.microphone("explicit-boundary", AudioFrame(b"speech"))
+        await asyncio.sleep(.02)
+        assert not stt.started.is_set() and not llm.requests
+        assert orch.stop_input("explicit-boundary")
+        assert not orch.accepting_input
+        assert not orch.microphone("explicit-boundary", AudioFrame(b"late"))
+        await asyncio.wait_for(stt.started.wait(), 1)
+        await asyncio.wait_for(output.finished.wait(), 1)
+        output.confirm_complete(output.scope)
+        result = await task
+        assert result.receipt and result.state == SessionState.LISTENING
+        assert vad == [b"speech"] and stt.frames == [b"speech"]
+    asyncio.run(scenario())

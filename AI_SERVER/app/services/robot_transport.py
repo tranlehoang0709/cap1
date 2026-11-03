@@ -1,12 +1,14 @@
-"""Negotiated local-development WebSocket output and mock Opus TTS adapter."""
+"""Negotiated development WebSocket output and Opus TTS transport adapters."""
 
 import asyncio
 from dataclasses import replace
+import io
+import wave
 
 from app.models.audio import AudioFrame, AudioMetadata
-from app.models.tts import AudioFormat, PlaybackEvidence, TTSConfig, TTSAudioChunk
+from app.models.tts import AudioFormat, PlaybackEvidence, TTSConfig, TTSAudioChunk, TTSRequest, TTSError, TTSErrorCode
 from app.protocol.audio_framing import FramingConfig, encode_audio_frame
-from app.services.opus_codec import PCMOpusFrames
+from app.services.opus_codec import CodecError, OpusCodec, PCMOpusFrames, resample_pcm16
 
 OPUS_FORMAT = AudioFormat(AudioMetadata("opus", 16000, 1, 60), "raw")
 PCM_FORMAT = AudioFormat(AudioMetadata("pcm", 16000, 1, 60, "s16le"), "raw")
@@ -35,6 +37,74 @@ class OpusTTSAdapter:
                 await source.aclose()
             finally:
                 encoder.close()
+
+
+class GeminiOpusTTSAdapter:
+    """Convert real provider WAV output to negotiated 16 kHz mono 60 ms Opus."""
+    def __init__(self, delegate, source_config: TTSConfig, *, max_wav_bytes: int = 5_000_000):
+        if not isinstance(source_config, TTSConfig) or source_config.audio_format.data_format != "wav":
+            raise TTSError(TTSErrorCode.INVALID_INPUT)
+        if type(max_wav_bytes) is not int or not 0 < max_wav_bytes <= 19_000_000:
+            raise TTSError(TTSErrorCode.INVALID_INPUT)
+        self.delegate, self.source_config, self.max_wav_bytes = delegate, source_config, max_wav_bytes
+
+    async def synthesize(self, request: TTSRequest, context):
+        if request.config.audio_format != OPUS_FORMAT:
+            raise TTSError(TTSErrorCode.INVALID_INPUT)
+        source_request = replace(request, config=self.source_config)
+        source = self.delegate.synthesize(source_request, context)
+        encoder = None
+        try:
+            wav_bytes = bytearray()
+            sequence = 0
+            async for chunk in source:
+                context.check()
+                if not isinstance(chunk, TTSAudioChunk) or chunk.sequence != sequence or chunk.audio_format != self.source_config.audio_format:
+                    raise TTSError(TTSErrorCode.INVALID_AUDIO)
+                sequence += 1
+                if len(wav_bytes) + len(chunk.payload) > self.max_wav_bytes:
+                    raise TTSError(TTSErrorCode.LIMIT)
+                wav_bytes.extend(chunk.payload)
+            if not wav_bytes:
+                raise TTSError(TTSErrorCode.INVALID_AUDIO)
+            try:
+                with wave.open(io.BytesIO(wav_bytes), "rb") as audio:
+                    if (audio.getnchannels() != 1 or audio.getframerate() != 24000
+                            or audio.getsampwidth() != 2 or audio.getcomptype() != "NONE"):
+                        raise ValueError
+                    pcm = audio.readframes(audio.getnframes())
+                    if not pcm or len(pcm) % 2:
+                        raise ValueError
+            except Exception:
+                raise TTSError(TTSErrorCode.INVALID_AUDIO) from None
+
+            try:
+                encoder = OpusCodec(16000, 60)
+            except CodecError as error:
+                if "libopus unavailable" in str(error):
+                    raise TTSError(TTSErrorCode.CODEC_UNAVAILABLE) from None
+                raise TTSError(TTSErrorCode.OUTPUT_ERROR) from None
+            source_frame_bytes = 24000 * 60 // 1000 * 2
+            sequence = 0
+            for offset in range(0, len(pcm), source_frame_bytes):
+                context.check()
+                frame = pcm[offset:offset + source_frame_bytes]
+                if len(frame) < source_frame_bytes:
+                    frame += b"\x00" * (source_frame_bytes - len(frame))
+                converted = resample_pcm16(frame, 24000, 16000)
+                packet = encoder.encode(converted)
+                yield TTSAudioChunk(sequence, packet, OPUS_FORMAT)
+                sequence += 1
+        except (TTSError, GeneratorExit):
+            raise
+        except Exception:
+            raise TTSError(TTSErrorCode.OUTPUT_ERROR) from None
+        finally:
+            try:
+                await source.aclose()
+            finally:
+                if encoder is not None:
+                    encoder.close()
 
 
 class RobotAudioOutput:

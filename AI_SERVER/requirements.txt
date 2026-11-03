@@ -1,7 +1,8 @@
 fastapi==0.159.1
 uvicorn==0.54.0
 pydantic-settings==2.16.1
-websockets==17.3
+websockets==16.0
 openai==3.42.1
+google-genai==2.27.0
 httpx==0.28.1
 anyio==4.16.0

@@ -95,12 +95,14 @@ class AIOrchestrator:
                  input_metadata: AudioMetadata, turn_config: TurnDetectionConfig, language_rules,
                  speech_activity: Callable[[AudioFrame], bool], tts_config: TTSConfig,
                  playback_limits: PlaybackLimits, limits: OrchestrationLimits, system_prompt: str,
+                 defer_stt_until_input_complete: bool = False,
                  clock_ms: Callable[[], float] = lambda: time.monotonic() * 1000):
         self.key = key  # Must come from trusted auth, never wire session_id.
         self.stt, self.llm, self.tts, self.output = stt, llm, tts, output
         self.runner, self.metadata = llm_runner, input_metadata
         self.turn_config, self.rules, self.vad = turn_config, language_rules, speech_activity
         self.tts_config, self.limits, self.prompt = tts_config, limits, system_prompt
+        self.defer_stt_until_input_complete = defer_stt_until_input_complete
         self.clock = clock_ms
         self.conversation = Conversation(key, max_turns=limits.history_turns, max_history_chars=limits.history_chars)
         self.playback = PlaybackScheduler(key, playback_limits)
@@ -175,10 +177,12 @@ class AIOrchestrator:
                 and self.task is not None and not self.task.done() and not self._input_stopped)
 
     def stop_input(self, turn_id):
-        """Explicit manual listen.stop: stop ingress, observe silence, still require END."""
+        """End ingress; real file/frame STT may begin only after this boundary."""
         if self.state != SessionState.LISTENING or self.turn is None or turn_id != self.turn.turn_id:
             return False
         self._input_stopped = True
+        if self.defer_stt_until_input_complete:
+            return self.turn.end_input(self.clock())
         self.turn.detector.speech(SpeechActivity(self.clock(), False))
         self.tick()
         return True
@@ -227,18 +231,23 @@ class AIOrchestrator:
         return final
 
     async def _run(self, turn):
-        stt = asyncio.create_task(self._transcribe(turn))
+        stt = None if self.defer_stt_until_input_complete else asyncio.create_task(self._transcribe(turn))
         monitor = asyncio.create_task(self._monitor(turn))
         boundary = asyncio.create_task(self._boundary.wait())
         receipt = None
         try:
-            done, _ = await turn.audio.context.run(lambda: asyncio.wait((stt, boundary, monitor), return_when=asyncio.FIRST_COMPLETED))
+            pending = (boundary, monitor) if stt is None else (stt, boundary, monitor)
+            done, _ = await turn.audio.context.run(lambda: asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED))
             if monitor in done:
                 await monitor
                 raise _Failure("turn_timeout")
-            if stt in done:
+            if stt is not None and stt in done:
                 stt.result()  # Surface Provider/empty errors immediately, not after timeout.
             await turn.audio.context.run(lambda: asyncio.shield(boundary))
+            if stt is None:
+                if self.state != SessionState.PROCESSING:
+                    raise _Failure("invalid_state")
+                stt = asyncio.create_task(self._transcribe(turn))
             final = await turn.audio.context.run(lambda: asyncio.shield(stt))
             if self.state != SessionState.PROCESSING:
                 raise _Failure("invalid_state")
@@ -305,6 +314,8 @@ class AIOrchestrator:
                 self._state(SessionState.ERROR)
         finally:
             for child in (stt, monitor, boundary):
+                if child is None:
+                    continue
                 if not child.done():
                     child.cancel()
             await asyncio.gather(stt, monitor, boundary, return_exceptions=True)

@@ -1,8 +1,4 @@
-"""Single-turn half-duplex bridge; caller supplies mock VAD until decoded audio.
-
-This module is not wired to WebSocket or STT runtime. Do not attach a real VAD
-directly to firmware Opus bytes without a separately approved decoding layer.
-"""
+"""Single-turn half-duplex bridge for decoded PCM audio and explicit boundaries."""
 
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -91,6 +87,17 @@ class HalfDuplexTurn:
             return self._terminal_decision()
         self._check()
         return self._apply(self.detector.tick(at_ms), at_ms)
+
+    def end_input(self, at_ms: float) -> bool:
+        """Close a complete client-framed utterance without requiring a transcript."""
+        if self.phase != TurnPhase.LISTENING:
+            return False
+        self._check()
+        self.audio.finish()
+        self._phase = TurnPhase.PROCESSING
+        self._emitted = True
+        self._emit(TurnEnded(self.turn_id, at_ms, "", False))
+        return True
 
     def _apply(self, decision: Decision, at_ms: float) -> Decision:
         if self.detector.timed_out:

@@ -578,3 +578,35 @@ Không coi source snapshot PASS là protocol/board/hardware approval. Chưa có 
 board đã xác minh, ESP-IDF active hoặc Cloud credentials; không flash/gọi Backend.
 
 Kết quả FIX cuối: **384 pytest PASS**, **70 firmware host tests PASS**. Hardware/Cloud vẫn BLOCKED.
+# Tích hợp Backend (03/11/2026)
+
+Xem [báo cáo API và kiểm thử](docs/backend-integration-report.md).
+`AI_SERVER_BACKEND_MODE=development-mock` giữ gateway development hiện có.
+`integrated` hiện fail closed trước audio vì Backend chưa đăng ký đầy đủ internal API;
+không có fallback mock. Không coi fixture tests là Backend/Cloud/hardware live PASS.
+
+
+## Current runtime integration state (2026-11-03)
+
+The older D2-S2-05 notes above describe the original development gateway and are historical. Current behavior and verified limitations are in [docs/runtime-integration-audit.md](docs/runtime-integration-audit.md).
+
+- `integrated` is the default and requires distinct Backend device/config/quota service tokens.
+- The integrated WebSocket authorizes the device and resolves its user/device AI configuration before accepting audio. It then fails closed with `AI_PIPELINE_UNAVAILABLE` because no approved Cloud credential broker, real STT/TTS runtime, live quota readiness, or firmware device-proof headers are available.
+- Mock STT/LLM/TTS and simulated tone remain available only after explicitly selecting `development-mock`. They are not Cloud or hardware evidence.
+- Backend authorization/config routes exist in source, but quota schema readiness, provider secret delivery, session lifecycle, and hardware playback remain unverified or missing.
+
+## D2-S2-06 — OpenAI API probe
+
+The Task 03 `OpenAILLMAdapter` already uses the official Responses API but does not discover credentials. The new `scripts/test_openai_connection.py` reads a real `OPENAI_API_KEY` and `OPENAI_MODEL` from environment or `.env`, makes exactly one request with automatic retry disabled, applies the configured existing output-token cap, and prints returned usage/request ID/latency. No key is currently configured, so the script is BLOCKED before network access. This does not connect OpenAI to robot runtime and does not modify quota/rate-limit behavior. See [Task 06 report](docs/test-report-d2-s2-06.md).
+
+## Gemini API — Prompt 06G
+
+Added `GeminiLLMAdapter` alongside the existing `OpenAILLMAdapter`, using `google-genai` and no provider fallback. `GEMINI_API_KEY`, `GEMINI_MODEL`, and timeout load from environment or `.env`. The separate live test sends one request and preserves the existing output-token ceiling; quota behavior is unchanged. `gemini-3.8-flash` is documented with a Free Tier, but the configured project entitlement is not live-verified: the real request returned HTTP 503. Report: `docs/test-report-d2-s2-06g.md`.
+
+## D2-S2-09 — Gemini TTS and voice response policy
+
+The standalone `scripts/gemini_voice_demo.py` streams text through `LLMRunner`, then synthesizes the final answer using `GeminiTTSAdapter` and saves `artifacts/gemini_voice_demo.wav`. `scripts/test_gemini_tts_live.py --play` tests TTS independently with a fixed Vietnamese phrase. Configure `GEMINI_TTS_MODEL=gemini-3.8-flash-tts`, `GEMINI_TTS_VOICE=Kore`, and `GEMINI_API_KEY`. Google lists a Free Tier, with project-specific rate limits. Latest TTS-only live request was blocked by network; project entitlement and generated voice are not confirmed. The voice policy is applied only to the voice demo; regular text demo behavior is unchanged. This does not connect the adapter to integrated robot runtime or claim physical playback completion. See [D2-S2-09 report](docs/test-report-d2-s2-09.md).
+
+## D2-S2-10 — File voice pipeline
+
+`scripts/gemini_voice_file_pipeline.py` accepts completed WAV/Ogg Opus utterances and calls Gemini STT adapter, `LLMRunner` with Voice Response Policy V1, then Gemini TTS adapter. Repeat `--audio` for consecutive turns; user/session identity is explicit. It writes validated outputs to `artifacts/`. The diagnostic requires both `--enable` and `AI_SERVER_VOICE_PIPELINE_DEMO_ENABLE=true`, plus `AI_SERVER_BACKEND_MODE=development-mock`; it invokes real adapters only and does not bypass production integrated auth/quota because it is not a runtime route. The workspace has no supplied recording of a user question and current Gemini access failed with network error, so no live pipeline PASS is claimed. See [D2-S2-10 report](docs/test-report-d2-s2-10.md).

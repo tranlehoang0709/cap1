@@ -7,6 +7,7 @@ import ipaddress
 import json
 import math
 import struct
+import time
 from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -14,14 +15,19 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.models.audio import AudioError, AudioFrame
 from app.models.llm import ConversationKey, ProviderDelta, ProviderDone
 from app.models.tts import PlaybackLimits, TTSConfig
+from app.models.backend import DeviceProof
 from app.protocol.audio_framing import FramingConfig, validate_audio_frame
 from app.services.mock_llm import MockLLMAdapter
 from app.services.mock_stt import MockStreamingSTT
 from app.services.mock_tts import MockTTS
-from app.services.opus_codec import OpusCodec
+from app.services.opus_codec import CodecError, OpusCodec
 from app.services.orchestrator import AIOrchestrator, Control, OrchestrationLimits, SessionState
-from app.services.robot_transport import OPUS_FORMAT, PCM_FORMAT, OpusTTSAdapter, RobotAudioOutput
+from app.services.robot_transport import GeminiOpusTTSAdapter, OPUS_FORMAT, PCM_FORMAT, OpusTTSAdapter, RobotAudioOutput
 from app.services.turn_detection import TextRules, TurnDetectionConfig
+from app.services.audio_context import AudioContext
+from app.services.device_auth import authorize_device
+from app.clients.backend import BackendError
+from pydantic import ValidationError
 
 router = APIRouter()
 
@@ -40,8 +46,46 @@ def parse_message(text):
     return result
 
 
+def validate_timestamp_order(version, frame, previous):
+    """Check v2 sender-clock ordering while allowing uint32 millisecond wrap."""
+    if version != 2:
+        return previous
+    current = frame.timestamp_ms
+    if type(current) is not int or not 0 <= current <= 0xffffffff:
+        raise ValueError("Invalid audio timestamp")
+    if previous is not None:
+        delta = (current - previous) & 0xffffffff
+        if delta == 0 or delta >= 0x80000000:
+            raise ValueError("Out-of-order audio timestamp")
+    return current
+
+
 @router.websocket("/ws/dev-robot")
 async def robot_endpoint(ws: WebSocket):
+    if ws.app.state.backend_settings.mode == "integrated":
+        # Authenticate and resolve policy before accepting or reading any audio.
+        # No mock fallback is reachable in this branch.
+        client = ws.app.state.backend_client
+        uids, credentials = ws.headers.getlist("device-uid"), ws.headers.getlist("device-credential")
+        if client is None or len(uids) != 1 or len(credentials) != 1:
+            await ws.close(code=1008)
+            return
+        context = AudioContext(deadline=time.monotonic() + ws.app.state.backend_settings.timeout_seconds)
+        try:
+            proof = DeviceProof(deviceUid=uids[0], credential=credentials[0])
+            session = await authorize_device(client, proof, context)
+            await session.resolve(context)
+        except ValidationError:
+            await ws.close(code=1008)
+            return
+        except BackendError as error:
+            # Do not disclose Backend response bodies, credential details, or policy data.
+            await ws.close(code=1013 if error.status == 429 or error.status is None or error.status >= 500 else 1008)
+            return
+        await ws.accept()
+        await ws.send_json({"type": "error", "code": "AI_PIPELINE_UNAVAILABLE"})
+        await ws.close(code=1013, reason="AI media pipeline is not configured")
+        return
     settings = ws.app.state.robot_settings
     try:
         peer = ipaddress.ip_address(ws.client.host)
@@ -82,25 +126,66 @@ async def robot_endpoint(ws: WebSocket):
         session_id = uuid4().hex
         codec = OpusCodec(16000, 60)
         output = RobotAudioOutput(ws, session_id, version)
-        pcm = struct.pack("<960h", *(int(3000 * math.sin(2 * math.pi * 440 * i / 16000)) for i in range(960)))
         def energy(frame):
             samples = struct.unpack("<960h", frame.payload)
             return sum(v*v for v in samples) / len(samples) > settings.energy_threshold ** 2
-        # Mock ASR/LLM/TTS only. Tone is not synthesized speech or Cloud success.
-        orch = AIOrchestrator(ConversationKey("local-development", session_id, uuid4().hex),
-            stt=MockStreamingSTT("Xin chào."),
-            llm=MockLLMAdapter((ProviderDelta("Xin chào. "), ProviderDelta("Đây là thử nghiệm."), ProviderDone(True, "completed"))),
-            tts=OpusTTSAdapter(MockTTS(((pcm,), (pcm,)))), output=output, llm_runner=ws.app.state.robot_llm_runner,
-            input_metadata=PCM_FORMAT.metadata, turn_config=TurnDetectionConfig(settings.min_silence_ms, settings.transcript_stability_ms, settings.max_turn_duration_ms),
-            language_rules=TextRules((".", "?", "!"), ("...", "và", "nhưng", "ừm")), speech_activity=energy,
-            tts_config=TTSConfig("mock-model", "mock-voice", "vi", OPUS_FORMAT),
-            playback_limits=PlaybackLimits(2, 4096, 2048, 4, 500, 16),
-            limits=OrchestrationLimits(settings.deadline_seconds, .02, 32, 61440, 16, 16000),
-            system_prompt="Trả lời bằng tiếng Việt.")
+        if settings.ai_mode == "gemini":
+            if ws.app.state.backend_settings.mode != "development-mock":
+                raise ValueError("Gemini robot runtime requires explicit development-mock Backend mode")
+            from app.clients.provider_factory import create_llm_adapter
+            from app.clients.stt_factory import create_gemini_stt_adapter
+            from app.clients.tts_factory import create_gemini_tts_adapter
+            from app.clients.gemini_tts import WAV_FORMAT
+            from app.core.llm_config import LLMSettings
+            from app.core.provider_config import LLMProviderSettings
+            from app.core.stt_config import GeminiSTTSettings
+            from app.core.tts_config import GeminiTTSSettings
+            from app.services.llm import LLMRunner
+            from app.services.voice_response_policy import voice_system_prompt
+
+            provider = LLMProviderSettings()
+            if provider.provider != "gemini":
+                raise ValueError("Explicit Gemini provider required; no fallback")
+            stt_settings, tts_settings = GeminiSTTSettings(), GeminiTTSSettings()
+            stt = create_gemini_stt_adapter(stt_settings)
+            llm, llm_model = create_llm_adapter(provider)
+            tts = create_gemini_tts_adapter(tts_settings)
+            llm_settings = LLMSettings(model=llm_model)
+            source_tts_config = TTSConfig(tts.model, tts.voice, "vi-VN", WAV_FORMAT)
+            runtime_tts = GeminiOpusTTSAdapter(tts, source_tts_config,
+                                               max_wav_bytes=settings.max_output_audio_bytes)
+            max_frames = (settings.max_turn_duration_ms + 59) // 60
+            runtime_limits = OrchestrationLimits(settings.deadline_seconds, .02, max_frames,
+                max_frames * 1920, 16, 16000)
+            orch = AIOrchestrator(
+                ConversationKey("local-development", session_id, ws.headers["device-id"]),
+                stt=stt, llm=llm, tts=runtime_tts, output=output,
+                llm_runner=LLMRunner(llm_settings), input_metadata=PCM_FORMAT.metadata,
+                turn_config=TurnDetectionConfig(settings.min_silence_ms, settings.transcript_stability_ms,
+                                                settings.max_turn_duration_ms),
+                language_rules=TextRules((".", "?", "!"), ("...", "và", "nhưng", "ừm")),
+                speech_activity=energy, tts_config=TTSConfig(tts.model, tts.voice, "vi-VN", OPUS_FORMAT),
+                playback_limits=PlaybackLimits(2, 4096, 1275, 8, 500, 16), limits=runtime_limits,
+                system_prompt=voice_system_prompt("AIVA voice assistant."),
+                defer_stt_until_input_complete=True)
+        else:
+            # Mock ASR/LLM/TTS only. Tone is not synthesized speech or Cloud success.
+            pcm = struct.pack("<960h", *(int(3000 * math.sin(2 * math.pi * 440 * i / 16000)) for i in range(960)))
+            orch = AIOrchestrator(ConversationKey("local-development", session_id, uuid4().hex),
+                stt=MockStreamingSTT("Xin chào."),
+                llm=MockLLMAdapter((ProviderDelta("Xin chào. "), ProviderDelta("Đây là thử nghiệm."), ProviderDone(True, "completed"))),
+                tts=OpusTTSAdapter(MockTTS(((pcm,), (pcm,)))), output=output, llm_runner=ws.app.state.robot_llm_runner,
+                input_metadata=PCM_FORMAT.metadata, turn_config=TurnDetectionConfig(settings.min_silence_ms, settings.transcript_stability_ms, settings.max_turn_duration_ms),
+                language_rules=TextRules((".", "?", "!"), ("...", "và", "nhưng", "ừm")), speech_activity=energy,
+                tts_config=TTSConfig("mock-model", "mock-voice", "vi", OPUS_FORMAT),
+                playback_limits=PlaybackLimits(2, 4096, 2048, 4, 500, 16),
+                limits=OrchestrationLimits(settings.deadline_seconds, .02, 32, 61440, 16, 16000),
+                system_prompt="Trả lời bằng tiếng Việt.")
         await output.json({"type": "hello", "version": version, "transport": "websocket", "session_id": session_id,
             "features": {"aiva_half_duplex_v1": True},
             "audio_params": {"format": "opus", "sample_rate": 16000, "channels": 1, "frame_duration": 60}})
         framing = FramingConfig(version, 4096 - framing_header(version))
+        last_audio_timestamp = None
         while True:
             if orch.state in (SessionState.ERROR, SessionState.CLOSED):
                 break
@@ -117,6 +202,7 @@ async def robot_endpoint(ws: WebSocket):
                 if not orch.accepting_input:
                     continue
                 audio = validate_audio_frame(message["bytes"], framing)
+                last_audio_timestamp = validate_timestamp_order(version, audio, last_audio_timestamp)
                 orch.microphone(orch.turn.turn_id, AudioFrame(codec.decode(audio.payload)))
                 continue
             control = parse_message(message.get("text", ""))
@@ -128,11 +214,14 @@ async def robot_endpoint(ws: WebSocket):
             elif kind == "listen" and control.get("state") == "start":
                 if control.get("mode") not in ("auto", "manual"):
                     raise ValueError("Realtime/barge-in disabled")
+                if settings.ai_mode == "gemini" and control.get("mode") != "manual":
+                    raise ValueError("Gemini voice runtime requires an explicit listen.stop boundary")
                 if orch.task is not None and output.complete.is_set():
                     await orch.task
                 if orch.state != SessionState.LISTENING or (orch.task is not None and not orch.task.done()):
                     raise ValueError("Busy turn")
                 orch.start_turn(uuid4().hex)
+                last_audio_timestamp = None
             elif kind == "listen" and control.get("state") == "stop":
                 if orch.turn is not None:
                     orch.stop_input(orch.turn.turn_id)
@@ -147,6 +236,12 @@ async def robot_endpoint(ws: WebSocket):
         await ws.close(code=1000)
     except WebSocketDisconnect:
         pass
+    except CodecError as error:
+        try:
+            await ws.send_json({"type": "error", "code": "OPUS_CODEC_UNAVAILABLE" if "libopus unavailable" in str(error) else "OPUS_CODEC_ERROR"})
+            await ws.close(code=1013)
+        except Exception:
+            pass
     except (AudioError, ValueError, TimeoutError):
         try:
             await ws.close(code=1008)

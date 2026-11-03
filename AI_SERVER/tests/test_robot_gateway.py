@@ -13,9 +13,12 @@ from app.services.opus_codec import CodecError, OpusCodec, PCMOpusFrames, resamp
 TOKEN = 'fixture-development-token-1234567890'
 
 def configured(monkeypatch, **options):
+    monkeypatch.setenv('AI_SERVER_BACKEND_MODE', 'development-mock')
     for k,v in dict(enabled='true', token=TOKEN, energy_threshold=100, **options).items():
         monkeypatch.setenv('AI_SERVER_ROBOT_' + k.upper(), str(v))
-    return create_app()
+    application = create_app()
+    assert application.state.backend_settings.mode == 'development-mock'
+    return application
 
 def headers(version=1, token=TOKEN):
     return {'Authorization': 'Bearer '+token, 'Protocol-Version': str(version), 'Device-Id': 'same-untrusted-mac', 'Client-Id': 'same-untrusted-client'}
@@ -298,3 +301,64 @@ def test_opus_encoder_closes_even_if_provider_cleanup_fails(monkeypatch):
             async for _ in robot_transport.OpusTTSAdapter(Delegate()).synthesize(request,None): pass
     asyncio.run(scenario())
     assert Encoder.closed
+
+
+def test_gemini_wav_tts_transport_resamples_and_encodes_ordered_frames(monkeypatch):
+    import asyncio, io, wave, struct
+    from app.models.audio import AudioMetadata
+    from app.models.llm import ConversationKey
+    from app.models.tts import PlaybackScope, TTSConfig, TTSRequest, TTSAudioChunk
+    from app.services import robot_transport
+
+    wav_stream = io.BytesIO()
+    with wave.open(wav_stream, "wb") as wav:
+        wav.setnchannels(1); wav.setsampwidth(2); wav.setframerate(24000)
+        wav.writeframes(struct.pack("<" + "h" * 2400, *([700] * 2400)))
+    source_format = robot_transport.AudioFormat(AudioMetadata("pcm", 24000, 1, 60, "s16le"), "wav")
+    source_config = TTSConfig("gemini-tts", "Kore", "vi-VN", source_format)
+    class Stream:
+        def __init__(self): self.closed = False
+        def __aiter__(self): return self
+        async def __anext__(self):
+            if hasattr(self, "sent"): raise StopAsyncIteration
+            self.sent = True
+            return TTSAudioChunk(0, wav_stream.getvalue(), source_format)
+        async def aclose(self): self.closed = True
+    stream = Stream()
+    class Provider:
+        def synthesize(self, request, context):
+            assert request.config == source_config
+            return stream
+    class Encoder:
+        def __init__(self, rate, duration):
+            assert (rate, duration) == (16000, 60); self.frames=[]; self.closed=False
+        def encode(self, pcm):
+            assert len(pcm) == 1920
+            self.frames.append(pcm)
+            return b"encoded-opus-frame"
+        def close(self): self.closed=True
+    made=[]
+    def factory(*args):
+        encoder=Encoder(*args); made.append(encoder); return encoder
+    monkeypatch.setattr(robot_transport, "OpusCodec", factory)
+    scope=PlaybackScope(ConversationKey("u", "s", "d"), "turn", "gen")
+    request=TTSRequest(scope, 0, "Chào AIVA", TTSConfig("gemini-tts", "Kore", "vi-VN", robot_transport.OPUS_FORMAT))
+    async def scenario():
+        chunks=[chunk async for chunk in robot_transport.GeminiOpusTTSAdapter(Provider(), source_config).synthesize(request, type("Context", (), {"check": lambda self: None})())]
+        assert [c.sequence for c in chunks] == [0, 1]
+        assert all(c.audio_format == robot_transport.OPUS_FORMAT and c.payload == b"encoded-opus-frame" for c in chunks)
+    asyncio.run(scenario())
+    assert stream.closed and made[0].closed and len(made[0].frames)==2
+    # This test substitutes the encoder and proves adapter wiring/metadata only;
+    # it does not establish that libopus emitted valid packets or prove playback.
+
+
+@pytest.mark.parametrize("previous,current,valid", [(100, 160, True), (0xffffffd0, 20, True), (100, 100, False), (160, 100, False)])
+def test_v2_audio_timestamp_order(previous, current, valid):
+    from app.api.robot_websocket import validate_timestamp_order
+    from app.models.audio import AudioFrame
+    if valid:
+        assert validate_timestamp_order(2, AudioFrame(b"packet", current), previous) == current
+    else:
+        with pytest.raises(ValueError, match="timestamp"):
+            validate_timestamp_order(2, AudioFrame(b"packet", current), previous)
