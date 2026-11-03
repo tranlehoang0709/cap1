@@ -38,6 +38,46 @@ export class UsersRepository {
     return rows[0] ? this.toUserWithCredential(rows[0]) : null;
   }
 
+  async listUsers(page: number, limit: number, search?: string): Promise<{ items: Array<PublicUser & { role: RoleCode }>; total: number }> {
+    const where = search ? 'WHERE u.email LIKE ? OR u.display_name LIKE ?' : '';
+    const values = search ? [`%${search}%`, `%${search}%`] : [];
+    const [countRows] = await this.executor.execute<CountRow[]>(
+      `SELECT COUNT(*) AS total FROM users u ${where}`, values as never[],
+    );
+    const [rows] = await this.executor.execute<UserWithRoleRow[]>(
+      `SELECT u.id, u.email, u.display_name, u.status, u.email_verified_at, u.last_login_at, u.created_at, u.updated_at, r.code AS role
+       FROM users u INNER JOIN user_roles ur ON ur.user_id = u.id INNER JOIN roles r ON r.id = ur.role_id
+       ${where} ORDER BY u.created_at DESC LIMIT ? OFFSET ?`, [...values, limit, (page - 1) * limit] as never[],
+    );
+    return {
+      items: rows.map((row) => ({ ...this.toPublicUser(row), role: row.role })),
+      total: Number(countRows[0]?.total ?? 0),
+    };
+  }
+
+  async updateProfile(userId: UserId, displayName: string): Promise<PublicUser> {
+    await this.executor.execute('UPDATE users SET display_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [displayName, userId]);
+    const user = await this.findById(userId);
+    if (!user) throw new Error('User disappeared while updating profile');
+    return user;
+  }
+
+  async getSaveHistory(userId: UserId): Promise<boolean> {
+    const rows = await this.selectRows<PrivacyRow>(
+      'SELECT save_history FROM privacy_preferences WHERE user_id = ? LIMIT 1', [userId],
+    );
+    return rows[0] ? Boolean(rows[0].save_history) : true;
+  }
+
+  async setSaveHistory(userId: UserId, saveHistory: boolean): Promise<boolean> {
+    await this.executor.execute(
+      `INSERT INTO privacy_preferences (user_id, save_history, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
+       ON DUPLICATE KEY UPDATE save_history = VALUES(save_history), updated_at = CURRENT_TIMESTAMP`,
+      [userId, saveHistory],
+    );
+    return saveHistory;
+  }
+
   async findUserRoles(userId: UserId): Promise<RoleRecord[]> {
     const rows = await this.selectRows<RoleRow>(
       `SELECT r.id, r.code, r.name
@@ -198,3 +238,6 @@ interface RoleRow extends RowDataPacket {
 interface CountRow extends RowDataPacket {
   total: number | string;
 }
+
+interface UserWithRoleRow extends PublicUserRow { role: RoleCode }
+interface PrivacyRow extends RowDataPacket { save_history: number | boolean }

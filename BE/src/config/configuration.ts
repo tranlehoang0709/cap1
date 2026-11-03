@@ -1,6 +1,7 @@
 export interface RuntimeConfiguration {
   app: {
     port: number;
+    corsOrigins: string[];
   };
   database: {
     host: string;
@@ -10,6 +11,16 @@ export interface RuntimeConfiguration {
     name: string;
     connectionLimit: number;
   };
+  auth: {
+    accessTokenSecret: string;
+    refreshTokenSecret: string;
+    accessTokenTtlSeconds: number;
+    refreshTokenTtlSeconds: number;
+    adminEmail: string;
+    adminPassword: string;
+    adminDisplayName: string;
+  };
+  crypto: { encryptionKey: string };
 }
 
 export function validateEnvironment(environment: Record<string, unknown>): Record<string, unknown> {
@@ -27,15 +38,7 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
   if (!Number.isInteger(databasePort) || databasePort < 1 || databasePort > 65535) {
     throw new Error('DB_PORT must be an integer between 1 and 65535');
   }
-  const isolatedTest=environment.NODE_ENV==='test'&&environment.MYSQL_INTEGRATION_TESTS==='true';
-  if(environment.NODE_ENV==='test'&&!isolatedTest) {
-    throw new Error('NODE_ENV=test requires MYSQL_INTEGRATION_TESTS=true and an isolated DB_NAME');
-  }
-  if(isolatedTest){
-    if(typeof environment.DB_NAME!=='string'||!/^aiva_iot_test(?:_[a-z0-9_]+)?$/.test(environment.DB_NAME)) {
-      throw new Error('Isolated MySQL tests require DB_NAME=aiva_iot_test or aiva_iot_test_<suffix>; aiva_iot is forbidden');
-    }
-  } else if (environment.DB_NAME !== 'aiva_iot') {
+  if (environment.DB_NAME !== 'aiva_iot') {
     throw new Error('DB_NAME must be aiva_iot; this backend is restricted to the existing V1.5 database');
   }
 
@@ -51,24 +54,47 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
     throw new Error('DB_CONNECTION_LIMIT must be a positive integer');
   }
 
-  const heartbeatTimeout=environment.HEARTBEAT_TIMEOUT_SECONDS;
-  if(heartbeatTimeout!==undefined && (typeof heartbeatTimeout!=='string'||!/^\d+$/.test(heartbeatTimeout)
-    ||Number(heartbeatTimeout)<1||Number(heartbeatTimeout)>2147483)) {
-    throw new Error('HEARTBEAT_TIMEOUT_SECONDS must be an integer between 1 and 2147483');
+  for (const key of ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'] as const) {
+    const value = environment[key];
+    if (typeof value !== 'string' || value.length < 32) {
+      throw new Error(`${key} must contain at least 32 characters`);
+    }
   }
-  if(environment.HEARTBEAT_SWEEPER_ENABLED!==undefined&&!['true','false'].includes(environment.HEARTBEAT_SWEEPER_ENABLED as string)) {
-    throw new Error('HEARTBEAT_SWEEPER_ENABLED must be true or false');
+
+  const encryptionKey = environment.APP_ENCRYPTION_KEY;
+  if (typeof encryptionKey !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(encryptionKey)) {
+    throw new Error('APP_ENCRYPTION_KEY must be a 32-byte base64url value');
   }
-  for(const flag of ['AI_QUOTA_CONTRACT_APPROVED','AI_USAGE_REPORT_SWEEPER_ENABLED']){
-    if(environment[flag]!==undefined&&!['true','false'].includes(environment[flag] as string))throw new Error(`${flag} must be true or false`);
+
+  for (const key of ['ADMIN_EMAIL', 'ADMIN_PASSWORD', 'ADMIN_DISPLAY_NAME'] as const) {
+    const value = environment[key];
+    if (typeof value !== 'string' || value.trim().length === 0) {
+      throw new Error(`${key} is required`);
+    }
   }
-  const quotaEnabled=environment.AI_QUOTA_CONTRACT_APPROVED==='true';
-  const reportWorker=environment.AI_USAGE_REPORT_SWEEPER_ENABLED==='true';
-  const reportTimeout=environment.AI_USAGE_REPORT_TIMEOUT_SECONDS;
-  if(quotaEnabled||reportWorker||(reportTimeout!==undefined&&reportTimeout!=='')){
-    if(typeof reportTimeout!=='string'||!/^\d+$/.test(reportTimeout)||Number(reportTimeout)<1||Number(reportTimeout)>2147483)throw new Error('AI_USAGE_REPORT_TIMEOUT_SECONDS must be configured between 1 and 2147483');
+
+  for (const key of ['ACCESS_TOKEN_TTL_SECONDS', 'REFRESH_TOKEN_TTL_SECONDS'] as const) {
+    const value = environment[key] === undefined
+      ? (key === 'ACCESS_TOKEN_TTL_SECONDS' ? 900 : 2592000)
+      : Number(environment[key]);
+    if (!Number.isInteger(value) || value < 60) {
+      throw new Error(`${key} must be an integer of at least 60 seconds`);
+    }
   }
-  if(quotaEnabled&&(typeof environment.AI_QUOTA_SERVICE_TOKEN!=='string'||!/^[A-Za-z0-9_-]{43,128}$/.test(environment.AI_QUOTA_SERVICE_TOKEN)))throw new Error('AI_QUOTA_SERVICE_TOKEN must be a separate configured service token');
+
+  const corsOrigins = environment.CORS_ORIGINS === undefined
+    ? []
+    : String(environment.CORS_ORIGINS).split(',').map((origin) => origin.trim()).filter(Boolean);
+  for (const origin of corsOrigins) {
+    try {
+      const parsed = new URL(origin);
+      if (!['http:', 'https:'].includes(parsed.protocol) || parsed.origin !== origin) {
+        throw new Error();
+      }
+    } catch {
+      throw new Error('CORS_ORIGINS must be a comma-separated list of HTTP(S) origins');
+    }
+  }
 
   return environment;
 }
@@ -77,6 +103,7 @@ export default function configuration(): RuntimeConfiguration {
   return {
     app: {
       port: Number(process.env.PORT ?? 3000),
+      corsOrigins: (process.env.CORS_ORIGINS ?? '').split(',').map((origin) => origin.trim()).filter(Boolean),
     },
     database: {
       host: process.env.DB_HOST ?? '',
@@ -86,5 +113,15 @@ export default function configuration(): RuntimeConfiguration {
       name: process.env.DB_NAME ?? '',
       connectionLimit: Number(process.env.DB_CONNECTION_LIMIT ?? 10),
     },
+    auth: {
+      accessTokenSecret: process.env.JWT_ACCESS_SECRET ?? '',
+      refreshTokenSecret: process.env.JWT_REFRESH_SECRET ?? '',
+      accessTokenTtlSeconds: Number(process.env.ACCESS_TOKEN_TTL_SECONDS ?? 900),
+      refreshTokenTtlSeconds: Number(process.env.REFRESH_TOKEN_TTL_SECONDS ?? 2592000),
+      adminEmail: process.env.ADMIN_EMAIL ?? '',
+      adminPassword: process.env.ADMIN_PASSWORD ?? '',
+      adminDisplayName: process.env.ADMIN_DISPLAY_NAME ?? '',
+    },
+    crypto: { encryptionKey: process.env.APP_ENCRYPTION_KEY ?? '' },
   };
 }

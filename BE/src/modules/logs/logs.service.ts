@@ -1,0 +1,1 @@
+import {Injectable} from '@nestjs/common'; import {LogsRepository} from './logs.repository'; @Injectable() export class LogsService{constructor(private repo:LogsRepository){} system(p:number,l:number,s?:string,c?:string){return this.repo.system(p,l,s,c)} audit(p:number,l:number){return this.repo.audit(p,l)}}

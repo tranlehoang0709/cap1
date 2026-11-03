@@ -30,6 +30,33 @@ export class UsersService {
     });
   }
 
+  async listUsers(page: number, limit: number, search?: string): Promise<{ items: Array<PublicUser & { role: RoleCode }>; total: number }> {
+    return this.withDatabaseErrors(() => this.usersRepository.listUsers(page, limit, search?.trim() || undefined));
+  }
+
+  async updateProfile(id: UserId, displayName: string): Promise<PublicUser> {
+    const userId = this.normalizeUserId(id);
+    return this.withDatabaseErrors(async () => {
+      const user = await this.usersRepository.updateProfile(userId, displayName.trim());
+      await this.usersRepository.insertAuditLog(userId, 'USER_PROFILE_UPDATED', 'USER', userId, { display_name_changed: true });
+      return user;
+    });
+  }
+
+  async getPrivacy(id: UserId): Promise<{ save_history: boolean }> {
+    const userId = this.normalizeUserId(id);
+    return this.withDatabaseErrors(async () => ({ save_history: await this.usersRepository.getSaveHistory(userId) }));
+  }
+
+  async updatePrivacy(id: UserId, saveHistory: boolean): Promise<{ save_history: boolean }> {
+    const userId = this.normalizeUserId(id);
+    return this.withDatabaseErrors(async () => {
+      await this.usersRepository.setSaveHistory(userId, saveHistory);
+      await this.usersRepository.insertAuditLog(userId, 'USER_PRIVACY_UPDATED', 'USER', userId, { save_history: saveHistory });
+      return { save_history: saveHistory };
+    });
+  }
+
   async getUserRole(id: UserId): Promise<RoleCode> {
     const userId = this.normalizeUserId(id);
     return this.withDatabaseErrors(async () => {
