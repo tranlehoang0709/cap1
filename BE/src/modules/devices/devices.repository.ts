@@ -39,7 +39,6 @@ export class DevicesRepository {
   }
 
   async listDevices(userId: string | null, page: number, limit: number): Promise<{ items: DeviceRecord[]; total: number }> {
-    await this.db.execute("UPDATE devices SET connection_status='offline',updated_at=CURRENT_TIMESTAMP WHERE connection_status='online' AND (last_seen_at IS NULL OR last_seen_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 120 SECOND))");
     const join = userId ? 'INNER JOIN device_assignments da ON da.device_id = d.id' : '';
     const where = userId ? 'WHERE da.user_id = ?' : '';
     const values = userId ? [userId] : [];

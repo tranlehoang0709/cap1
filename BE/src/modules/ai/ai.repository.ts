@@ -29,7 +29,15 @@ export class AiRepository {
   async providerEnabled(id: string) { const [rows] = await this.pool.execute<ProviderRow[]>('SELECT id,code,name,is_enabled,health_status FROM ai_providers WHERE id=? LIMIT 1',[id]); return rows[0] ? provider(rows[0]) : null; }
   async quota(userId: string, providerId: string) { const [rows] = await this.pool.execute<QuotaRow[]>(`SELECT requests_per_minute,requests_per_day,tokens_per_month FROM quota_policies WHERE is_active=1 AND (user_id=? OR user_id IS NULL) AND (provider_id=? OR provider_id IS NULL) ORDER BY user_id IS NULL,provider_id IS NULL,id DESC`,[userId,providerId]); return rows[0] ?? null; }
   async quotas(userId: string | null) { const [rows] = await this.pool.execute<QuotaPolicyRow[]>(`SELECT id,user_id,provider_id,requests_per_minute,requests_per_day,tokens_per_month,is_active,created_at,updated_at FROM quota_policies WHERE (? IS NULL OR user_id=?) ORDER BY updated_at DESC`,[userId,userId]); return rows.map((r)=>({...r,id:String(r.id),user_id:r.user_id===null?null:String(r.user_id),provider_id:r.provider_id===null?null:String(r.provider_id),is_active:Boolean(r.is_active)})); }
-  async upsertQuota(userId: string | null, providerId: string | null, rpm: number | null, rpd: number | null, monthly: string | null) { await this.pool.execute(`INSERT INTO quota_policies (user_id,provider_id,requests_per_minute,requests_per_day,tokens_per_month,is_active,created_at,updated_at) VALUES (?,?,?,?,?,1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`,[userId,providerId,rpm,rpd,monthly]); return this.quotas(userId); }
+  async upsertQuota(userId: string | null, providerId: string | null, rpm: number | null, rpd: number | null, monthly: string | null) {
+    const [existing] = await this.pool.execute<RowDataPacket[]>('SELECT id FROM quota_policies WHERE user_id <=> ? AND provider_id <=> ? ORDER BY id DESC LIMIT 1', [userId, providerId]);
+    if (existing[0]) {
+      await this.pool.execute('UPDATE quota_policies SET requests_per_minute=?,requests_per_day=?,tokens_per_month=?,is_active=1,updated_at=CURRENT_TIMESTAMP WHERE id=?', [rpm, rpd, monthly, existing[0].id]);
+    } else {
+      await this.pool.execute(`INSERT INTO quota_policies (user_id,provider_id,requests_per_minute,requests_per_day,tokens_per_month,is_active,created_at,updated_at) VALUES (?,?,?,?,?,1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`, [userId, providerId, rpm, rpd, monthly]);
+    }
+    return this.quotas(userId);
+  }
   async deactivateQuota(id:string){const[r]=await this.pool.execute<ResultSetHeader>('UPDATE quota_policies SET is_active=0,updated_at=CURRENT_TIMESTAMP WHERE id=? AND is_active=1',[id]);return r.affectedRows===1;}
   async useCount(userId:string,providerId:string, from: Date) { const [rows]=await this.pool.execute<CountRow[]>('SELECT COUNT(*) total FROM usage_records WHERE user_id=? AND provider_id=? AND occurred_at>=? AND status=\'success\'',[userId,providerId,from]); return Number(rows[0]?.total ?? 0); }
   async usageSince(userId:string,providerId:string,from:Date) { const [rows]=await this.pool.execute<UsageRow[]>('SELECT COUNT(*) requests, COALESCE(SUM(input_tokens+output_tokens),0) tokens FROM usage_records WHERE user_id=? AND provider_id=? AND occurred_at>=? AND status=\'success\'',[userId,providerId,from]); return {requests:Number(rows[0]?.requests??0),tokens:Number(rows[0]?.tokens??0)}; }

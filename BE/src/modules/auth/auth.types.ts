@@ -18,6 +18,11 @@ export interface RefreshTokenPayload {
   jti: string;
 }
 
+export interface EmailVerificationPayload {
+  sub: string;
+  typ: 'email_verification';
+}
+
 export interface TokenPair {
   access_token: string;
   refresh_token: string;

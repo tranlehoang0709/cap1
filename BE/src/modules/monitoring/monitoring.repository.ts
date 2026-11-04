@@ -5,8 +5,12 @@ import { MYSQL_POOL } from '../../database/database.constants';
 @Injectable()
 export class MonitoringRepository {
   constructor(@Inject(MYSQL_POOL) private readonly pool: Pool) {}
+  async sweepStaleDevices(): Promise<number> {
+    const [result] = await this.pool.query<any>("UPDATE devices SET connection_status='offline',updated_at=CURRENT_TIMESTAMP WHERE connection_status='online' AND last_seen_at < (CURRENT_TIMESTAMP - INTERVAL 120 SECOND)");
+    return Number(result.affectedRows ?? 0);
+  }
   async dashboard() {
-    await this.pool.query("UPDATE devices SET connection_status='offline' WHERE connection_status='online' AND last_seen_at < (CURRENT_TIMESTAMP - INTERVAL 120 SECOND)");
+    await this.sweepStaleDevices();
     const q = async (sql: string) => { const [r] = await this.pool.query<RowDataPacket[]>(sql); return Number(r[0]?.total ?? 0); };
     return { users: await q('SELECT COUNT(*) total FROM users'), devices: await q('SELECT COUNT(*) total FROM devices'), assigned_devices: await q("SELECT COUNT(*) total FROM devices WHERE lifecycle_status='assigned'"), online_devices: await q("SELECT COUNT(*) total FROM devices WHERE connection_status='online'"), conversations: await q('SELECT COUNT(*) total FROM conversations WHERE deleted_at IS NULL'), usage_today: await q('SELECT COUNT(*) total FROM usage_records WHERE occurred_at>=CURRENT_DATE'), generated_at: new Date().toISOString() };
   }

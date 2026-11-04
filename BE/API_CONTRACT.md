@@ -864,3 +864,16 @@ Scoped response thêm quotaUnboundedRequests và admissionBlockedByUnboundedRequ
 finite legacy policy có unknown hold trả token remaining=null thay vì quảng cáo usable
 balance. BLOCKED remaining=0; UNLIMITED explicit mode mới có unlimited null. HTTP
 200/400/401/403/404/409/500. Duplicate/invalid policy fail closed.
+
+## Current NestJS routes (2026-11-04)
+
+The currently active application routes include `/auth/register`, `/auth/login`,
+`/auth/verify-email`, `/auth/refresh`, `/auth/logout`, `/auth/me`, `/devices/*`,
+`/user/devices/*`, `/user/dashboard/access`, `/admin/device-recovery/*`,
+`/ai/providers`, `/ai/profile`, `/api-keys`, `/web-chat/messages`,
+`/conversations/*`, `/quotas`, `/usage`, `/admin/quotas`, `/admin/logs`,
+`/admin/audit-logs`, `/admin/monitoring/*`, and `/admin/system-settings/*`.
+
+Registration returns a one-time `verification_token` for development delivery;
+the token is signed for 15 minutes and is consumed by `POST /auth/verify-email`.
+Production deployments should deliver that token through the configured email provider.

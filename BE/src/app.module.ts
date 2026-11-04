@@ -23,6 +23,8 @@ import { SystemSettingsModule } from './modules/system-settings/system-settings.
 import { UsersModule } from './modules/users/users.module';
 import { WebChatModule } from './modules/web-chat/web-chat.module';
 import { InternalApiModule } from './modules/internal-api/internal-api.module';
+import { PairingModule } from './modules/pairing/pairing.module';
+import { RecoveryModule } from './modules/device-recovery/recovery.module';
 
 @Module({
   imports: [
@@ -49,6 +51,8 @@ import { InternalApiModule } from './modules/internal-api/internal-api.module';
     MonitoringModule,
     SystemSettingsModule,
     InternalApiModule,
+    PairingModule,
+    RecoveryModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -50,7 +50,7 @@ export class AuthRepository {
       await connection.beginTransaction();
       const [insert] = await connection.execute<ResultSetHeader>(
         `INSERT INTO users (email, password_hash, display_name, status, email_verified_at, created_at, updated_at)
-         VALUES (?, ?, ?, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+         VALUES (?, ?, ?, 'active', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [email, passwordHash, name],
       );
       const userId = String(insert.insertId);
@@ -80,6 +80,14 @@ export class AuthRepository {
 
   async updateLastLogin(userId: string): Promise<void> {
     await this.pool.execute('UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?', [userId]);
+  }
+
+  async verifyEmail(userId: string): Promise<boolean> {
+    const [result] = await this.pool.execute<ResultSetHeader>(
+      'UPDATE users SET email_verified_at = COALESCE(email_verified_at, CURRENT_TIMESTAMP), updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [userId],
+    );
+    return result.affectedRows === 1;
   }
 
   async createRefreshSession(userId: string, tokenHash: string, expiresAt: Date): Promise<void> {
