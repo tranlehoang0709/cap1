@@ -14,8 +14,6 @@ describe('AiService', () => {
     expect(repo.createCredential).toHaveBeenCalledWith('1', '2', 'Personal key', 'encrypted:secret-1234', '1234');
   });
   it('fails closed instead of generating mock chat replies or estimated usage', async () => {
-    let error: unknown;
-    try { service.chat('2', 'hello', '1'); } catch (caught) { error = caught; }
-    expect(error).toMatchObject({ code: 'AI_PIPELINE_UNAVAILABLE' });
+    await expect(service.chat('2', 'hello', '1')).rejects.toMatchObject({ code: 'AI_PIPELINE_UNAVAILABLE' });
   });
 });

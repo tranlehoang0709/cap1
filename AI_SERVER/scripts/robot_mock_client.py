@@ -57,13 +57,28 @@ async def exercise(url, token, version):
             await ws.send(json.dumps(proof|dict(type='playback',state='complete',audio_chunks=count)))
             # Confirm server accepts next turn only after processing completion proof.
             await ws.send(json.dumps(dict(type='listen',state='start',mode='auto',session_id=session)))
-            await ws.send(json.dumps(dict(type='abort',session_id=session)))
-            from websockets.exceptions import ConnectionClosedOK
-            try:
-                await receive(ws)
-            except ConnectionClosedOK:
-                pass
-            return dict(session_id=session,version=version,audio_chunks=count,decoded_samples=count*960,proof='SIMULATED, NOT HARDWARE')
+            pcm=struct.pack('<960h',*(int(4000*math.sin(i*.15)) for i in range(960)))
+            await ws.send(encode_audio_frame(AudioFrame(codec.encode(pcm),0),FramingConfig(version,4096)))
+            await ws.send(json.dumps(dict(type='listen',state='stop',session_id=session)))
+            next_start=json.loads(await receive(ws))
+            assert next_start['state']=='start' and next_start['turn_id']!=start['turn_id']
+            next_proof={k:next_start[k] for k in ('session_id','turn_id','playback_id')}
+            await ws.send(json.dumps(next_proof|dict(type='playback',state='ready',audio_chunks=0)))
+            next_count=0
+            while True:
+                message=await receive(ws)
+                if isinstance(message,bytes):
+                    packet=validate_audio_frame(message,FramingConfig(version,1275))
+                    assert len(codec.decode(packet.payload))==1920
+                    next_count+=1
+                else:
+                    stop=json.loads(message)
+                    assert stop['state']=='stop' and stop['audio_chunks']==next_count==2
+                    break
+            await ws.send(json.dumps(next_proof|dict(type='playback',state='complete',audio_chunks=next_count)))
+            return dict(session_id=session,version=version,audio_chunks=count,decoded_samples=count*960,
+                        second_turn_chunks=next_count,
+                        proof='SIMULATED, NOT HARDWARE')
     finally:
         codec.close()
 

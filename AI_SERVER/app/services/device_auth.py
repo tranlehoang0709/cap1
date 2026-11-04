@@ -1,12 +1,26 @@
 """Authorize explicit provisioned proof. No MAC mapping or firmware token guessing."""
 
 from datetime import datetime, timezone
+import hmac
 from uuid import uuid4
+from pydantic import SecretStr
 
 from app.clients.backend import BackendClient, BackendCode, BackendError
 from app.models import backend as dto
 from app.models.llm import ConversationKey
 from app.services.orchestrator import Control
+
+
+def validate_local_device_credential(credentials, uid: str, credential: str) -> bool:
+    """Validate a provisioned local credential; UID/MAC alone is never proof."""
+    if isinstance(credential, SecretStr):
+        credential = credential.get_secret_value()
+    if not isinstance(uid, str) or not isinstance(credential, str):
+        return False
+    expected = credentials.get(uid)
+    if expected is None:
+        return False
+    return hmac.compare_digest(expected.get_secret_value().encode("utf-8"), credential.encode("utf-8"))
 
 
 class AuthorizedSession:
@@ -37,11 +51,12 @@ class AuthorizedSession:
         if self.orchestrator is not None and self.orchestrator.turn is not None:
             await self.orchestrator.control(command, key=self.key, turn_id=self.orchestrator.turn.turn_id)
 
-    async def resolve(self, context):
+    async def resolve(self, context, *, include_credential=False):
         if not self.valid:
             raise BackendError(BackendCode.BINDING)
         try:
-            self.config = await self.client.resolve_config(dto.ConfigRequest(userId=self.key.user_id, deviceId=self.key.device_id), context)
+            self.config = await self.client.resolve_config(dto.ConfigRequest(userId=self.key.user_id, deviceId=self.key.device_id,
+                includeCredential=True if include_credential else None), context)
             return self.config
         except BackendError:
             await self.invalidate()

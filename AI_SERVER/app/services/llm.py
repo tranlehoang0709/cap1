@@ -33,6 +33,7 @@ class Conversation:
         self._history: tuple[Message, ...] = ()
         self._attempted: set[str] = set()
         self._turn: HalfDuplexTurn | None = None
+        self._pending: dict[str, tuple[LLMRequest, LLMResult | None]] = {}
 
     @property
     def key(self):
@@ -57,16 +58,30 @@ class Conversation:
             raise LLMError(LLMErrorCode.CONTEXT_LIMIT)
         self._turn = turn
         self._attempted.add(turn.turn_id)
-        return LLMRequest(key, turn.turn_id, transcript.text, prompt, self.history, config)
+        request = LLMRequest(key, turn.turn_id, transcript.text, prompt, self.history, config)
+        self._pending[turn.turn_id] = (request, None)
+        return request
 
     def commit(self, request: LLMRequest, result: LLMResult) -> None:
-        if result.complete:
-            self._history += (Message("user", request.transcript), Message("assistant", result.text))
-
-    def release(self, turn: HalfDuplexTurn) -> None:
-        """Only release after explicit close; never reopen during SPEAKING."""
-        if self._turn is not turn or turn.phase != TurnPhase.CLOSED:
+        pending = self._pending.get(request.turn_id)
+        if pending is None or pending[0] != request:
             raise LLMError(LLMErrorCode.SESSION_BUSY)
+        self._pending[request.turn_id] = (request, result if result.complete else None)
+
+    def release(self, turn: HalfDuplexTurn, *, interrupted: bool = False) -> None:
+        """Only release after explicit close; never reopen during SPEAKING."""
+        if self._turn is not turn:
+            return
+        if turn.phase != TurnPhase.CLOSED:
+            raise LLMError(LLMErrorCode.SESSION_BUSY)
+        pending = self._pending.pop(turn.turn_id, None)
+        if pending is not None:
+            request, result = pending
+            if interrupted:
+                self._history += (Message("user", request.transcript),
+                                  Message("assistant", "[response interrupted]"))
+            elif result is not None:
+                self._history += (Message("user", request.transcript), Message("assistant", result.text))
         self._turn = None
 
 

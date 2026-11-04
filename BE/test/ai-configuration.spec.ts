@@ -74,6 +74,12 @@ describe('AI provider/profile/credential service',()=>{
     await expect(service.updateAIProfile(user,{preferredProviderId:'2',preferredLlmModelId:'3'})).rejects.toMatchObject({status:409});
     expect(tx.saveProfile).not.toHaveBeenCalled();
   });
+  it('delivers decrypted credentials only on explicit internal request',async()=>{
+    const input={userId:'7',providerId:'2',modelId:'3'};
+    expect(await service.resolveAIConfiguration(input)).not.toHaveProperty('credential');
+    expect(await service.resolveAIConfiguration({...input,includeCredential:true})).toMatchObject({
+      credential:rawSecret,credentialReference:{id:'9',providerId:'2'}});
+  });
   it('reads absent profile without mutation and scopes create/update to authenticated User',async()=>{
     expect(await service.getAIProfile(user)).toEqual({...emptyProfile,credentialScope:'USER'});expect(tx.saveProfile).not.toHaveBeenCalled();
     const result=await service.updateAIProfile(user,{assistantName:' AIVA ',systemPrompt:'hello\nworld'});

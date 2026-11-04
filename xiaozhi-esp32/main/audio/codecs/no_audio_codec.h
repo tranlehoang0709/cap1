@@ -6,9 +6,12 @@
 #include <driver/gpio.h>
 #include <driver/i2s_pdm.h>
 #include <mutex>
+#include "audio/audio_signal_stats.h"
 #include "audio/i2s_tx_drain_fence.h"
 
-#if CONFIG_AIVA_I2S_TX_DRAIN_PROOF && ESP_IDF_VERSION == ESP_IDF_VERSION_VAL(6, 0, 2)
+#if CONFIG_AIVA_I2S_TX_DRAIN_PROOF && \
+    (ESP_IDF_VERSION == ESP_IDF_VERSION_VAL(6, 0, 2) || \
+     ESP_IDF_VERSION == ESP_IDF_VERSION_VAL(6, 0, 3))
 #define AIVA_HAS_I2S_TX_DRAIN_PROOF 1
 #else
 #define AIVA_HAS_I2S_TX_DRAIN_PROOF 0
@@ -17,6 +20,8 @@
 class NoAudioCodec : public AudioCodec {
 protected:
     std::mutex data_if_mutex_;
+    AudioSignalStats raw_i2s_input_stats_;
+    int input_pcm_shift_ = 12;
 #if AIVA_HAS_I2S_TX_DRAIN_PROOF
     mutable portMUX_TYPE drain_mux_ = portMUX_INITIALIZER_UNLOCKED;
     I2sTxDrainFence drain_fence_;
@@ -42,8 +47,8 @@ public:
 
 class NoAudioCodecSimplex : public NoAudioCodec {
 public:
-    NoAudioCodecSimplex(int input_sample_rate, int output_sample_rate, gpio_num_t spk_bclk, gpio_num_t spk_ws, gpio_num_t spk_dout, gpio_num_t mic_sck, gpio_num_t mic_ws, gpio_num_t mic_din);
-    NoAudioCodecSimplex(int input_sample_rate, int output_sample_rate, gpio_num_t spk_bclk, gpio_num_t spk_ws, gpio_num_t spk_dout, i2s_std_slot_mask_t spk_slot_mask, gpio_num_t mic_sck, gpio_num_t mic_ws, gpio_num_t mic_din, i2s_std_slot_mask_t mic_slot_mask);
+    NoAudioCodecSimplex(int input_sample_rate, int output_sample_rate, gpio_num_t spk_bclk, gpio_num_t spk_ws, gpio_num_t spk_dout, gpio_num_t mic_sck, gpio_num_t mic_ws, gpio_num_t mic_din, int input_pcm_shift = 12);
+    NoAudioCodecSimplex(int input_sample_rate, int output_sample_rate, gpio_num_t spk_bclk, gpio_num_t spk_ws, gpio_num_t spk_dout, i2s_std_slot_mask_t spk_slot_mask, gpio_num_t mic_sck, gpio_num_t mic_ws, gpio_num_t mic_din, i2s_std_slot_mask_t mic_slot_mask, int input_pcm_shift = 12);
 };
 
 class NoAudioCodecSimplexPdm : public NoAudioCodec {

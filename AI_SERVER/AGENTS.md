@@ -1,5 +1,60 @@
 # Bản đồ luồng AI_SERVER
 
+## D2-S2-15 integrated Gemini (2026-11-04)
+
+| Từ | Qua | Ghi chú |
+|---|---|---|
+| BE Web Chat | `/internal/web-chat` | Service token |
+| resolve-config | SecretStr | Nội bộ, no-store |
+| quota admission | credentialId | Ràng buộc key |
+| Gemini countTokens | Token budget | Trước generation |
+| Gemini metadata | BE usage | Actuals, no retry |
+| Settled success | turns/complete | Privacy + dedupe |
+| `/ws/robot` | real Gemini media | Auth trước audio |
+
+The hardcoded media blocker is removed for integrated Web Chat and `/ws/robot`.
+Readiness is now checked through BE auth/config/admission. The seven quota
+columns were verified necessary, tested in an isolated DB, then added to the
+empty working ledger under the user's conditional schema authorization.
+The working DB still lacks ready Gemini user/model/credential configuration;
+contract flags remain disabled. No LIVE Gemini or working-DB persistence PASS
+is claimed. See `../BE/docs/d2-s2-15-live-gemini.md`. Do not run the existing
+manual schema migration blindly or against a nonempty ledger. No Git commit.
+
+## D2-S2-14 LAN control (2026-11-04)
+
+| Từ | Qua | Ghi chú |
+|---|---|---|
+| `POST /xiaozhi/ota/` | BE authorize | Proof bắt buộc |
+| `LanSettings` | OTA websocket URL | Origin từ env |
+| `/ws/robot` | BE authorize | Integrated only |
+| LAN hello | session mới | Không dùng MAC |
+| direct heartbeat | BE heartbeat | Không Ping/Pong |
+| listen.start | resolve config | Media vẫn chặn |
+| `run_lan.cmd` | `.env` port | Bind 0.0.0.0 |
+
+See `docs/d2-s2-14-lan.md`. LAN bootstrap/control is implemented; integrated
+Gemini audio remains BLOCKED by credential delivery and live quota execution.
+The prior development endpoint is unchanged. Hardware/independent-power/Wi-Fi
+recovery are not accepted without a real SD2 test. User forbids Git operations
+for D2-S2-14; do not commit this task automatically.
+
+## D2-S2-19 secure LAN gateway (2026-11-04)
+
+| From | Through | Note |
+|---|---|---|
+| `run_lan.py` | TLS cert/key validation | HTTPS origin required |
+| `run_dev.py` | Uvicorn SSL settings | TLS 1.2 server context |
+| `POST /xiaozhi/ota/` | HTTPS-only guard | HTTP receives 426 |
+| `/ws/robot` | WSS-only guard | Plain WS closed before auth |
+| `/ws/robot` | BE authorize/config/quota | Audio fail-closed before admission |
+
+See `docs/d2-s2-19-secure-wifi-gateway.md`. The source is TLS-capable, but no
+TLS certificate/trust anchor is configured. An existing port-8000 listener
+still has old plaintext behavior and Windows denied process stop/inspection;
+do not report the deployed gateway as secure. D2-S2-18 enrollment endpoints
+remain unimplemented in BE; AI_SERVER must not invent them.
+
 Tài liệu này ghi luồng chạy hiện có trong mã nguồn. Cột **Ghi chú** tối đa 20 ký tự.
 
 ## Luồng chạy
@@ -418,3 +473,25 @@ worked with mock tone; do not infer production acceptance from that result.
 Server tests: 507 PASS and one pre-existing historical snapshot hash FAIL;
 do not overwrite historical snapshots to force approval. Firmware host build
 and asset tests: 70 PASS. See `docs/sd2-gemini-lan.md`.
+<<<<<<< HEAD
+=======
+
+## D2-S2 robot live audio follow-up (2026-11-04)
+
+| From | Via | Note |
+|---|---|---|
+| `/ws/robot` | `lan_robot.robot()` | WSS + BE admission |
+| Binary Opus | `OpusCodec.decode()` | 16 kHz mono PCM |
+| Explicit stop | `GeminiSTTAdapter` | Bounded RAM utterance |
+| `quota_gemini()` | Gemini LLM | Existing BE budget |
+| Gemini PCM deltas | `PCMOpusFrames` | 24k to 16k Opus |
+| Playback queue | `RobotAudioOutput` | Bounded + paced |
+| Empty/STT error | usage settlement | Zero only pre-LLM |
+
+The LAN route wires existing STT/LLM/TTS adapters after WSS identity, config and
+per-turn quota admission. Integrated Gemini TTS uses Interactions PCM streaming;
+unary WAV remains for adapters without a stream method. Firmware waits for the
+scoped `status/listening` acknowledgement before mic capture. No audio file is
+written. Status events carry session and turn IDs. Real BE, TLS, Gemini
+credential readiness and SD2 hardware remain separate acceptance gates.
+>>>>>>> 8656999 (Update AIVA IoT integration and SD2)

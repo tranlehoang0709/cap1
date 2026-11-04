@@ -3,6 +3,7 @@
 from pathlib import Path
 import os
 import signal
+import ssl
 import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +36,9 @@ def main() -> None:
         ws_ping_interval=None,
         ws_per_message_deflate=False,
         proxy_headers=False,
+        ssl_certfile=str(settings.tls_certfile) if settings.tls_certfile else None,
+        ssl_keyfile=str(settings.tls_keyfile) if settings.tls_keyfile else None,
+        ssl_version=ssl.PROTOCOL_TLS_SERVER,
     )
 
 

@@ -1,3 +1,5 @@
+> Historical UI reference. Session demo operations described below have been retired. See README.md and giao_dien/live.py for the current Backend API implementation. Legacy UI checks depending on init_demo are no longer applicable.
+
 # Hướng dẫn cấu trúc Frontend AIVA-IoT
 
 Cập nhật ngày 15/10/2026. Giai đoạn 9 chuyển auth sang `giao_dien/xac_thuc/dang_nhap.py`

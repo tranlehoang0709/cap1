@@ -112,6 +112,46 @@ export class AiProvidersService {
       return {providers};
     });
   }
+  async startTurn(body: unknown) {
+    const input=objectInput(body,['userId','deviceId','channel']);
+    const userId=id(input.userId),deviceId=input.deviceId==null?null:id(input.deviceId);
+    if(!['web','robot'].includes(input.channel as string) || (input.channel==='robot'&&!deviceId) || (input.channel==='web'&&deviceId)) throw new BadRequestException('INVALID_AI_CONTEXT');
+    return this.database(async tx=>{
+      await this.activeUser(tx,userId);
+      if(deviceId&&!await tx.ownership.verifyDeviceOwnership(userId,deviceId))throw new ForbiddenException('DEVICE_ACCESS_DENIED');
+      await tx.rows("INSERT INTO conversations(user_id,device_id,channel,status,started_at) VALUES(?,?,?,'active',UTC_TIMESTAMP())",[userId,deviceId,input.channel]);
+      const conversationId=(await tx.rows<{id:string}>('SELECT CAST(LAST_INSERT_ID() AS CHAR) AS id'))[0].id;
+      await tx.rows("INSERT INTO ai_sessions(conversation_id,device_id,status,started_at) VALUES(?,?,'active',UTC_TIMESTAMP())",[conversationId,deviceId]);
+      const sessionId=(await tx.rows<{id:string}>('SELECT CAST(LAST_INSERT_ID() AS CHAR) AS id'))[0].id;
+      return {conversationId,sessionId};
+    });
+  }
+  async completeTurn(body: unknown) {
+    const input=objectInput(body,['userId','sessionId','requestId','content','response']);
+    const userId=id(input.userId),sessionId=id(input.sessionId);
+    const content=text(input.content,16000,false,true) as string,response=text(input.response,500,false,true) as string;
+    if(typeof input.requestId!=='string'||!/^[A-Za-z0-9_-]{16,128}$/.test(input.requestId))throw new BadRequestException('INVALID_REQUEST_ID');
+    return this.database(async tx=>{
+      await this.activeUser(tx,userId);
+      const s=(await tx.rows<{conversationId:string;status:string;deviceId:string|null}>(`SELECT CAST(s.conversation_id AS CHAR) AS conversationId,s.status,CAST(s.device_id AS CHAR) AS deviceId FROM ai_sessions s JOIN conversations c ON c.id=s.conversation_id WHERE s.id=? AND c.user_id=? AND c.deleted_at IS NULL FOR UPDATE`,[sessionId,userId]))[0];
+      if(!s)throw new ForbiddenException('INVALID_AI_CONTEXT');
+      if(s.deviceId&&!await tx.ownership.verifyDeviceOwnership(userId,s.deviceId))throw new ForbiddenException('DEVICE_ACCESS_DENIED');
+      const usage=(await tx.rows<{providerId:string}>(`SELECT CAST(provider_id AS CHAR) AS providerId FROM usage_records WHERE request_id=? AND user_id=? AND ai_session_id=? AND conversation_id=? AND finalized_at IS NOT NULL AND status='success' FOR UPDATE`,[input.requestId,userId,sessionId,s.conversationId]))[0];
+      if(!usage)throw new ConflictException('USAGE_NOT_SETTLED');
+      const privacy=(await tx.rows<{save:number}>('SELECT save_history AS save FROM privacy_preferences WHERE user_id=? FOR UPDATE',[userId]))[0];
+      const saved=privacy?.save===1;
+      if(s.status==='completed') {
+        if(saved){const messages=await tx.rows<{role:string;content:string}>('SELECT role,content FROM messages WHERE conversation_id=? ORDER BY id',[s.conversationId]);
+          if(messages.length!==2||messages[0].content!==content||messages[1].content!==response)throw new ConflictException('TURN_COMPLETION_CONFLICT');}
+        return {conversationId:s.conversationId,sessionId,saved};
+      }
+      if(s.status!=='active')throw new ConflictException('INVALID_AI_CONTEXT');
+      if(saved)await tx.rows("INSERT INTO messages(conversation_id,role,content,provider_id,created_at) VALUES(?,'user',?,?,UTC_TIMESTAMP()),(?,'assistant',?,?,UTC_TIMESTAMP())",[s.conversationId,content,usage.providerId,s.conversationId,response,usage.providerId]);
+      await tx.rows("UPDATE ai_sessions SET status='completed',ended_at=UTC_TIMESTAMP() WHERE id=?",[sessionId]);
+      await tx.rows("UPDATE conversations SET status='completed',ended_at=UTC_TIMESTAMP() WHERE id=?",[s.conversationId]);
+      return {conversationId:s.conversationId,sessionId,saved};
+    });
+  }
   async getAIProfile(actor: CurrentUser) {
     const userId=this.actor(actor,'USER');
     return this.database(async tx=>{await this.activeUser(tx,userId);return {...(await tx.profile(userId) ?? emptyProfile),credentialScope:await tx.scope(userId)};});

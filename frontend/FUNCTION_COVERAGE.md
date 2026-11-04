@@ -1,3 +1,5 @@
+> Historical UI reference. Session demo operations described below have been retired. See README.md and giao_dien/live.py for the current Backend API implementation. Legacy UI checks depending on init_demo are no longer applicable.
+
 # Đối chiếu Functions → Frontend
 
 Nguồn: `chucnang.docx`, Proposal ver 1.1 và các quyết định giao diện đã được người dùng duyệt. Chưa có Proposal V1.5 hoặc danh sách 66 chức năng có thẩm quyền để xác nhận tuân thủ. Các thao tác dưới đây là UI/mock trong phiên Streamlit, chưa chứng minh tích hợp Backend, AI Server hoặc thiết bị thật.

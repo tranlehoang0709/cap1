@@ -11,6 +11,7 @@
 #include <esp_network.h>
 #include <esp_log.h>
 #include <esp_mac.h>
+#include <sstream>
 #include <utility>
 
 #include <material_symbols.h>
@@ -124,20 +125,37 @@ void WifiBoard::OnNetworkEvent(NetworkEvent event, const std::string& data) {
             Blufi::GetInstance().deinit();
 #endif
             in_config_mode_ = false;
+            if (GetDisplay() != nullptr) GetDisplay()->SetStatus(Lang::Strings::CONNECTION_SUCCESSFUL);
             ESP_LOGI(TAG, "Connected to WiFi: %s", data.c_str());
             break;
         case NetworkEvent::Scanning:
             ESP_LOGI(TAG, "WiFi scanning");
             break;
         case NetworkEvent::Connecting:
+            if (GetDisplay() != nullptr) GetDisplay()->SetStatus(Lang::Strings::CONNECTING);
             ESP_LOGI(TAG, "WiFi connecting to %s", data.c_str());
             break;
         case NetworkEvent::Disconnected:
+            if (GetDisplay() != nullptr) GetDisplay()->SetStatus(Lang::Strings::SERVER_NOT_CONNECTED);
             ESP_LOGW(TAG, "WiFi disconnected");
             break;
         case NetworkEvent::WifiConfigModeEnter:
             ESP_LOGI(TAG, "WiFi config mode entered");
             in_config_mode_ = true;
+            if (auto* display = GetDisplay()) {
+                auto& wifi_manager = WifiManager::GetInstance();
+                std::ostringstream hint;
+                hint << "Network: " << wifi_manager.GetApSsid()
+                     << "\nTemporary AP password: " << wifi_manager.GetApPassword()
+                     << "\nOpen: " << wifi_manager.GetApWebUrl();
+                if (!display->ShowProvisioningInfo("Wi-Fi setup: waiting", hint.str().c_str())) {
+                    wifi_manager.StopConfigAp();
+                    ESP_LOGE(TAG, "Secure provisioning requires an active trusted display");
+                }
+            } else {
+                WifiManager::GetInstance().StopConfigAp();
+                ESP_LOGE(TAG, "Secure provisioning requires an active trusted display");
+            }
             break;
         case NetworkEvent::WifiConfigModeExit:
             ESP_LOGI(TAG, "WiFi config mode exited");
@@ -173,18 +191,11 @@ void WifiBoard::StartWifiConfigMode() {
     Application::GetInstance().SetDeviceState(kDeviceStateWifiConfiguring);
 #ifdef CONFIG_USE_HOTSPOT_WIFI_PROVISIONING
     auto& wifi_manager = WifiManager::GetInstance();
+    if (!wifi_manager.StartConfigAp()) {
+        ESP_LOGE(TAG, "Secure Wi-Fi provisioning AP could not be started");
+        return;
+    }
 
-    wifi_manager.StartConfigAp();
-
-    // Show config prompt after a short delay
-    Application::GetInstance().Schedule([&wifi_manager]() {
-        std::string hint = Lang::Strings::CONNECT_TO_HOTSPOT;
-        hint += wifi_manager.GetApSsid();
-        hint += Lang::Strings::ACCESS_VIA_BROWSER;
-        hint += wifi_manager.GetApWebUrl();
-
-        Application::GetInstance().Alert(Lang::Strings::WIFI_CONFIG_MODE, hint.c_str(), "gear", Lang::Sounds::OGG_WIFICONFIG);
-    });
 #elif CONFIG_USE_ESP_BLUFI_WIFI_PROVISIONING
     auto &blufi = Blufi::GetInstance();
     // initialize esp-blufi protocol

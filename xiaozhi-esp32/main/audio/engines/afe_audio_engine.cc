@@ -186,12 +186,15 @@ bool AfeAudioEngine::Initialize(AudioCodec* codec, int frame_duration_ms, srmode
     const char* detector = wake_detector_ == WakeDetector::kWakeNet
         ? "WakeNet"
         : (wake_detector_ == WakeDetector::kMultiNet ? "MultiNet" : "none");
-    ESP_LOGI(TAG, "Initialized FD AFE, detector: %s, NS: off, feed: %d, fetch: %d",
-        detector, afe_iface_->get_feed_chunksize(afe_data_), afe_iface_->get_fetch_chunksize(afe_data_));
+    ESP_LOGI(TAG, "Initialized FD AFE, detector=%s input_rate_hz=%d input_channels=%d input_format=%s output_rate_hz=16000 output_channels=1 output_format=s16le NS=off feed_samples=%d fetch_samples=%d",
+        detector, codec_->input_sample_rate(), codec_->input_channels(), input_format.c_str(),
+        afe_iface_->get_feed_chunksize(afe_data_), afe_iface_->get_fetch_chunksize(afe_data_));
     return true;
 }
 
 void AfeAudioEngine::Feed(std::vector<int16_t>&& data) {
+    pre_afe_input_stats_.RecordPcm16("pcm16_before_afe", data.data(), data.size(),
+                                     static_cast<uint32_t>(codec_->input_sample_rate()));
     EventBits_t bits = xEventGroupGetBits(event_group_);
     if ((bits & kVoiceProcessingEnabled) && !kUseAfeForVoiceProcessing) {
         OutputRawAudio(data);
@@ -371,6 +374,13 @@ void AfeAudioEngine::ProcessingTask() {
                 ESP_LOGW(TAG, "AFE fetch failed: %d", result->ret_value);
             }
             continue;
+        }
+
+        if (!afe_frame_layout_logged_) {
+            ESP_LOGI(TAG, "AFE output frame: rate_hz=16000 channels=1 format=s16le bytes=%u samples=%u",
+                static_cast<unsigned>(result->data_size),
+                static_cast<unsigned>(result->data_size / sizeof(int16_t)));
+            afe_frame_layout_logged_ = true;
         }
 
         EventBits_t bits = xEventGroupGetBits(event_group_);

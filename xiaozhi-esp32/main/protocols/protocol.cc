@@ -55,8 +55,11 @@ void Protocol::SetError(const std::string& message) {
     }
 }
 
-void Protocol::SendAbortSpeaking(AbortReason reason) {
+void Protocol::SendAbortSpeaking(AbortReason reason, const std::string& turn_id) {
     std::string message = "{\"session_id\":\"" + session_id_ + "\",\"type\":\"abort\"";
+    if (!turn_id.empty()) {
+        message += ",\"turn_id\":\"" + turn_id + "\"";
+    }
     if (reason == kAbortReasonWakeWordDetected) {
         message += ",\"reason\":\"wake_word_detected\"";
     }
@@ -68,7 +71,11 @@ void Protocol::SendWakeWordDetected(const std::string& wake_word) {
     std::string json = "{\"session_id\":\"" + session_id_ +
                        "\",\"type\":\"listen\",\"state\":\"detect\",\"text\":\"" + wake_word +
                        "\"}";
-    SendText(json);
+    if (SendText(json)) {
+        ESP_LOGI(TAG, "Sent listen.detect for wake word");
+    } else {
+        ESP_LOGW(TAG, "Failed to send listen.detect");
+    }
 }
 
 void Protocol::SendStartListening(ListeningMode mode) {
@@ -82,7 +89,11 @@ void Protocol::SendStartListening(ListeningMode mode) {
         message += ",\"mode\":\"manual\"";
     }
     message += "}";
-    SendText(message);
+    if (SendText(message)) {
+        ESP_LOGI(TAG, "Sent listen.start");
+    } else {
+        ESP_LOGW(TAG, "Failed to send listen.start");
+    }
 }
 
 void Protocol::SendStopListening() {

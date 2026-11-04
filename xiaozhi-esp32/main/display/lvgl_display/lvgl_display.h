@@ -22,6 +22,7 @@ public:
     virtual ~LvglDisplay();
 
     virtual void SetStatus(const char* status);
+    virtual bool ShowProvisioningInfo(const char* status, const char* message) override;
     virtual void ShowNotification(const char* notification, int duration_ms = 3000);
     virtual void ShowNotification(const std::string& notification, int duration_ms = 3000);
     virtual void SetPreviewImage(std::unique_ptr<LvglImage> image);

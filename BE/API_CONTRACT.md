@@ -310,3 +310,13 @@ It no longer creates mock assistant messages, estimates token counts, or persist
 usage. Enable real chat only after provider execution, approved quota admission, and actual
 usage settlement are available. Historical text above describing a mock web-chat path is
 superseded by this runtime update.
+# D2-S2-15 additions
+
+See [the integration contract](docs/d2-s2-15-live-gemini.md). Internal config may
+deliver a credential only under the existing approved service-token guard with
+`includeCredential=true`; public Web Chat never returns it. Admission now
+includes `credentialId` to bind execution to the ledger-selected credential.
+Internal `turns/start` and `turns/complete` persist existing conversation/session
+and message tables, with settled-usage and privacy checks. No schema is changed
+by these endpoints; the existing quota migration remains a deployment gate.
+

@@ -161,6 +161,18 @@ void LvglDisplay::SetStatus(const char* status) {
     last_status_update_time_ = std::chrono::system_clock::now();
 }
 
+bool LvglDisplay::ShowProvisioningInfo(const char* status, const char* message) {
+    if (!setup_ui_called_) return false;
+    DisplayLockGuard lock(this);
+    if (status_label_ == nullptr || notification_label_ == nullptr) return false;
+    lv_label_set_text(status_label_, status ? status : "Wi-Fi setup");
+    lv_obj_remove_flag(status_label_, LV_OBJ_FLAG_HIDDEN);
+    lv_label_set_text(notification_label_, message ? message : "");
+    lv_obj_remove_flag(notification_label_, LV_OBJ_FLAG_HIDDEN);
+    last_status_update_time_ = std::chrono::system_clock::now();
+    return true;
+}
+
 void LvglDisplay::ShowNotification(const std::string& notification, int duration_ms) {
     ShowNotification(notification.c_str(), duration_ms);
 }

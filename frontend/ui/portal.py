@@ -1,4 +1,4 @@
-"""Reference portal layout using the existing session-local demo operations."""
+"""Compatibility imports for pages backed by Backend APIs."""
 
 from html import escape
 
@@ -10,7 +10,6 @@ import plotly.express as px
 
 from ui import user, admin
 
-from ui.state import data, current_user, approved_devices, preferences, done, uid, PROVIDERS
 
 from ui.common import panel, render_frame, email_valid
 

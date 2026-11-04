@@ -17,6 +17,7 @@
 #include <atomic>
 
 #include "audio_codec.h"
+#include "audio/audio_signal_stats.h"
 #include "wake_word.h"
 #include "wake_word_audio_cache.h"
 
@@ -60,6 +61,13 @@ private:
     std::atomic<bool> running_ = false;
     std::vector<int16_t> input_buffer_;
     std::mutex input_buffer_mutex_;
+    AudioSignalStats after_afe_stats_;
+    uint64_t feed_frames_ = 0;
+    uint64_t detect_calls_ = 0;
+    uint64_t detecting_frames_ = 0;
+    uint64_t detected_frames_ = 0;
+    uint64_t timeout_frames_ = 0;
+    int64_t last_detector_log_us_ = 0;
 
     TaskHandle_t wake_word_encode_task_ = nullptr;
     StaticTask_t* wake_word_encode_task_buffer_ = nullptr;

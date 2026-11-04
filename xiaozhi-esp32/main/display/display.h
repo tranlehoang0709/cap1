@@ -39,6 +39,9 @@ public:
     virtual void ShowNotification(const std::string& notification, int duration_ms = 3000);
     virtual void SetEmotion(const char* emotion);
     virtual void SetChatMessage(const char* role, const char* content);
+    // Displays short-lived provisioning material only; implementations must
+    // not log either argument.
+    virtual bool ShowProvisioningInfo(const char* status, const char* message) { return false; }
     virtual void ClearChatMessages();
     virtual void SetTheme(Theme* theme);
     virtual Theme* GetTheme() { return current_theme_; }

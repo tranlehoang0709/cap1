@@ -27,7 +27,7 @@ class ContractModel(BaseModel):
                     raise ValueError("Boolean required")
         return value
 
-    @field_validator("deviceId", "userId", "ownerUserId", "providerId", "modelId", "id", "preferredProviderId", "preferredLlmModelId",
+    @field_validator("deviceId", "userId", "ownerUserId", "providerId", "modelId", "credentialId", "id", "preferredProviderId", "preferredLlmModelId",
                      "sessionId", "conversationId", check_fields=False)
     @classmethod
     def ids(cls, value):
@@ -124,7 +124,7 @@ class ConfigRequest(ContractModel):
     deviceId: str | None = None
     providerId: str | None = None
     modelId: str | None = None
-    includeCredential: bool = False
+    includeCredential: bool | None = None
 
 
 class Provider(ContractModel):
@@ -160,7 +160,7 @@ class ResolvedConfig(ContractModel):
     profile: Profile
     credentialScope: Literal["USER", "SYSTEM", "NONE"]
     credentialReference: CredentialReference | None
-    credential: SecretStr | None = Field(default=None, repr=False)
+    credential: SecretStr | None = Field(default=None, repr=False, exclude=True)
 
     @model_validator(mode="after")
     def coherent(self):
@@ -207,6 +207,7 @@ class AdmissionResult(ContractModel):
     allowed: Literal[True]
     requestId: RequestId
     providerId: str
+    credentialId: str | None = None
     mode: Literal["LIMITED", "UNLIMITED"]
     remainingQuota: Remaining
     reservedTokens: str | None
@@ -243,3 +244,28 @@ class UsageResult(ContractModel):
     recorded: Literal[True]
     replayed: bool
     budgetExceeded: bool
+
+
+class TurnStart(ContractModel):
+    userId: str
+    deviceId: str | None = None
+    channel: Literal["web", "robot"]
+
+
+class TurnResult(ContractModel):
+    conversationId: str
+    sessionId: str
+
+
+class TurnComplete(ContractModel):
+    userId: str
+    sessionId: str
+    requestId: RequestId
+    content: str = Field(min_length=1, max_length=16000, repr=False)
+    response: str = Field(min_length=1, max_length=500, repr=False)
+
+
+class TurnSaved(ContractModel):
+    conversationId: str
+    sessionId: str
+    saved: bool

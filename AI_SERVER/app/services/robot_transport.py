@@ -8,6 +8,7 @@ import wave
 from app.models.audio import AudioFrame, AudioMetadata
 from app.models.tts import AudioFormat, PlaybackEvidence, TTSConfig, TTSAudioChunk, TTSRequest, TTSError, TTSErrorCode
 from app.protocol.audio_framing import FramingConfig, encode_audio_frame
+from app.clients.gemini_tts import PCM_FORMAT as GEMINI_PCM_FORMAT
 from app.services.opus_codec import CodecError, OpusCodec, PCMOpusFrames, resample_pcm16
 
 OPUS_FORMAT = AudioFormat(AudioMetadata("opus", 16000, 1, 60), "raw")
@@ -39,8 +40,8 @@ class OpusTTSAdapter:
                 encoder.close()
 
 
-class GeminiOpusTTSAdapter:
-    """Convert real provider WAV output to negotiated 16 kHz mono 60 ms Opus."""
+class WavOpusTTSAdapter:
+    """Convert provider WAV output to negotiated 16 kHz mono 60 ms Opus."""
     def __init__(self, delegate, source_config: TTSConfig, *, max_wav_bytes: int = 5_000_000):
         if not isinstance(source_config, TTSConfig) or source_config.audio_format.data_format != "wav":
             raise TTSError(TTSErrorCode.INVALID_INPUT)
@@ -52,6 +53,48 @@ class GeminiOpusTTSAdapter:
         if request.config.audio_format != OPUS_FORMAT:
             raise TTSError(TTSErrorCode.INVALID_INPUT)
         source_request = replace(request, config=self.source_config)
+        pcm_stream = getattr(self.delegate, "stream_pcm", None)
+        if callable(pcm_stream):
+            source = pcm_stream(source_request, context)
+            encoder = None
+            sequence = input_sequence = total_bytes = 0
+            try:
+                encoder = PCMOpusFrames(24000, 16000, max_chunk_bytes=65536)
+                async for chunk in source:
+                    context.check()
+                    if (not isinstance(chunk, TTSAudioChunk) or chunk.sequence != input_sequence
+                            or chunk.audio_format != GEMINI_PCM_FORMAT):
+                        raise TTSError(TTSErrorCode.INVALID_AUDIO)
+                    input_sequence += 1
+                    total_bytes += len(chunk.payload)
+                    if total_bytes > self.max_wav_bytes:
+                        raise TTSError(TTSErrorCode.LIMIT)
+                    for packet in encoder.feed(chunk.payload):
+                        yield TTSAudioChunk(sequence, packet, OPUS_FORMAT)
+                        sequence += 1
+                if input_sequence == 0:
+                    raise TTSError(TTSErrorCode.INVALID_AUDIO)
+                for packet in encoder.finish():
+                    yield TTSAudioChunk(sequence, packet, OPUS_FORMAT)
+                    sequence += 1
+                if sequence == 0:
+                    raise TTSError(TTSErrorCode.INVALID_AUDIO)
+            except (TTSError, GeneratorExit):
+                raise
+            except CodecError as error:
+                if "libopus unavailable" in str(error):
+                    raise TTSError(TTSErrorCode.CODEC_UNAVAILABLE) from None
+                raise TTSError(TTSErrorCode.INVALID_AUDIO) from None
+            except Exception:
+                raise TTSError(TTSErrorCode.OUTPUT_ERROR) from None
+            finally:
+                try:
+                    await source.aclose()
+                finally:
+                    if encoder is not None:
+                        encoder.close()
+            return
+
         source = self.delegate.synthesize(source_request, context)
         encoder = None
         try:
@@ -105,6 +148,10 @@ class GeminiOpusTTSAdapter:
             finally:
                 if encoder is not None:
                     encoder.close()
+
+
+# Compatibility name retained for existing Gemini-specific callers/tests.
+GeminiOpusTTSAdapter = WavOpusTTSAdapter
 
 
 class RobotAudioOutput:
@@ -177,7 +224,7 @@ class RobotAudioOutput:
     def acknowledge(self, message):
         if (self.aborted or self.scope is None or message.get("session_id") != self.session_id
             or message.get("turn_id") != self.scope.turn_id or message.get("playback_id") != self.scope.generation):
-            raise ValueError("Stale playback event")
+            return False  # A delayed ACK for an aborted/previous turn is harmless.
         state = message.get("state")
         if (state == "ready" and type(message.get("audio_chunks")) is int
             and message["audio_chunks"] == 0 and not self.ready.is_set() and not self.finished):
@@ -187,6 +234,7 @@ class RobotAudioOutput:
             self.complete.set()
         else:
             raise ValueError("Unexpected playback event")
+        return True
 
     async def abort(self, scope):
         if self.scope == scope:

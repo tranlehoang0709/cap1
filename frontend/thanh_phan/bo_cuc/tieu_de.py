@@ -9,7 +9,7 @@ def page_header(title, description):
     with st.container(key="portal_page_header"):
         # Dùng nguyên script cục bộ trong phần tử thương hiệu hiện có.
         scroll_script = (ASSETS_DIR / 'layout' / 'header_scroll.js').read_text(encoding='utf-8')
-        st.html('<div class="brand"><b>🤖 AIVA-IoT</b><span>AI Virtual Assistant & IoT Robot Management Platform</span><small>Bản demo frontend</small></div>'
+        st.html('<div class="brand"><b>🤖 AIVA-IoT</b><span>AI Virtual Assistant & IoT Robot Management Platform</span><small>Backend API</small></div>'
                 f'<script>{scroll_script}</script>', unsafe_allow_javascript=True)
         st.title(title)
         st.caption(description)

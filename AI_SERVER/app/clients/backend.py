@@ -165,6 +165,9 @@ class BackendClient:
         result = await self._post("/internal/ai/resolve-config", request, self._tokens.config, dto.ResolvedConfig, context)
         if result.userId != request.userId:
             raise BackendError(BackendCode.BINDING)
+        if (request.providerId is not None and result.provider.id != request.providerId
+                or request.modelId is not None and result.model.id != request.modelId):
+            raise BackendError(BackendCode.BINDING)
         return result
 
     async def admit(self, request: dto.Admission, context: AudioContext):
@@ -177,5 +180,14 @@ class BackendClient:
     async def report_usage(self, request: dto.UsageReport, context: AudioContext):
         result = await self._post("/internal/ai/usage", request, self._tokens.quota, dto.UsageResult, context)
         if result.requestId != request.requestId or result.status.lower() != request.status:
+            raise BackendError(BackendCode.BINDING)
+        return result
+
+    async def start_turn(self, request: dto.TurnStart, context: AudioContext):
+        return await self._post('/internal/ai/turns/start', request, self._tokens.config, dto.TurnResult, context)
+
+    async def complete_turn(self, request: dto.TurnComplete, context: AudioContext):
+        result = await self._post('/internal/ai/turns/complete', request, self._tokens.config, dto.TurnSaved, context)
+        if result.sessionId != request.sessionId:
             raise BackendError(BackendCode.BINDING)
         return result

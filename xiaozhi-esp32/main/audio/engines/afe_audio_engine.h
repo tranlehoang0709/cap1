@@ -16,6 +16,7 @@
 #include <freertos/task.h>
 
 #include "audio_engine.h"
+#include "audio/audio_signal_stats.h"
 #include "wake_words/wake_word_audio_cache.h"
 
 class CustomWakeWord;
@@ -76,6 +77,7 @@ private:
     // Incremented whenever an active AFE session is invalidated. ProcessingTask
     // uses it to reject a fetch result produced before a disable/re-enable cycle.
     std::atomic<uint32_t> control_generation_{0};
+    bool afe_frame_layout_logged_ = false;
     WakeDetector wake_detector_ = WakeDetector::kNone;
 
     std::unique_ptr<CustomWakeWord> custom_wake_word_;
@@ -84,6 +86,7 @@ private:
     std::vector<int16_t> input_buffer_;
     std::vector<int16_t> output_buffer_;
     std::mutex input_buffer_mutex_;
+    AudioSignalStats pre_afe_input_stats_;
 
     std::function<void(const std::string&)> wake_word_detected_callback_;
     std::function<void(std::vector<int16_t>&&)> output_callback_;

@@ -1,3 +1,5 @@
+> Historical UI reference. Session demo operations described below have been retired. See README.md and giao_dien/live.py for the current Backend API implementation. Legacy UI checks depending on init_demo are no longer applicable.
+
 # AIVA-IoT design direction
 
 TasteSkill source: https://github.com/Leonxlnx/taste-skill/tree/main/skills/taste-skill

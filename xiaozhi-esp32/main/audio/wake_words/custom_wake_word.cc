@@ -8,6 +8,7 @@
 #include <esp_mn_models.h>
 #include <esp_mn_speech_commands.h>
 #include <cJSON.h>
+#include <esp_timer.h>
 
 #define TAG "CustomWakeWord"
 
@@ -16,6 +17,10 @@ CustomWakeWord::CustomWakeWord()
 }
 
 CustomWakeWord::~CustomWakeWord() {
+    if (multinet_model_data_ != nullptr && multinet_ != nullptr) {
+        // The ESP-SR command registry holds pointers to this model instance.
+        esp_mn_commands_free();
+    }
     if (multinet_model_data_ != nullptr && multinet_ != nullptr) {
         multinet_->destroy(multinet_model_data_);
         multinet_model_data_ = nullptr;
@@ -117,14 +122,73 @@ bool CustomWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) 
     }
 
     multinet_ = esp_mn_handle_from_name(mn_name_);
-    multinet_model_data_ = multinet_->create(mn_name_, duration_);
-    multinet_->set_det_threshold(multinet_model_data_, threshold_);
-    input_buffer_.reserve(multinet_->get_samp_chunksize(multinet_model_data_));
-    esp_mn_commands_clear();
-    for (int i = 0; i < commands_.size(); i++) {
-        esp_mn_commands_add(i + 1, commands_[i].command.c_str());
+    if (multinet_ == nullptr) {
+        ESP_LOGE(TAG, "MultiNet interface lookup failed for model=%s", mn_name_);
+        return false;
     }
-    esp_mn_commands_update();
+    multinet_model_data_ = multinet_->create(mn_name_, duration_);
+    if (multinet_model_data_ == nullptr) {
+        ESP_LOGE(TAG, "MultiNet model creation failed for model=%s", mn_name_);
+        return false;
+    }
+    multinet_->set_det_threshold(multinet_model_data_, threshold_);
+    const int sample_rate = multinet_->get_samp_rate(multinet_model_data_);
+    const int chunk_samples = multinet_->get_samp_chunksize(multinet_model_data_);
+    ESP_LOGI(TAG, "Wake detector ready: model=%s language=%s rate_hz=%d chunk_samples=%d threshold=%.2f duration_ms=%d",
+        mn_name_, language_.c_str(), sample_rate, chunk_samples, threshold_, duration_);
+    if (sample_rate != 16000 || chunk_samples <= 0) {
+        ESP_LOGE(TAG, "Unsupported MultiNet input layout: expected 16000 Hz mono s16, got rate=%d chunk=%d",
+            sample_rate, chunk_samples);
+        return false;
+    }
+    input_buffer_.reserve(chunk_samples);
+    const esp_err_t alloc_result = esp_mn_commands_alloc(multinet_, multinet_model_data_);
+    if (alloc_result != ESP_OK) {
+        ESP_LOGE(TAG, "Command registry allocation failed: %s", esp_err_to_name(alloc_result));
+        return false;
+    }
+    for (int i = 0; i < commands_.size(); i++) {
+#if CONFIG_SR_MN_EN_MULTINET5_SINGLE_RECOGNITION_QUANT8
+        // ESP-SR 2.4.x MultiNet5 Q8 consumes phoneme tokens. These are the
+        // official multinet_g2p.py mapping for "hello" (HH AH0 L OW1).
+        if (commands_[i].command != "hello") {
+            ESP_LOGE(TAG, "MultiNet5 Q8 needs a verified phoneme mapping; unsupported phrase=%s",
+                commands_[i].command.c_str());
+            return false;
+        }
+        constexpr char kHelloPhonemes[] = "hcLb";
+        const esp_err_t add_result = esp_mn_commands_phoneme_add(
+            i + 1, commands_[i].command.c_str(), kHelloPhonemes);
+        const int tokenized = multinet_->check_speech_command(
+            multinet_model_data_, kHelloPhonemes);
+        ESP_LOGI(TAG, "Wake phrase registration: command_id=%d phrase=%s phonemes=%s add=%s supported=%s",
+            i + 1, commands_[i].command.c_str(), kHelloPhonemes,
+            esp_err_to_name(add_result), tokenized != 0 ? "yes" : "no");
+#else
+        const esp_err_t add_result = esp_mn_commands_add(i + 1, commands_[i].command.c_str());
+        const int tokenized = multinet_->check_speech_command(
+            multinet_model_data_, commands_[i].command.c_str());
+        ESP_LOGI(TAG, "Wake phrase registration: command_id=%d phrase=%s add=%s supported=%s",
+            i + 1, commands_[i].command.c_str(), esp_err_to_name(add_result),
+            tokenized != 0 ? "yes" : "no");
+#endif
+        if (add_result != ESP_OK || tokenized == 0) {
+            ESP_LOGE(TAG, "Wake phrase registration rejected: command_id=%d", i + 1);
+            return false;
+        }
+    }
+    esp_mn_error_t* update_error = esp_mn_commands_update();
+    if (update_error != nullptr) {
+        ESP_LOGE(TAG, "MultiNet command update rejected %d phrase(s)", update_error->num);
+        for (int i = 0; i < update_error->num; ++i) {
+            const esp_mn_phrase_t* phrase = update_error->phrases[i];
+            ESP_LOGE(TAG, "Rejected command: id=%d phrase=%s", phrase ? phrase->command_id : -1,
+                (phrase && phrase->string) ? phrase->string : "<unknown>");
+        }
+        return false;
+    }
+    ESP_LOGI(TAG, "MultiNet command list updated: commands=%u command_id=1 phrase=%s",
+        static_cast<unsigned>(commands_.size()), commands_.empty() ? "<none>" : commands_[0].command.c_str());
     
     multinet_->print_active_speech_commands(multinet_model_data_);
 #if CONFIG_SEND_WAKE_WORD_DATA
@@ -169,6 +233,9 @@ void CustomWakeWord::FeedSamples(const int16_t* data, size_t samples, bool mono)
         return;
     }
 
+    after_afe_stats_.RecordPcm16("pcm16_after_afe_before_multinet", data, samples, 16000);
+    feed_frames_ += samples;
+
     // If input channels is 2, we need to fetch the left channel data
     if (!mono && codec_->input_channels() > 1) {
         for (size_t i = 0; i < samples; i += codec_->input_channels()) {
@@ -178,20 +245,45 @@ void CustomWakeWord::FeedSamples(const int16_t* data, size_t samples, bool mono)
         input_buffer_.insert(input_buffer_.end(), data, data + samples);
     }
     
-    int chunksize = multinet_->get_samp_chunksize(multinet_model_data_);
+    const int chunksize = multinet_->get_samp_chunksize(multinet_model_data_);
     while (input_buffer_.size() >= chunksize) {
 #if CONFIG_SEND_WAKE_WORD_DATA
         wake_word_audio_cache_.Store(input_buffer_.data(), chunksize);
 #endif
 
         esp_mn_state_t mn_state = multinet_->detect(multinet_model_data_, input_buffer_.data());
+        ++detect_calls_;
+        switch (mn_state) {
+            case ESP_MN_STATE_DETECTING: ++detecting_frames_; break;
+            case ESP_MN_STATE_DETECTED: ++detected_frames_; break;
+            case ESP_MN_STATE_TIMEOUT: ++timeout_frames_; break;
+            default: break;
+        }
+        const int64_t now_us = esp_timer_get_time();
+        if (last_detector_log_us_ == 0 || now_us - last_detector_log_us_ >= 5000000) {
+            ESP_LOGI(TAG, "MultiNet feed stats: feed_samples=%llu detect_calls=%llu states{detecting=%llu detected=%llu timeout=%llu} frame_samples=%d rate_hz=%d buffered_samples=%u",
+                static_cast<unsigned long long>(feed_frames_),
+                static_cast<unsigned long long>(detect_calls_),
+                static_cast<unsigned long long>(detecting_frames_),
+                static_cast<unsigned long long>(detected_frames_),
+                static_cast<unsigned long long>(timeout_frames_), chunksize,
+                multinet_->get_samp_rate(multinet_model_data_),
+                static_cast<unsigned>(input_buffer_.size()));
+            last_detector_log_us_ = now_us;
+        }
         
         if (mn_state == ESP_MN_STATE_DETECTED) {
             esp_mn_results_t *mn_result = multinet_->get_results(multinet_model_data_);
             for (int i = 0; i < mn_result->num && running_; i++) {
                 ESP_LOGI(TAG, "Custom wake word detected: command_id=%d, string=%s, prob=%f", 
                         mn_result->command_id[i], mn_result->string, mn_result->prob[i]);
-                auto& command = commands_[mn_result->command_id[i] - 1];
+                const int command_index = mn_result->command_id[i] - 1;
+                if (command_index < 0 || command_index >= static_cast<int>(commands_.size())) {
+                    ESP_LOGE(TAG, "MultiNet returned invalid command_id=%d (commands=%u)",
+                        mn_result->command_id[i], static_cast<unsigned>(commands_.size()));
+                    continue;
+                }
+                auto& command = commands_[command_index];
                 if (command.action == "wake") {
                     last_detected_wake_word_ = command.text;
                     running_ = false;

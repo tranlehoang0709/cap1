@@ -1,5 +1,10 @@
 # AIVA-IoT AI Server — D2-S1-01 đến D2-S1-07
 
+Current LAN bootstrap/control work: [D2-S2-14 setup, commands and acceptance](docs/d2-s2-14-lan.md).
+Integrated Gemini execution: [D2-S2-15 contract, tests and deployment blockers](../BE/docs/d2-s2-15-live-gemini.md).
+Secure LAN gateway status and TLS setup: [D2-S2-19](docs/d2-s2-19-secure-wifi-gateway.md).
+The historical foundation notes below do not imply integrated media readiness.
+
 Server độc lập bằng Python/FastAPI: cấu hình, vòng đời, `GET /health`
 và WebSocket echo Development. Health xác nhận ứng dụng đang chạy;
 không kiểm tra MySQL, Backend, thiết bị hoặc AI provider.

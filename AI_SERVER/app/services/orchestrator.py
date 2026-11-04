@@ -110,6 +110,7 @@ class AIOrchestrator:
         self.turn = None
         self.task = None
         self._attempted: set[str] = set()
+        self._aborted: set[str] = set()
         self._error = None
         self._metrics = TurnMetrics()
 
@@ -195,12 +196,20 @@ class AIOrchestrator:
         """Trusted internal command, NOT a parser for any invented firmware message."""
         if not isinstance(command, Control) or key != self.key or self.turn is None or turn_id != self.turn.turn_id:
             return False
+        if command == Control.ABORT:
+            if turn_id in self._aborted:
+                return True
+            self._aborted.add(turn_id)
+            if self.task is None or self.task.done():
+                return True  # Idempotent if playback completed just before the abort.
+            self._error = "aborted"
+            self.turn.cancel()
+            await asyncio.gather(self.task, return_exceptions=True)
+            return True
         if self.task is None or self.task.done():
-            if command in (Control.REVOKE, Control.DISCONNECT):
-                self._state(SessionState.CLOSED)
             return True
         self._error = command.value.lower()
-        self._state(SessionState.ERROR if command == Control.ABORT else SessionState.CLOSED)
+        self._state(SessionState.CLOSED)
         self.turn.cancel()
         await asyncio.gather(self.task, return_exceptions=True)
         return True
@@ -235,6 +244,7 @@ class AIOrchestrator:
         monitor = asyncio.create_task(self._monitor(turn))
         boundary = asyncio.create_task(self._boundary.wait())
         receipt = None
+        turn_finalized = False
         try:
             pending = (boundary, monitor) if stt is None else (stt, boundary, monitor)
             done, _ = await turn.audio.context.run(lambda: asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED))
@@ -294,7 +304,10 @@ class AIOrchestrator:
 
             texts = self.runner.stream(ObservedLLM(), self.conversation, self.key, turn, final, self.prompt, turn.audio.context)
             receipt = await self.playback.play(ObservedTTS(), ObservedOutput(), texts, key=self.key, turn=turn, config=self.tts_config)
-            self.conversation.release(turn)
+            finish_turn = getattr(self.llm, "finish_turn", None)
+            if callable(finish_turn):
+                await finish_turn(turn.turn_id, played=True)
+            turn_finalized = True
             self._state(SessionState.LISTENING)  # Only scheduler proof can reach here.
         except asyncio.CancelledError:
             self._error = self._error or "cancelled"
@@ -320,6 +333,22 @@ class AIOrchestrator:
                     child.cancel()
             await asyncio.gather(stt, monitor, boundary, return_exceptions=True)
             await turn.aclose()
+            self.conversation.release(turn, interrupted=self._error == "aborted")
+            finish_turn = getattr(self.llm, "finish_turn", None)
+            if callable(finish_turn) and not turn_finalized:
+                try:
+                    await finish_turn(turn.turn_id, played=False)
+                except Exception:
+                    self._error = "usage_settlement_failed"
+            settle_unused = getattr(self.llm, "settle_unused", None)
+            if self._error and callable(settle_unused):
+                try:
+                    await settle_unused(turn.turn_id)
+                except Exception:
+                    # Do not retry an ambiguous settlement or fabricate usage.
+                    self._error = "usage_settlement_failed"
+            if self._error == "aborted":
+                self._state(SessionState.LISTENING)
             self._metrics.total_ms = (time.monotonic() - self._started) * 1000
             for stage, latency in vars(self._metrics).items():
                 log_event(get_logger("orchestrator"), logging.INFO, "orchestrator.latency", "Pipeline latency",

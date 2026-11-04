@@ -1,5 +1,14 @@
 # SD2: AIVA-IoT ESP32-S3 ST7789 240x240
 
+<<<<<<< HEAD
+=======
+The opt-in `aiva-iot-s3-st7789-lan` variant adds authenticated OTA bootstrap,
+device proof, heartbeat and LAN control reconnection. See
+[`D2-S2-14`](../../../../../AI_SERVER/docs/d2-s2-14-lan.md) for first-flash,
+Wi-Fi provisioning and current integration/hardware blockers. It is not an
+accepted standalone voice build.
+
+>>>>>>> 8656999 (Update AIVA IoT integration and SD2)
 Project naming: SD1 is `custom/xiaozhi-s3-tft`; SD2 is this board.
 Each board has its own firmware identity and pin configuration.
 
@@ -49,6 +58,18 @@ The build must select `CONFIG_BOARD_TYPE_AIVA_IOT_S3_ST7789=y` and USB Serial/JT
 console. Defaults supply 16 MB flash and OPI PSRAM. Wake word is disabled by the
 command above; no AI token is required for this flash/boot gate.
 
+<<<<<<< HEAD
+=======
+For the LAN voice variant, select the Vietnamese display locale explicitly.
+Wake-word recognition remains the English `hello` model configured by the
+variant; the recognition language and display locale are independent:
+
+```bat
+python scripts\build.py custom/aiva-iot-s3-st7789 --name aiva-iot-s3-st7789-lan --language vi-VN
+idf.py -p COM3 -b 115200 flash monitor
+```
+
+>>>>>>> 8656999 (Update AIVA IoT integration and SD2)
 ## Verification
 
 ```bat

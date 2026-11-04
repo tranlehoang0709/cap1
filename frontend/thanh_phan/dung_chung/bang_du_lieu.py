@@ -15,7 +15,7 @@ def render_frame(frame, **kwargs):
 def table(rows, key, filters=()):
     """Bảng phân trang với bộ lọc và thanh công cụ Streamlit hiện có."""
     if not rows:
-        st.info("Chưa có dữ liệu mẫu.")
+        st.info("Chưa có dữ liệu để hiển thị.")
         return []
     frame = pd.DataFrame(rows)
     page_key = f"page_{key}"

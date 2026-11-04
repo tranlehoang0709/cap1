@@ -263,7 +263,7 @@ def test_existing_llm_stream_continues_same_turn_while_speaking():
         output, scheduler = MockAudioOutput(), PlaybackScheduler(KEY, LIMITS)
         task = asyncio.create_task(play(scheduler, MockTTS(FIXTURES), output, turn, source))
         await output.finished.wait()
-        assert turn.phase == TurnPhase.SPEAKING and conversation.history
+        assert turn.phase == TurnPhase.SPEAKING and not conversation.history
         other = make_turn("other")
         with pytest.raises(LLMError, match="session_busy"):
             await anext(LLMRunner(LLMSettings()).stream(llm, conversation, KEY, other,
@@ -272,6 +272,9 @@ def test_existing_llm_stream_continues_same_turn_while_speaking():
         output.confirm_complete(output.scope)
         assert (await task).ready_for_next_turn
         assert len(llm.requests) == 1 and len(output.delivered) == 3
+        await turn.aclose()
+        conversation.release(turn)
+        assert conversation.history
     asyncio.run(scenario())
 
 

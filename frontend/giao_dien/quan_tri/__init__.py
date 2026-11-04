@@ -1,1 +1,1 @@
-"""Các trang Quản trị, giữ nguyên tương tác demo."""
+"""Backend API pages."""

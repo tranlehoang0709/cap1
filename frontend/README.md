@@ -22,4 +22,4 @@ set AIVA_BACKEND_URL=http://127.0.0.1:3000
 
 AI Chat intentionally remains disabled because Backend returns HTTP 503 from `/web-chat/messages` until real provider execution and approved quota/usage settlement are ready. The frontend does not show a fabricated response. Quota admission/usage remains a Backend schema blocker, and unsupported admin key flows are not simulated.
 
-The older `giao_dien/` and `ui/` modules are retained for compatibility with existing UI checks, but `app.py` does not import or route to their session-local demo state.
+`giao_dien/live.py` contains API-backed pages shared by `app.py` and the compatibility routes in `giao_dien/` and `ui/`. The session-local demo store and fabricated chat replies have been removed. Legacy calls to `init_demo()` or `data()` fail explicitly; they cannot create sample records. Old UI checks that depend on that store must be migrated to authenticated API fixtures. Memory, knowledge uploads and system-key editing remain unavailable until supported Backend APIs are connected.

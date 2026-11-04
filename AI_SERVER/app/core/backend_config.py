@@ -19,7 +19,6 @@ class BackendSettings(BaseSettings):
     device_token: SecretStr | None = Field(default=None, repr=False)
     config_token: SecretStr | None = Field(default=None, repr=False)
     quota_token: SecretStr | None = Field(default=None, repr=False)
-    web_chat_token: SecretStr | None = Field(default=None, repr=False)
     timeout_seconds: float = Field(default=5, gt=0, le=60, allow_inf_nan=False)
     max_connections: int = Field(default=10, ge=1, le=100)
     max_response_bytes: int = Field(default=65536, ge=1024, le=1048576)
@@ -42,6 +41,3 @@ class BackendSettings(BaseSettings):
             allow_local_http=self.allow_local_http, transport=transport)
 
 
-# Backend routes exist, but the complete production media/secret/quota pipeline
-# is not currently available to this server.
-INTEGRATION_BLOCKER = "cloud_media_pipeline_unavailable"

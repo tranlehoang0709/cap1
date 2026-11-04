@@ -2,6 +2,7 @@
 
 import asyncio
 from collections.abc import AsyncIterator, Callable
+from datetime import datetime
 import socket
 import ssl
 
@@ -19,6 +20,17 @@ def _google_client(api_key: str, timeout_seconds: float):
         retry_options=types.HttpRetryOptions(attempts=1),
     )
     return genai.Client(api_key=api_key, http_options=options)
+
+
+def _system_instruction(base_prompt: str, now: datetime | None = None) -> str:
+    """Add a bounded server clock while preserving the BE-owned base prompt."""
+    local_now = datetime.now().astimezone() if now is None else now.astimezone()
+    clock = local_now.strftime('%Y-%m-%d %H:%M:%S %Z%z')
+    return (f"{base_prompt.rstrip()}\n\n" if base_prompt.strip() else '') + (
+        f"Current server local date and time: {clock}. "
+        "For questions about today's date or current local time, answer using this value. "
+        "Do not claim to have live access to other current events or facts."
+    )
 
 
 class GeminiLLMAdapter:
@@ -41,6 +53,31 @@ class GeminiLLMAdapter:
     def __repr__(self):
         return "GeminiLLMAdapter(api_key=<redacted>)"
 
+    async def count_input_tokens(self, request, context):
+        client = None
+        try:
+            client = self._client_factory(self._api_key, self._timeout_seconds)
+            contents = [{'role': 'model' if item.role == 'assistant' else 'user',
+                         'parts': [{'text': item.text}]} for item in request.history]
+            contents.append({'role':'user','parts':[{'text':request.transcript}]})
+            result = await context.run(lambda: client.aio.models.count_tokens(model=request.config.model,
+                contents=contents, config={'system_instruction':_system_instruction(request.system_prompt)}))
+            count = getattr(result, 'total_tokens', None)
+            if type(count) is not int or count < 0:
+                raise LLMError(LLMErrorCode.INVALID_STREAM)
+            return count
+        except (LLMError, AudioError):
+            raise
+        except Exception as error:
+            raise LLMError(self._classify_error(error)) from None
+        finally:
+            if client is not None:
+                try:
+                    await client.aio.aclose()
+                    client.close()
+                except Exception:
+                    raise LLMError(LLMErrorCode.PROVIDER_ERROR) from None
+
     async def stream(self, request: LLMRequest, context: AudioContext) -> AsyncIterator[ProviderDelta | ProviderDone]:
         client = stream = None
         owns_client = False
@@ -60,7 +97,7 @@ class GeminiLLMAdapter:
             ]
             contents.append({"role": "user", "parts": [{"text": request.transcript}]})
             config = {
-                "system_instruction": request.system_prompt,
+                "system_instruction": _system_instruction(request.system_prompt),
                 "max_output_tokens": request.config.max_output_tokens,
                 "candidate_count": 1,
                 "automatic_function_calling": {"disable": True},

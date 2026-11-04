@@ -2,6 +2,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 import pytest
+import ssl
 
 from app.core.config import ConfigurationError, PROJECT_ROOT, Settings, get_settings
 
@@ -94,6 +95,8 @@ def test_entrypoint_passes_configuration_to_uvicorn(monkeypatch, reload):
         "ws": "websockets-sansio", "ws_max_size": 4096,
         "ws_ping_interval": None, "ws_per_message_deflate": False,
         "proxy_headers": False,
+        "ssl_certfile": None, "ssl_keyfile": None,
+        "ssl_version": ssl.PROTOCOL_TLS_SERVER,
     }
 
 

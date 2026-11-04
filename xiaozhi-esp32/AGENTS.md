@@ -1,5 +1,19 @@
 # AGENTS.md
 
+## D2-S2-14 LAN variant (2026-11-04)
+
+`aiva-iot-s3-st7789-lan` enables `AIVA_LAN_BOOTSTRAP` alongside the existing
+half-duplex transport. It uses portal `wifi/ota_url` (no public default fallback),
+NVS `device/uid` + `device/credential`, OTA POST and authenticated LAN WebSocket.
+USB `proof` provisions initial BE proof; no Cloud key is sent. Idle heartbeats
+and reconnect bootstrap run only with network readiness; connect/hello waits
+stay on the activation worker. Board pins and stable/dev variants are retained.
+Media remains fail-closed at AI_SERVER until real credential/quota execution is
+ready. No physical or SDK build PASS is claimed. See
+`../AI_SERVER/docs/d2-s2-14-lan.md` for exact checks and Windows commands.
+The user explicitly forbids Git operations for this task; that overrides the
+historical commit requirement below.
+
 ## Bắt đầu mỗi phiên làm việc
 
 Đọc file này trước khi lập kế hoạch hoặc sửa dự án. Giữ tên chuẩn `AGENTS.md`
@@ -237,3 +251,16 @@ Build/flash, real device connection/input and mock hardware playback completion
 were verified; the user heard Gemini output, but rate_limited interrupted the
 turn. Do not claim stable/full Cloud conversation acceptance yet. See
 `../AI_SERVER/docs/sd2-gemini-lan.md` for settings and known test limitations.
+<<<<<<< HEAD
+=======
+
+### SD2 LAN audio admission and UI follow-up (2026-11-04)
+
+In `aiva-iot-s3-st7789-lan`, `StartListeningAudio()` sends the existing manual
+listen-start event but waits for a session/turn-scoped server acknowledgement
+before enabling mic capture. The server's explicit stop closes the current
+turn; there is no firmware silence timer or wake-word change. Processing,
+answering and failure statuses are accepted only for the current session/turn.
+The existing SD2 USB console `record`/`stop` commands remain command-only test
+triggers. No GPIO or audio data path over USB was added.
+>>>>>>> 8656999 (Update AIVA IoT integration and SD2)

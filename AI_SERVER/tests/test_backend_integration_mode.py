@@ -22,7 +22,7 @@ def test_integrated_never_accepts_mock_robot(monkeypatch):
     for name, value in (("DEVICE", "A"), ("CONFIG", "B"), ("QUOTA", "C")):
         monkeypatch.setenv("AI_SERVER_BACKEND_" + name + "_TOKEN", value * 43)
     app = create_app()
-    assert app.state.backend_integration_blocker == "cloud_media_pipeline_unavailable"
+    assert app.state.backend_integration_blocker is None
     with TestClient(app) as client:
         from starlette.websockets import WebSocketDisconnect
         with pytest.raises(WebSocketDisconnect) as error:

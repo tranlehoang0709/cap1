@@ -92,7 +92,7 @@ export class QuotasService {
         dayRequests:(BigInt(totals.dayRequests)+1n).toString(),reservedTokens:(BigInt(totals.reservedTokens)+BigInt(input.maxTotalTokens??'0')).toString()});
       const globalRemaining=12n-globalUsed-1n;
       remaining.requestsPerMinute=remaining.requestsPerMinute===null ? globalRemaining.toString() : (BigInt(remaining.requestsPerMinute)<globalRemaining?remaining.requestsPerMinute:globalRemaining.toString());
-      return {value:{allowed:true as const,requestId:input.requestId,providerId:input.providerId,mode:policyMode(policy),remainingQuota:remaining,
+      return {value:{allowed:true as const,requestId:input.requestId,providerId:input.providerId,credentialId:permission.credentialReference?.id??null,mode:policyMode(policy),remainingQuota:remaining,
         reservedTokens:input.maxTotalTokens,reportDueAt:due.toISOString(),replayed:false as const,executionAllowed:true as const}};
     }));
     if('error' in result) throw result.error;return result.value;

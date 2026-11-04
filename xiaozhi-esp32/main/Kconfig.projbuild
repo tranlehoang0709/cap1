@@ -1,5 +1,14 @@
 menu "Xiaozhi Assistant"
 
+config AIVA_SECURE_WIFI_PROVISIONING
+    bool "Require encrypted NVS for SD1/SD2 Wi-Fi credentials"
+    depends on BOARD_TYPE_XIAOZHI_S3_CUSTOM_TFT || BOARD_TYPE_AIVA_IOT_S3_ST7789
+    default y
+    help
+        Refuse to persist new Wi-Fi credentials on SD1/SD2 unless NVS
+        encryption is enabled and its device-specific key provisioning is ready.
+        This option does not enable NVS encryption or burn eFuses.
+
 config AIVA_DEV_VOICE
     bool "AIVA private development voice transport (NO Backend)"
     default n
@@ -10,15 +19,28 @@ config AIVA_DEV_VOICE
         Never store a Cloud API key on the device. Existing board pins unchanged.
 
 config AIVA_I2S_TX_DRAIN_PROOF
-    bool "Experimental I2S TX EOF completion proof (ESP-IDF 6.0.2 only)"
+    bool "Experimental I2S TX EOF completion proof (ESP-IDF 6.0.2/6.0.3)"
     depends on AIVA_DEV_VOICE && IDF_TARGET_ESP32S3
     default n
     help
         NoAudioCodec only. Track two complete sets of DMA buffer TX EOF events
         after the last successful write, using the existing auto-clearing ring.
-        Requires ESP-IDF 6.0.2 and hardware/ISR validation before enabling.
+          Requires ESP-IDF 6.0.2 or 6.0.3 and hardware/ISR validation before enabling.
         Unsupported drivers/SDKs fail closed; no delay or estimated duration ACK.
 
+<<<<<<< HEAD
+=======
+config AIVA_LAN_BOOTSTRAP
+    bool "AIVA authenticated LAN OTA bootstrap and control connection"
+    depends on AIVA_DEV_VOICE && BOARD_TYPE_AIVA_IOT_S3_ST7789
+    default n
+    help
+        Use the provisioned wifi/ota_url instead of skipping OTA. Send explicit
+        device UID/credential from NVS to OTA and WebSocket. Never infer identity
+        from MAC or use the development token as a Backend credential.
+        This does not enable media when the server auth/quota pipeline is blocked.
+
+>>>>>>> 8656999 (Update AIVA IoT integration and SD2)
 config AIVA_SD2_USB_DEV_CONSOLE
     bool "SD2 USB commands for private voice diagnostics"
     depends on AIVA_DEV_VOICE && BOARD_TYPE_AIVA_IOT_S3_ST7789 && ESP_CONSOLE_USB_SERIAL_JTAG

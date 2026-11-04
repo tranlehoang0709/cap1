@@ -2,7 +2,7 @@
 
 import ipaddress
 from typing import Literal
-from pydantic import Field, SecretStr, model_validator
+from pydantic import AliasChoices, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from app.core.config import PROJECT_ROOT
 
@@ -14,8 +14,10 @@ class RobotSettings(BaseSettings):
         hide_input_in_errors=True,
     )
     enabled: bool = False
-    ai_mode: Literal["mock", "gemini"] = "mock"
+    ai_mode: Literal["mock", "gemini", "openai"] = "mock"
     token: SecretStr | None = Field(default=None, repr=False)
+    local_device_credentials: dict[str, SecretStr] = Field(default_factory=dict, repr=False,
+        validation_alias=AliasChoices("AI_SERVER_ROBOT_LOCAL_DEVICE_CREDENTIALS", "local_device_credentials"))
     allowed_networks: list[str] = ["127.0.0.0/8", "::1/128"]
     energy_threshold: int | None = Field(default=None, gt=0, le=32767)
     min_silence_ms: int = Field(default=700, gt=0, le=10000)
@@ -26,6 +28,19 @@ class RobotSettings(BaseSettings):
     max_total_audio_memory_bytes: int = Field(default=256_000_000, ge=15_000_000, le=2_000_000_000)
     deadline_seconds: float = Field(default=30, gt=1, le=120)
 
+    @field_validator("local_device_credentials")
+    @classmethod
+    def validate_local_device_credentials(cls, value):
+        if len(value) > 16:
+            raise ValueError("At most 16 local device credentials are supported")
+        for uid, credential in value.items():
+            secret = credential.get_secret_value()
+            if (not isinstance(uid, str) or not 1 <= len(uid) <= 128 or not uid.isascii()
+                or any(char.isspace() for char in uid) or len(secret) < 32 or not secret.isascii()
+                or any(char.isspace() for char in secret)):
+                raise ValueError("Invalid local device credential entry")
+        return value
+
     @model_validator(mode="after")
     def development_only(self):
         private = [ipaddress.ip_network(n) for n in ("127.0.0.0/8", "::1/128", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7")]
@@ -33,8 +48,10 @@ class RobotSettings(BaseSettings):
             network = ipaddress.ip_network(value)
             if not any(network.version == n.version and network.subnet_of(n) for n in private):
                 raise ValueError("Only explicit loopback/private networks allowed")
-        if self.enabled and (self.token is None or len(self.token.get_secret_value()) < 32 or self.energy_threshold is None or not self.allowed_networks):
-            raise ValueError("Development token, private allowlist and mock energy threshold required")
+        if self.enabled and self.token is None and not self.local_device_credentials:
+            raise ValueError("Development token or per-device local credential required")
+        if self.enabled and (self.energy_threshold is None or not self.allowed_networks):
+            raise ValueError("Private allowlist and energy threshold required")
         if self.token is not None and (not self.token.get_secret_value().isascii() or any(c.isspace() for c in self.token.get_secret_value())):
             raise ValueError("ASCII token without whitespace required")
         # Conservative per-session peak: six decoded-input copies or three

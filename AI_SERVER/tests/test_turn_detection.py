@@ -143,6 +143,27 @@ def test_silence_config_can_be_increased_to_1000():
     assert d.tick(2000) == Decision.END
 
 
+def test_two_second_silence_boundary_and_resumed_speech_reset():
+    config = TurnDetectionConfig(2000, 300, 15000)
+    d = detector(config)
+    d.speech(SpeechActivity(0, True))
+    d.transcription(text(100))
+    d.speech(SpeechActivity(1000, False))
+    assert d.tick(2999) == Decision.WAIT
+    assert d.tick(3000) == Decision.END
+    assert d.tick(5000) == Decision.END  # terminal once
+
+    d = detector(config)
+    d.speech(SpeechActivity(0, True))
+    d.transcription(text(100))
+    d.speech(SpeechActivity(1000, False))
+    assert d.speech(SpeechActivity(2999, True)) == Decision.WAIT
+    d.transcription(text(3400, "Báº­t Ä‘Ã¨n phÃ²ng ngá»§."))
+    d.speech(SpeechActivity(3500, False))
+    assert d.tick(5499) == Decision.WAIT
+    assert d.tick(5500) == Decision.END
+
+
 def test_env_config_requires_explicit_values_and_has_no_app_side_effects():
     values = {"AI_SERVER_TURN_MIN_SILENCE_MS": "700",
               "AI_SERVER_TURN_TRANSCRIPT_STABILITY_MS": "300",

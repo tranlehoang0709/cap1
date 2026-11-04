@@ -136,7 +136,7 @@ def test_controls_during_speaking_close_and_no_late_audio(command):
         assert not await orch.control(command, key=ConversationKey("wrong", "session", "d"), turn_id="t")
         assert await orch.control(command, key=orch.key, turn_id="t")
         result = await task
-        assert result.state == (SessionState.ERROR if command == Control.ABORT else SessionState.CLOSED)
+        assert result.state == (SessionState.LISTENING if command == Control.ABORT else SessionState.CLOSED)
         assert output.aborted and len(output.delivered) == before and orch.playback.queue.bytes == 0
         assert not orch.microphone("t", AudioFrame(b"late"))
     asyncio.run(scenario())
@@ -241,11 +241,36 @@ def test_abort_at_each_stage_discards_late_provider_results(stage):
             await provider.started.wait()
         await orch.control(Control.ABORT, key=orch.key, turn_id="t")
         result = await task
-        assert result.state == SessionState.ERROR and not output.delivered
+        assert result.state == SessionState.LISTENING and not output.delivered
         if stage != "listening":
             assert provider.released
         assert orch.turn.audio.buffered_bytes == 0
         assert not [t for t in asyncio.all_tasks() if t is not asyncio.current_task() and not t.done()]
+    asyncio.run(scenario())
+
+
+def test_abort_is_idempotent_turn_scoped_and_keeps_session_history():
+    async def scenario():
+        items = setup()
+        orch, _, _, _, _, output, _ = items
+        first = orch.start_turn("old")
+        await end_input(items)
+        await output.finished.wait()
+        assert await orch.control(Control.ABORT, key=orch.key, turn_id="old")
+        assert await first
+        assert orch.state == SessionState.LISTENING
+        assert orch.conversation.history[-2].role == "user"
+        assert orch.conversation.history[-1].text == "[response interrupted]"
+        assert await orch.control(Control.ABORT, key=orch.key, turn_id="old")
+
+        items[1].value = 1000
+        second = orch.start_turn("new")
+        assert not await orch.control(Control.ABORT, key=orch.key, turn_id="old")
+        await orch.control(Control.ABORT, key=orch.key, turn_id="new")
+        result = await second
+        assert result.state == SessionState.LISTENING
+        assert orch.conversation.history[-1].text == "[response interrupted]"
+        assert output.aborted
     asyncio.run(scenario())
 
 

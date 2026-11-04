@@ -292,6 +292,25 @@ def test_unknown_usage_on_cancel_is_pending_not_zero():
     asyncio.run(scenario())
 
 
+def test_prepared_admission_without_llm_execution_settles_cancelled_zero_once():
+    async def scenario():
+        fixture = BackendFixture()
+        async with client(fixture) as api:
+            session = await prepared(api)
+            reporter = UsageReporter(api, max_entries=3)
+            adapter = QuotaLLMAdapter(MockLLMAdapter(()), session, reporter, mock_only=True,
+                max_total_tokens="1000", report_context_factory=context)
+            await adapter.prepare("empty-audio-turn", context())
+            assert await adapter.settle_unused("empty-audio-turn") is True
+            assert await adapter.settle_unused("empty-audio-turn") is False
+            report = [json.loads(r.content) for r in fixture.calls if r.url.path == "/internal/ai/usage"]
+            assert len(report) == 1
+            assert report[0]["status"] == "cancelled"
+            assert report[0]["inputTokens"] == report[0]["outputTokens"] == 0
+            assert not reporter.pending
+    asyncio.run(scenario())
+
+
 @pytest.mark.parametrize("url", ["http://example.com", "https://user:secret@backend.invalid", "https://backend.invalid/path", "https://backend.invalid?token=bad"])
 def test_secure_origin_required(url):
     with pytest.raises(ValueError):

@@ -69,6 +69,9 @@ def test_streaming_order_before_final_and_history_commit():
             assert final == LLMResult("Xin chào. Tôi là AIVA.", True, "completed", Usage(10, 8, 18))
             with pytest.raises(StopAsyncIteration):
                 await anext(stream)
+        assert not conversation.history  # staged until output completion is confirmed
+        await turn.aclose()
+        conversation.release(turn)
         assert [item.role for item in conversation.history] == ["user", "assistant"]
         assert mock.released == 1
         await turn.aclose()
@@ -85,10 +88,11 @@ def test_context_isolation_user_session_device_and_next_turn():
         await asyncio.gather(*(collect(runner, mock, conv, turn)
                                for mock, conv, turn in zip(mocks, conversations, turns)))
         for i, conv in enumerate(conversations):
+            assert not conv.history
+            await turns[i].aclose()
+            conv.release(turns[i])
             assert conv.history[-1].text == f"Đáp {i}."
             assert mocks[i].requests[0].history == ()
-            await turns[i].aclose()
-        conversations[0].release(turns[0])
         next_turn = make_turn("next")
         next_mock = MockLLMAdapter(SCRIPT)
         await collect(runner, next_mock, conversations[0], next_turn)

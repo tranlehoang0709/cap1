@@ -75,4 +75,11 @@ describe('AI routes role/current identity and internal boundary',()=>{
     config.set('AI_CONFIG_CONTRACT_APPROVED','true');response=await call('/internal/ai/resolve-config','POST',internalToken,{userId:'7'});
     expect(response.status).toBe(200);expect(await response.json()).toEqual({userId:'7',credentialScope:'NONE'});
   });
+  it('marks secret delivery no-store and refuses a User JWT on that endpoint',async()=>{
+    config.set('AI_CONFIG_CONTRACT_APPROVED','true');
+    ai.resolveAIConfiguration.mockResolvedValueOnce({credential:'fixture-secret-only'});
+    const response=await call('/internal/ai/resolve-config','POST',internalToken,{userId:'7',includeCredential:true});
+    expect(response.status).toBe(200);expect(response.headers.get('cache-control')).toBe('no-store');
+    expect((await call('/internal/ai/resolve-config','POST',token('7'),{userId:'7',includeCredential:true})).status).toBe(401);
+  });
 });

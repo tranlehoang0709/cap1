@@ -44,6 +44,20 @@ Application::Application() : notify_player_(audio_service_) {
                                                 .name = "clock_timer",
                                                 .skip_unhandled_events = true};
     esp_timer_create(&clock_timer_args, &clock_timer_handle_);
+
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+    esp_timer_create_args_t vad_timer_args = {
+        .callback = [](void* arg) {
+            auto* app = static_cast<Application*>(arg);
+            xEventGroupSetBits(app->event_group_, MAIN_EVENT_VAD_SILENCE_TIMEOUT);
+        },
+        .arg = this,
+        .dispatch_method = ESP_TIMER_TASK,
+        .name = "lan_vad_silence",
+        .skip_unhandled_events = true,
+    };
+    esp_timer_create(&vad_timer_args, &lan_vad_silence_timer_);
+#endif
 }
 
 Application::~Application() {
@@ -52,6 +66,12 @@ Application::~Application() {
         esp_timer_stop(clock_timer_handle_);
         esp_timer_delete(clock_timer_handle_);
     }
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+    if (lan_vad_silence_timer_ != nullptr) {
+        esp_timer_stop(lan_vad_silence_timer_);
+        esp_timer_delete(lan_vad_silence_timer_);
+    }
+#endif
     vEventGroupDelete(event_group_);
 }
 
@@ -80,6 +100,20 @@ void Application::Initialize() {
         xEventGroupSetBits(event_group_, MAIN_EVENT_WAKE_WORD_DETECTED);
     };
     callbacks.on_vad_change = [this](bool speaking) {
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+        if (speaking) {
+            lan_vad_speech_seen_.store(true);
+            lan_vad_silence_since_us_.store(0);
+            if (lan_vad_silence_timer_ != nullptr)
+                esp_timer_stop(lan_vad_silence_timer_);
+        } else if (lan_vad_speech_seen_.load()) {
+            lan_vad_silence_since_us_.store(esp_timer_get_time());
+            if (lan_vad_silence_timer_ != nullptr) {
+                esp_timer_stop(lan_vad_silence_timer_);
+                esp_timer_start_once(lan_vad_silence_timer_, 2000000);
+            }
+        }
+#endif
         xEventGroupSetBits(event_group_, MAIN_EVENT_VAD_CHANGE);
     };
     callbacks.on_playback_drained = [this]() {
@@ -182,12 +216,27 @@ void Application::Run() {
         MAIN_EVENT_VAD_CHANGE | MAIN_EVENT_CLOCK_TICK | MAIN_EVENT_ERROR |
         MAIN_EVENT_NETWORK_CONNECTED | MAIN_EVENT_NETWORK_DISCONNECTED | MAIN_EVENT_TOGGLE_CHAT |
         MAIN_EVENT_START_LISTENING | MAIN_EVENT_STOP_LISTENING | MAIN_EVENT_ACTIVATION_DONE |
-        MAIN_EVENT_STATE_CHANGED | MAIN_EVENT_PLAYBACK_DRAINED;
+        MAIN_EVENT_STATE_CHANGED | MAIN_EVENT_PLAYBACK_DRAINED |
+        MAIN_EVENT_VAD_SILENCE_TIMEOUT;
 
     while (true) {
         auto bits = xEventGroupWaitBits(event_group_, ALL_EVENTS, pdTRUE, pdFALSE, portMAX_DELAY);
 
         if (bits & MAIN_EVENT_ERROR) {
+            boot_health_ready_ = false;
+            boot_health_ticks_ = 0;
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+            lan_mic_admission_pending_ = false;
+            active_server_turn_id_.clear();
+            if (lan_network_ready_) {
+                const auto delay = lan_retry_delay_seconds_;
+                lan_next_action_us_ = esp_timer_get_time() +
+                                      static_cast<int64_t>(delay) * 1000000LL;
+                lan_retry_delay_seconds_ = delay >= 30 ? 60 : delay * 2;
+                Board::GetInstance().GetDisplay()->SetStatus("Server: disconnected");
+                ESP_LOGW(TAG, "LAN server reconnect scheduled in %u seconds", delay);
+            }
+#endif
             if (GetDeviceState() == kDeviceStateNotifying) {
                 StopNotification();
             }
@@ -240,8 +289,20 @@ void Application::Run() {
 
         if (bits & MAIN_EVENT_SEND_AUDIO) {
             while (auto packet = audio_service_.PopPacketFromSendQueue()) {
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+                if (protocol_ && protocol_->HasHalfDuplexPlayback() && lan_audio_capture_pending_) {
+                    if (lan_pending_audio_.size() >= MAX_SEND_PACKETS_IN_QUEUE) {
+                        lan_audio_buffer_overflow_ = true;
+                        lan_pending_audio_.clear();
+                    } else if (!lan_audio_buffer_overflow_) {
+                        lan_pending_audio_.push_back(std::move(packet));
+                    }
+                    continue;
+                }
+#endif
                 if (protocol_ && protocol_->HasHalfDuplexPlayback() &&
-                    GetDeviceState() != kDeviceStateListening) continue;
+                    GetDeviceState() != kDeviceStateListening)
+                    continue;
                 if (protocol_ && !protocol_->SendAudio(std::move(packet))) {
                     // Drop the remaining packets. Leaving them in the queue would
                     // stall the Opus codec task (it waits for queue space), which in
@@ -251,6 +312,10 @@ void Application::Run() {
                         ;
                     break;
                 }
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+                if (protocol_ && protocol_->HasHalfDuplexPlayback())
+                    ++lan_audio_packets_sent_;
+#endif
             }
         }
 
@@ -265,6 +330,12 @@ void Application::Run() {
             }
         }
 
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+        if (bits & MAIN_EVENT_VAD_SILENCE_TIMEOUT) {
+            HandleLanVadSilenceTimeout();
+        }
+#endif
+
         if (bits & MAIN_EVENT_SCHEDULE) {
             std::unique_lock<std::mutex> lock(mutex_);
             auto tasks = std::move(main_tasks_);
@@ -275,6 +346,31 @@ void Application::Run() {
         }
 
         if (bits & MAIN_EVENT_CLOCK_TICK) {
+            // Require 30 consecutive responsive main-loop ticks after successful
+            // bootstrap/protocol setup. Disconnect/error resets this boot checkpoint.
+            if (boot_health_ready_ && boot_health_network_ && protocol_ &&
+                GetDeviceState() == kDeviceStateIdle) {
+                if (++boot_health_ticks_ == 30) {
+                    Ota health;
+                    health.MarkCurrentVersionValid();
+                }
+            } else {
+                boot_health_ticks_ = 0;
+            }
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+            const auto now = esp_timer_get_time();
+            if (lan_network_ready_ && activation_task_handle_ == nullptr &&
+                GetDeviceState() == kDeviceStateIdle && now >= lan_next_action_us_) {
+                if (protocol_ && protocol_->IsAudioChannelOpened()) {
+                    protocol_->SendDeviceHeartbeat();
+                } else {
+                    // Re-enter bootstrap on the existing activation worker;
+                    // never block the main loop with DNS/connect/hello waits.
+                    Board::GetInstance().GetDisplay()->SetStatus("Server: connecting");
+                    HandleNetworkConnectedEvent();
+                }
+            }
+#endif
             CheckVoicePlayback();
             clock_ticks_++;
             auto display = Board::GetInstance().GetDisplay();
@@ -291,16 +387,28 @@ void Application::Run() {
 }
 
 void Application::HandleNetworkConnectedEvent() {
+    boot_health_network_ = true;
     ESP_LOGI(TAG, "Network connected");
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+    lan_network_ready_ = true;
+#endif
     auto state = GetDeviceState();
 
-    if (state == kDeviceStateStarting || state == kDeviceStateWifiConfiguring) {
+    bool activate = state == kDeviceStateStarting || state == kDeviceStateWifiConfiguring;
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+    activate = activate ||
+               (state == kDeviceStateIdle && (!protocol_ || !protocol_->IsAudioChannelOpened()));
+#endif
+    if (activate) {
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+        Board::GetInstance().GetDisplay()->SetStatus("Server: connecting");
+#endif
         // Network is ready, start activation
-        SetDeviceState(kDeviceStateActivating);
         if (activation_task_handle_ != nullptr) {
             ESP_LOGW(TAG, "Activation task already running");
             return;
         }
+        SetDeviceState(kDeviceStateActivating);
 
         xTaskCreate(
             [](void* arg) {
@@ -318,13 +426,24 @@ void Application::HandleNetworkConnectedEvent() {
 }
 
 void Application::HandleNetworkDisconnectedEvent() {
+    boot_health_network_ = false;
+    boot_health_ticks_ = 0;
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+    lan_network_ready_ = false;
+    active_server_turn_id_.clear();
+    lan_mic_admission_pending_ = false;
+#endif
     // Close current conversation when network disconnected
     auto state = GetDeviceState();
     if (state == kDeviceStateNotifying) {
         StopNotification();
     }
-    if (state == kDeviceStateConnecting || state == kDeviceStateListening ||
-        state == kDeviceStateSpeaking) {
+    if (protocol_ && (state == kDeviceStateConnecting || state == kDeviceStateListening ||
+        state == kDeviceStateSpeaking
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+        || protocol_->IsAudioChannelOpened()
+#endif
+        )) {
         ESP_LOGI(TAG, "Closing audio channel due to network disconnection");
         protocol_->CloseAudioChannel();
     }
@@ -339,6 +458,13 @@ void Application::HandleActivationDoneEvent() {
 
     SystemInfo::PrintHeapStats();
     SetDeviceState(kDeviceStateIdle);
+
+    boot_health_ready_ = protocol_ != nullptr;
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+    lan_retry_delay_seconds_ = 5;
+    lan_next_action_us_ = esp_timer_get_time() + 15000000LL;
+    Board::GetInstance().GetDisplay()->SetStatus("Server: connected");
+#endif
 
     has_server_time_ = ota_->HasServerTime();
 
@@ -363,13 +489,29 @@ void Application::ActivationTask() {
     ota_ = std::make_unique<Ota>();
 
     // Explicit local development never contacts activation/OTA services.
-#if !CONFIG_AIVA_DEV_VOICE
+#if !CONFIG_AIVA_DEV_VOICE || CONFIG_AIVA_LAN_BOOTSTRAP
     CheckAssetsVersion();
     CheckNewVersion();
 #endif
 
     // Initialize the protocol
-    InitializeProtocol();
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+    if (!ota_->HasWebsocketConfig()) {
+        last_error_message_ = Lang::Strings::SERVER_NOT_CONNECTED;
+        xEventGroupSetBits(event_group_, MAIN_EVENT_ERROR);
+        return;
+    }
+#endif
+    const bool started = InitializeProtocol();
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+    if (!started) {
+        last_error_message_ = Lang::Strings::SERVER_NOT_CONNECTED;
+        xEventGroupSetBits(event_group_, MAIN_EVENT_ERROR);
+        return;
+    }
+#else
+    (void)started;
+#endif
 
     // Signal completion to main loop
     xEventGroupSetBits(event_group_, MAIN_EVENT_ACTIVATION_DONE);
@@ -493,8 +635,7 @@ void Application::CheckNewVersion() {
             // If upgrade failed, continue to normal operation
         }
 
-        // No new version, mark the current version as valid
-        ota_->MarkCurrentVersionValid();
+        // Cancel rollback only after protocol initialization reaches the main loop.
         if (!ota_->HasActivationCode() && !ota_->HasActivationChallenge()) {
             // Exit the loop if done checking new version
             break;
@@ -524,7 +665,7 @@ void Application::CheckNewVersion() {
     }
 }
 
-void Application::InitializeProtocol() {
+bool Application::InitializeProtocol() {
     auto& board = Board::GetInstance();
     auto display = board.GetDisplay();
     auto codec = board.GetAudioCodec();
@@ -556,7 +697,8 @@ void Application::InitializeProtocol() {
         if (GetDeviceState() == kDeviceStateSpeaking) {
             if (protocol_->HasHalfDuplexPlayback()) {
                 auto id = voice_playback_.Receive();
-                if (!id) return;
+                if (!id)
+                    return;
                 packet->playback_id = id;
                 if (!audio_service_.PushPacketToDecodeQueue(std::move(packet))) {
                     voice_playback_.Played(id, false);
@@ -578,13 +720,31 @@ void Application::InitializeProtocol() {
         }
     });
 
-    protocol_->OnAudioChannelClosed([this, &board]() {
-        voice_playback_.Cancel();
-        board.SetPowerSaveLevel(PowerSaveLevel::LOW_POWER);
-        Schedule([this]() {
+    auto* current_protocol = protocol_.get();
+    protocol_->OnAudioChannelClosed([this, &board, current_protocol]() {
+        Schedule([this, &board, current_protocol]() {
+            if (protocol_.get() != current_protocol)
+                return;
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+            active_server_turn_id_.clear();
+            lan_mic_admission_pending_ = false;
+#endif
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+            if (lan_network_ready_ && !protocol_->IsAudioChannelOpened()) {
+                const auto delay = lan_retry_delay_seconds_;
+                lan_next_action_us_ = esp_timer_get_time() +
+                                      static_cast<int64_t>(delay) * 1000000LL;
+                lan_retry_delay_seconds_ = delay >= 30 ? 60 : delay * 2;
+                Board::GetInstance().GetDisplay()->SetStatus("Server: disconnected");
+                ESP_LOGW(TAG, "LAN WebSocket lost; reconnect scheduled in %u seconds", delay);
+            }
+#endif
+            voice_playback_.Cancel();
+            board.SetPowerSaveLevel(PowerSaveLevel::LOW_POWER);
             auto display = Board::GetInstance().GetDisplay();
             display->SetChatMessage("system", "");
-            if (protocol_ && protocol_->HasHalfDuplexPlayback()) audio_service_.ResetDecoder();
+            if (protocol_ && protocol_->HasHalfDuplexPlayback())
+                audio_service_.ResetDecoder();
             SetDeviceState(kDeviceStateIdle);
         });
     });
@@ -639,24 +799,38 @@ void Application::InitializeProtocol() {
                 auto turn = cJSON_GetObjectItem(root, "turn_id");
                 auto playback = cJSON_GetObjectItem(root, "playback_id");
                 if (!cJSON_IsString(session) || protocol_->session_id() != session->valuestring ||
-                    !cJSON_IsString(turn) || !cJSON_IsString(playback)) return;
+                    !cJSON_IsString(turn) || !cJSON_IsString(playback)
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+                    || active_server_turn_id_ != turn->valuestring
+#endif
+                    )
+                    return;
                 auto chunks = cJSON_GetObjectItem(root, "audio_chunks");
                 uint32_t count = cJSON_IsNumber(chunks) && chunks->valuedouble >= 1 &&
-                    chunks->valuedouble <= 100000 && chunks->valuedouble == chunks->valueint ?
-                    static_cast<uint32_t>(chunks->valueint) : 0;
+                                         chunks->valuedouble <= 100000 &&
+                                         chunks->valuedouble == chunks->valueint
+                                     ? static_cast<uint32_t>(chunks->valueint)
+                                     : 0;
                 Schedule([this, action = std::string(state->valuestring),
                           turn = std::string(turn->valuestring),
                           playback = std::string(playback->valuestring), count]() {
                     if (action == "start") {
                         if (voice_playback_.Begin(turn, playback)) {
                             aborted_ = false;
-                            if (!SetDeviceState(kDeviceStateSpeaking)) voice_playback_.Cancel();
+                            if (!SetDeviceState(kDeviceStateSpeaking))
+                                voice_playback_.Cancel();
                         }
                     } else if (action == "stop") {
-                        if (voice_playback_.Stop(turn, playback, count)) CheckVoicePlayback();
+                        if (voice_playback_.Stop(turn, playback, count))
+                            CheckVoicePlayback();
                     } else if (action == "abort" && voice_playback_.Matches(turn, playback)) {
                         voice_playback_.Cancel();
                         audio_service_.ResetDecoder();
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+                        active_server_turn_id_.clear();
+                        lan_mic_admission_pending_ = false;
+                        ESP_LOGI(TAG, "LAN server admitted microphone turn; enabling voice capture");
+#endif
                         SetDeviceState(kDeviceStateIdle);
                     }
                 });
@@ -693,6 +867,104 @@ void Application::InitializeProtocol() {
                     });
                 }
             }
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+        } else if (strcmp(type->valuestring, "status") == 0) {
+            auto session = cJSON_GetObjectItem(root, "session_id");
+            auto turn = cJSON_GetObjectItem(root, "turn_id");
+            auto status = cJSON_GetObjectItem(root, "state");
+            if (!cJSON_IsString(session) || protocol_->session_id() != session->valuestring ||
+                !cJSON_IsString(turn) || !cJSON_IsString(status))
+                return;
+            const std::string turn_id = turn->valuestring;
+            const std::string status_name = status->valuestring;
+            Schedule([this, turn_id, status_name]() {
+                if (status_name == "listening") {
+                    active_server_turn_id_ = turn_id;
+                    if (lan_mic_admission_pending_ && GetDeviceState() == kDeviceStateListening) {
+                        lan_mic_admission_pending_ = false;
+                        auto display = Board::GetInstance().GetDisplay();
+                        display->SetStatus(Lang::Strings::LISTENING);
+                        if (lan_audio_buffer_overflow_) {
+                            lan_audio_buffer_overflow_ = false;
+                            lan_audio_capture_pending_ = false;
+                            lan_pending_audio_.clear();
+                            lan_pending_wake_audio_.clear();
+                            protocol_->SendAbortSpeaking(kAbortReasonNone, turn_id);
+                            active_server_turn_id_.clear();
+                            display->SetStatus("Audio buffer full; try again");
+                            SetDeviceState(kDeviceStateIdle);
+                            return;
+                        }
+                        while (!lan_pending_wake_audio_.empty()) {
+                            auto packet = std::move(lan_pending_wake_audio_.front());
+                            lan_pending_wake_audio_.pop_front();
+                            if (!protocol_->SendAudio(std::move(packet))) {
+                                lan_pending_audio_.clear();
+                                lan_audio_capture_pending_ = false;
+                                protocol_->SendAbortSpeaking(kAbortReasonNone, turn_id);
+                                active_server_turn_id_.clear();
+                                SetDeviceState(kDeviceStateIdle);
+                                return;
+                            }
+                            ++lan_audio_packets_sent_;
+                        }
+                        while (!lan_pending_audio_.empty()) {
+                            auto packet = std::move(lan_pending_audio_.front());
+                            lan_pending_audio_.pop_front();
+                            if (!protocol_->SendAudio(std::move(packet))) {
+                                lan_audio_capture_pending_ = false;
+                                protocol_->SendAbortSpeaking(kAbortReasonNone, turn_id);
+                                active_server_turn_id_.clear();
+                                SetDeviceState(kDeviceStateIdle);
+                                return;
+                            }
+                            ++lan_audio_packets_sent_;
+                        }
+                        lan_audio_capture_pending_ = false;
+                        lan_turn_speech_seen_ = lan_vad_speech_seen_.load();
+                        audio_service_.EnableVoiceProcessing(true);
+                        ConfigureWakeWordForListening();
+                        const auto silence_since = lan_vad_silence_since_us_.load();
+                        if (!audio_service_.IsVoiceDetected() && lan_turn_speech_seen_ && silence_since > 0) {
+                            const auto remaining = 2000000 - (esp_timer_get_time() - silence_since);
+                            if (remaining <= 0) {
+                                xEventGroupSetBits(event_group_, MAIN_EVENT_VAD_SILENCE_TIMEOUT);
+                            } else if (lan_vad_silence_timer_ != nullptr) {
+                                esp_timer_stop(lan_vad_silence_timer_);
+                                esp_timer_start_once(lan_vad_silence_timer_, remaining);
+                            }
+                        }
+                    }
+                    return;
+                }
+                if (active_server_turn_id_ != turn_id)
+                    return;
+                if (status_name == "processing") {
+                    if (lan_vad_silence_timer_ != nullptr)
+                        esp_timer_stop(lan_vad_silence_timer_);
+                    lan_audio_capture_pending_ = false;
+                    Board::GetInstance().GetDisplay()->SetStatus("Đang xử lý...");
+                } else if (status_name == "failed") {
+                    active_server_turn_id_.clear();
+                    lan_mic_admission_pending_ = false;
+                    lan_audio_capture_pending_ = false;
+                    lan_pending_audio_.clear();
+                    lan_pending_wake_audio_.clear();
+                    Board::GetInstance().GetDisplay()->SetStatus("Request failed");
+                } else if (status_name == "cancelled") {
+                    active_server_turn_id_.clear();
+                    lan_mic_admission_pending_ = false;
+                    lan_audio_capture_pending_ = false;
+                    lan_pending_audio_.clear();
+                    lan_pending_wake_audio_.clear();
+                    voice_playback_.Cancel();
+                    audio_service_.ResetDecoder();
+                    SetDeviceState(kDeviceStateIdle);
+                }
+            });
+#endif
+        } else if (strcmp(type->valuestring, "heartbeat") == 0) {
+            // Heartbeat acknowledgements only confirm session liveness.
         } else if (strcmp(type->valuestring, "stt") == 0) {
             auto text = cJSON_GetObjectItem(root, "text");
             if (cJSON_IsString(text)) {
@@ -759,7 +1031,7 @@ void Application::InitializeProtocol() {
         }
     });
 
-    protocol_->Start();
+    return protocol_->Start();
 }
 
 void Application::ShowActivationCode(const std::string& code, const std::string& message) {
@@ -815,7 +1087,8 @@ void Application::StopListening() { xEventGroupSetBits(event_group_, MAIN_EVENT_
 
 void Application::HandleToggleChatEvent() {
     auto state = GetDeviceState();
-    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking) return;
+    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking)
+        return;
 
     if (state == kDeviceStateNotifying) {
         StopNotification();
@@ -880,7 +1153,8 @@ void Application::ContinueOpenAudioChannel(ListeningMode mode) {
 
 void Application::HandleStartListeningEvent() {
     auto state = GetDeviceState();
-    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking) return;
+    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking)
+        return;
 
     if (state == kDeviceStateNotifying) {
         StopNotification();
@@ -917,7 +1191,8 @@ void Application::HandleStartListeningEvent() {
 
 void Application::HandleStopListeningEvent() {
     auto state = GetDeviceState();
-    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking) return;
+    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking)
+        return;
 
     if (state == kDeviceStateNotifying) {
         StopNotification();
@@ -926,11 +1201,41 @@ void Application::HandleStopListeningEvent() {
         SetDeviceState(kDeviceStateWifiConfiguring);
         return;
     } else if (state == kDeviceStateListening) {
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+        ESP_LOGI(TAG, "LAN microphone turn ended; Opus packets sent=%lu speech_seen=%d",
+                 static_cast<unsigned long>(lan_audio_packets_sent_),
+                 lan_vad_speech_seen_.load() ? 1 : 0);
+        if (lan_vad_silence_timer_ != nullptr)
+            esp_timer_stop(lan_vad_silence_timer_);
+        lan_vad_speech_seen_.store(false);
+        lan_vad_silence_since_us_.store(0);
+        lan_turn_speech_seen_ = false;
+        lan_audio_capture_pending_ = false;
+        lan_pending_audio_.clear();
+        lan_pending_wake_audio_.clear();
+        lan_mic_admission_pending_ = false;
+#endif
         if (protocol_) {
             protocol_->SendStopListening();
         }
         SetDeviceState(kDeviceStateIdle);
     }
+}
+
+void Application::HandleLanVadSilenceTimeout() {
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+    const auto silence_since = lan_vad_silence_since_us_.load();
+    if (GetDeviceState() != kDeviceStateListening || active_server_turn_id_.empty() ||
+        lan_mic_admission_pending_ || !lan_vad_speech_seen_.load() ||
+        audio_service_.IsVoiceDetected() || silence_since == 0 ||
+        esp_timer_get_time() - silence_since < 2000000) {
+        return;
+    }
+    lan_vad_speech_seen_.store(false);
+    lan_vad_silence_since_us_.store(0);
+    lan_turn_speech_seen_ = false;
+    HandleStopListeningEvent();  // One server boundary after 2,000 ms of AFE silence.
+#endif
 }
 
 void Application::HandleWakeWordDetectedEvent() {
@@ -939,7 +1244,8 @@ void Application::HandleWakeWordDetectedEvent() {
     }
 
     auto state = GetDeviceState();
-    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking) return;
+    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking)
+        return;
     auto wake_word = audio_service_.GetLastWakeWord();
     ESP_LOGI(TAG, "Wake word detected: %s (state: %d)", wake_word.c_str(), (int)state);
 
@@ -985,6 +1291,20 @@ void Application::BeginWakeWordInvoke(const std::string& wake_word) {
         return;
     }
 
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+    lan_audio_capture_pending_ = true;
+    lan_audio_buffer_overflow_ = false;
+    lan_pending_audio_.clear();
+    lan_pending_wake_audio_.clear();
+    lan_vad_speech_seen_.store(false);
+    lan_vad_silence_since_us_.store(0);
+    if (lan_vad_silence_timer_ != nullptr)
+        esp_timer_stop(lan_vad_silence_timer_);
+    // Keep the existing AFE/VAD active while the server admits the turn.
+    // Encoded frames are held in the bounded RAM queue until its scoped ACK.
+    audio_service_.EnableVoiceProcessing(true);
+#endif
+
     if (!protocol_->IsAudioChannelOpened()) {
         // Schedule to let the state change be processed first (UI update),
         // then continue with OpenAudioChannel which may block for ~1 second
@@ -1016,8 +1336,24 @@ void Application::ContinueWakeWordInvoke(const std::string& wake_word) {
     }
 
     if (protocol_->HasHalfDuplexPlayback()) {
-        while (audio_service_.PopWakeWordPacket()) {}
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+        while (auto packet = audio_service_.PopWakeWordPacket()) {
+            if (lan_pending_wake_audio_.size() >= MAX_SEND_PACKETS_IN_QUEUE) {
+                lan_audio_buffer_overflow_ = true;
+                lan_pending_wake_audio_.clear();
+                break;
+            }
+            lan_pending_wake_audio_.push_back(std::move(packet));
+        }
+#else
+        while (audio_service_.PopWakeWordPacket()) {
+        }
+#endif
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+        SetListeningMode(kListeningModeManualStop);
+#else
         SetListeningMode(kListeningModeAutoStop);
+#endif
         return;
     }
     ESP_LOGI(TAG, "Wake word detected: %s", wake_word.c_str());
@@ -1052,6 +1388,18 @@ void Application::HandleStateChangedEvent() {
     switch (new_state) {
         case kDeviceStateUnknown:
         case kDeviceStateIdle:
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+            if (lan_vad_silence_timer_ != nullptr)
+                esp_timer_stop(lan_vad_silence_timer_);
+            lan_vad_speech_seen_.store(false);
+            lan_vad_silence_since_us_.store(0);
+            lan_turn_speech_seen_ = false;
+            lan_audio_capture_pending_ = false;
+            lan_audio_buffer_overflow_ = false;
+            lan_mic_admission_pending_ = false;
+            lan_pending_audio_.clear();
+            lan_pending_wake_audio_.clear();
+#endif
             display->SetStatus(Lang::Strings::STANDBY);
             display->ClearChatMessages();    // Clear messages first
             display->SetEmotion("neutral");  // Then set emotion (wechat mode checks child count)
@@ -1064,9 +1412,20 @@ void Application::HandleStateChangedEvent() {
             display->SetChatMessage("system", "");
             break;
         case kDeviceStateListening:
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+            display->SetStatus("Đang nghe...");
+#else
             display->SetStatus(Lang::Strings::LISTENING);
+#endif
             display->SetEmotion("neutral");
 
+            // LAN half-duplex turns must begin with an explicit start event and
+            // wait for the server's admission acknowledgement before mic capture.
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+            if (protocol_ && protocol_->HasHalfDuplexPlayback()) {
+                StartListeningAudio();
+            } else
+#endif
             // Make sure the audio processor is running
             if (play_popup_on_listening_ || !audio_service_.IsAudioProcessorRunning()) {
                 // For auto mode, wait for the playback queue to drain before enabling
@@ -1083,13 +1442,18 @@ void Application::HandleStateChangedEvent() {
             }
             break;
         case kDeviceStateSpeaking:
-            display->SetStatus(Lang::Strings::SPEAKING);
+            if (protocol_ && protocol_->HasHalfDuplexPlayback()) {
+                display->SetStatus("Đang trả lời...");
+            } else {
+                display->SetStatus(Lang::Strings::SPEAKING);
+            }
 
             if (listening_mode_ != kListeningModeRealtime) {
                 audio_service_.EnableVoiceProcessing(false);
                 // Only AFE wake word can be detected in speaking mode
                 audio_service_.EnableWakeWordDetection(
-                    (!protocol_ || !protocol_->HasHalfDuplexPlayback()) && audio_service_.IsAfeWakeWord());
+                    (!protocol_ || !protocol_->HasHalfDuplexPlayback()) &&
+                    audio_service_.IsAfeWakeWord());
             }
             audio_service_.ResetDecoder();
             CheckVoicePlayback();
@@ -1115,9 +1479,30 @@ void Application::StartListeningAudio() {
     if (GetDeviceState() != kDeviceStateListening) {
         return;
     }
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+    if (lan_mic_admission_pending_ || !active_server_turn_id_.empty())
+        return;
+    lan_audio_packets_sent_ = 0;
+    if (!lan_audio_capture_pending_) {
+        lan_vad_speech_seen_.store(false);
+        lan_vad_silence_since_us_.store(0);
+        lan_turn_speech_seen_ = false;
+        if (lan_vad_silence_timer_ != nullptr)
+            esp_timer_stop(lan_vad_silence_timer_);
+    }
+#endif
 
     // Send the start listening command
     protocol_->SendStartListening(listening_mode_);
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+    if (protocol_->HasHalfDuplexPlayback()) {
+        // Wait for the server's turn-scoped acknowledgement after BE admission;
+        // do not put microphone audio on the socket while quota admission runs.
+        lan_mic_admission_pending_ = true;
+        Board::GetInstance().GetDisplay()->SetStatus("Đang nghe...");
+        return;
+    }
+#endif
     audio_service_.EnableVoiceProcessing(true);
 
     ConfigureWakeWordForListening();
@@ -1217,8 +1602,28 @@ void Application::AbortSpeaking(AbortReason reason) {
     ESP_LOGI(TAG, "Abort speaking");
     aborted_ = true;
     if (protocol_) {
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+        if (protocol_->HasHalfDuplexPlayback() && !active_server_turn_id_.empty()) {
+            protocol_->SendAbortSpeaking(reason, active_server_turn_id_);
+            return;
+        }
+#endif
         protocol_->SendAbortSpeaking(reason);
     }
+}
+
+void Application::AbortActiveLanTurn() {
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+    if (!protocol_ || !protocol_->HasHalfDuplexPlayback() || active_server_turn_id_.empty())
+        return;
+    aborted_ = true;
+    protocol_->SendAbortSpeaking(kAbortReasonNone, active_server_turn_id_);
+    voice_playback_.Cancel();
+    audio_service_.ResetDecoder();
+    active_server_turn_id_.clear();
+    lan_mic_admission_pending_ = false;
+    SetDeviceState(kDeviceStateIdle);
+#endif
 }
 
 void Application::SetListeningMode(ListeningMode mode) {
@@ -1227,17 +1632,36 @@ void Application::SetListeningMode(ListeningMode mode) {
 }
 
 void Application::CheckVoicePlayback() {
-    if (!protocol_ || !protocol_->HasHalfDuplexPlayback()) return;
+    if (!protocol_ || !protocol_->HasHalfDuplexPlayback())
+        return;
     auto event = voice_playback_.Poll(audio_service_.IsPlaybackIdle(),
-        Board::GetInstance().GetAudioCodec()->IsOutputDrained());
-    if (event.state == VoicePlaybackGuard::State::None) return;
-    const char* state = event.state == VoicePlaybackGuard::State::Ready ? "ready" :
-        event.state == VoicePlaybackGuard::State::Complete ? "complete" : "failed";
+                                      Board::GetInstance().GetAudioCodec()->IsOutputDrained());
+    if (event.state == VoicePlaybackGuard::State::None)
+        return;
+    const char* state = event.state == VoicePlaybackGuard::State::Ready      ? "ready"
+                        : event.state == VoicePlaybackGuard::State::Complete ? "complete"
+                                                                             : "failed";
     bool sent = protocol_->SendPlaybackEvent(state, event.turn, event.playback, event.chunks);
     if (event.state == VoicePlaybackGuard::State::Complete && sent) {
-        if (listening_mode_ == kListeningModeManualStop) SetDeviceState(kDeviceStateIdle);
-        else SetListeningMode(kListeningModeAutoStop);
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+        if (active_server_turn_id_ == event.turn)
+            active_server_turn_id_.clear();
+#endif
+        if (listening_mode_ == kListeningModeManualStop)
+            SetDeviceState(kDeviceStateIdle);
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+        else if (protocol_ && protocol_->HasHalfDuplexPlayback())
+            // Cloud replies must finish before the user explicitly starts the
+            // next turn. Idle keeps only the firmware wake detector active.
+            SetDeviceState(kDeviceStateIdle);
+#endif
+        else
+            SetListeningMode(kListeningModeAutoStop);
     } else if (!sent || event.state == VoicePlaybackGuard::State::Failed) {
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+        if (active_server_turn_id_ == event.turn)
+            active_server_turn_id_.clear();
+#endif
         voice_playback_.Cancel();
         audio_service_.ResetDecoder();
         SetDeviceState(kDeviceStateIdle);
@@ -1245,7 +1669,15 @@ void Application::CheckVoicePlayback() {
 }
 
 ListeningMode Application::GetDefaultListeningMode() const {
-    if (protocol_ && protocol_->HasHalfDuplexPlayback()) return kListeningModeAutoStop;
+    if (protocol_ && protocol_->HasHalfDuplexPlayback()) {
+#if CONFIG_AIVA_LAN_BOOTSTRAP
+        // The LAN server requires an explicit stop boundary; AFE VAD below
+        // owns the 2 s silence timer and emits exactly one listen.stop.
+        return kListeningModeManualStop;
+#else
+        return kListeningModeAutoStop;
+#endif
+    }
     return aec_mode_ == kAecOff ? kListeningModeAutoStop : kListeningModeRealtime;
 }
 
@@ -1281,7 +1713,7 @@ bool Application::UpgradeFirmware(const std::string& url, const std::string& ver
         ESP_LOGI(TAG, "Closing audio channel before firmware upgrade");
         protocol_->CloseAudioChannel();
     }
-    ESP_LOGI(TAG, "Starting firmware upgrade from URL: %s", upgrade_url.c_str());
+    ESP_LOGI(TAG, "Starting firmware upgrade");
 
     Alert(Lang::Strings::OTA_UPGRADE, Lang::Strings::UPGRADING, "download",
           Lang::Sounds::OGG_UPGRADE);
@@ -1330,7 +1762,8 @@ void Application::WakeWordInvoke(const std::string& wake_word) {
     }
 
     auto state = GetDeviceState();
-    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking) return;
+    if (protocol_ && protocol_->HasHalfDuplexPlayback() && state == kDeviceStateSpeaking)
+        return;
 
     if (state == kDeviceStateIdle) {
         // May be called from outside the main task (e.g. board button

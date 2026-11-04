@@ -116,3 +116,9 @@ npm run test:e2e
 ```
 
 The current `lint` script runs TypeScript's no-emit type check. Run the migration only against an intentionally empty development/test database.
+# D2-S2-15 integration update
+
+See [live Gemini contract, Windows commands and readiness](docs/d2-s2-15-live-gemini.md).
+Web Chat now delegates to authenticated AI_SERVER execution; live acceptance
+still requires the existing quota schema, model, credential, policy and gates.
+

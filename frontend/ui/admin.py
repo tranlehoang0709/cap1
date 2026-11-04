@@ -1,9 +1,8 @@
-"""Admin presentation and explicit session-local mock interactions."""
+"""Compatibility imports for pages backed by Backend APIs."""
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-from ui.state import data, uid, now, done, current_user, PROVIDERS
 from ui.common import panel, render_frame, table, select_record, confirm, email_valid
 
 

@@ -37,6 +37,7 @@ set(SOURCES "audio/audio_codec.cc"
             "system_info.cc"
             "application.cc"
             "ota.cc"
+            "secure_ota.cc"
             "settings.cc"
             "device_state_machine.cc"
             "assets.cc"
@@ -1090,6 +1091,7 @@ idf_component_register(SRCS ${SOURCES}
                         esp_driver_tsens
                         esp_app_format
                         app_update
+                        esp_http_client
                         spi_flash
                         mbedtls
                         console
@@ -1099,6 +1101,16 @@ idf_component_register(SRCS ${SOURCES}
                         xiaozhi-fonts
                         ${MAIN_PRIV_REQUIRES_EXTRA}
                     )
+
+# Optional approved public signing key. An absent anchor leaves OTA fail-closed.
+set(AIVA_OTA_TRUST_ANCHOR_FILE "" CACHE FILEPATH "Approved OTA ECDSA P-256 public PEM")
+if(AIVA_OTA_TRUST_ANCHOR_FILE)
+    configure_file("${AIVA_OTA_TRUST_ANCHOR_FILE}"
+                   "${CMAKE_CURRENT_BINARY_DIR}/aiva_ota_trust_anchor.pem" COPYONLY)
+    target_add_binary_data(${COMPONENT_LIB}
+                           "${CMAKE_CURRENT_BINARY_DIR}/aiva_ota_trust_anchor.pem" TEXT)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE AIVA_OTA_TRUST_ANCHOR=1)
+endif()
 
 # Use target_compile_definitions to define the reported board identity
 # If BOARD_NAME is empty, use BOARD_TYPE

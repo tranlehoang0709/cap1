@@ -2,7 +2,7 @@
 import streamlit as st
 
 
-def confirm(key, label="Tôi xác nhận thao tác trên dữ liệu mẫu", *, scope=None):
+def confirm(key, label="Tôi xác nhận thao tác này", *, scope=None):
     if scope is not None:
         scope_key = f"confirmation_scope_{key}"
         if st.session_state.get(scope_key) != scope:

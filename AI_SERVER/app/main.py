@@ -9,7 +9,13 @@ from app.api.health import router
 from app.api.websocket import router as websocket_router
 from app.core.config import Settings, get_settings
 from app.core.robot_config import RobotSettings
-from app.core.backend_config import BackendSettings, INTEGRATION_BLOCKER
+from app.core.lan_config import LanSettings
+from app.core.live_config import LiveSettings
+from app.api.web_chat import router as web_chat_router
+from app.services.backend_execution import UsageReporter
+from app.api.xiaozhi_ota import router as ota_router
+from app.api.lan_robot import router as lan_robot_router
+from app.core.backend_config import BackendSettings
 from app.api.robot_websocket import router as robot_router
 from app.core.logging import configure_logging, get_logger
 
@@ -43,14 +49,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application = FastAPI(title="AIVA-IoT AI Server", lifespan=lifespan)
     application.state.settings = settings if settings is not None else get_settings()
     application.state.robot_settings = RobotSettings()
+    application.state.lan_settings = LanSettings()
+    application.state.live_settings = LiveSettings()
     application.state.backend_settings = BackendSettings()
     application.state.backend_client = (
         application.state.backend_settings.create_client()
         if application.state.backend_settings.mode == "integrated" else None
     )
-    application.state.backend_integration_blocker = INTEGRATION_BLOCKER
+    # Per-user BE authorization/config/admission decide readiness at execution.
+    application.state.backend_integration_blocker = None
+    application.state.live_usage_reporter = UsageReporter(application.state.backend_client, max_entries=10000)
     import asyncio
+    from app.core.llm_config import LLMSettings
+    application.state.live_execution_slots = asyncio.Semaphore(LLMSettings().max_concurrent_requests)
     application.state.robot_slots = asyncio.Semaphore(application.state.robot_settings.max_sessions)
+    from app.services.gateway_rate_limit import GatewayRateLimit
+    application.state.robot_rate_limit = GatewayRateLimit()
     if application.state.robot_settings.enabled:
         from app.services.llm import LLMRunner
         from app.core.llm_config import LLMSettings
@@ -59,6 +73,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(websocket_router)
     application.include_router(device_profiles_router)
     application.include_router(robot_router)
+    application.include_router(ota_router)
+    application.include_router(lan_robot_router)
+    application.include_router(web_chat_router)
     return application
 
 

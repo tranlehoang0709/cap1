@@ -71,6 +71,40 @@ def test_native_pipeline_second_turn(monkeypatch,version):
             assert next_start['turn_id']!=start['turn_id']
             drain(ws,next_start,version)
 
+def test_standalone_lan_admits_turn_before_microphone_audio(monkeypatch):
+    uid, credential = 'fixture-sd2', 'F' * 43
+    monkeypatch.setenv('AI_SERVER_ROBOT_LOCAL_DEVICE_CREDENTIALS',
+                       json.dumps({uid: credential}))
+    monkeypatch.setenv('GEMINI_API_KEY', 'fixture-gemini-key')
+    monkeypatch.setenv('AI_SERVER_LLM_PROVIDER', 'gemini')
+    monkeypatch.setattr('app.clients.provider_factory.create_llm_adapter',
+                        lambda _settings: (object(), 'fixture-gemini-model'))
+    monkeypatch.setattr('app.clients.stt_factory.create_gemini_stt_adapter', lambda _settings: object())
+    from types import SimpleNamespace
+    monkeypatch.setattr('app.clients.tts_factory.create_gemini_tts_adapter',
+                        lambda _settings: SimpleNamespace(model='fixture-tts', voice='fixture-voice'))
+    app = configured(monkeypatch, ai_mode='gemini', allowed_networks='["127.0.0.0/8"]')
+    headers = {'Device-Uid': uid, 'Device-Credential': credential,
+               'Protocol-Version': '1', 'Device-Id': 'fixture-device',
+               'Client-Id': 'fixture-client'}
+    with TestClient(app, base_url='https://testserver', client=('127.0.0.1', 1234)) as client:
+        with client.websocket_connect('wss://testserver/ws/robot', headers=headers) as ws:
+            session = hello(ws)
+            ws.send_json({'type': 'listen', 'state': 'start', 'mode': 'manual',
+                          'session_id': session})
+            admitted = ws.receive_json()
+            assert admitted['type'] == 'status'
+            assert admitted['state'] == 'listening'
+            assert admitted['session_id'] == session
+            assert admitted['turn_id']
+            codec = OpusCodec(16000, 60)
+            try:
+                pcm = struct.pack('<960h', *(int(1000 * math.sin(i * .15)) for i in range(960)))
+                ws.send_bytes(encode_audio_frame(AudioFrame(codec.encode(pcm), 0),
+                                                  FramingConfig(1, 4096)))
+            finally:
+                codec.close()
+
 def test_two_sessions_and_reconnect(monkeypatch):
     with TestClient(configured(monkeypatch),client=('127.0.0.1',1234)) as client:
         with client.websocket_connect('/ws/dev-robot',headers=headers()) as a:
@@ -179,6 +213,10 @@ def test_real_tcp_two_clients(tmp_path):
     env={k:v for k,v in os.environ.items() if not k.upper().startswith('AI_SERVER_')}
     env.update(AI_SERVER_HOST='127.0.0.1',AI_SERVER_PORT=str(port),AI_SERVER_RELOAD='false',AI_SERVER_ROBOT_ENABLED='true',AI_SERVER_ROBOT_TOKEN=TOKEN,AI_SERVER_ROBOT_ENERGY_THRESHOLD='100',
                AI_SERVER_BACKEND_MODE='development-mock', AI_SERVER_ROBOT_AI_MODE='mock',
+<<<<<<< HEAD
+=======
+               AI_SERVER_TLS_CERTFILE='', AI_SERVER_TLS_KEYFILE='',
+>>>>>>> 8656999 (Update AIVA IoT integration and SD2)
                AI_SERVER_ROBOT_ALLOWED_NETWORKS='["127.0.0.0/8"]')
     with (tmp_path/'tcp.log').open('w+') as log:
         process=subprocess.Popen([sys.executable,str(root/'scripts/run_dev.py')],env=env,stdout=log,stderr=log,cwd=root)
@@ -250,7 +288,7 @@ def test_output_rejects_late_audio_and_ack_after_abort():
         output.acknowledge(proof)
         await task
         await output.abort(scope)
-        with pytest.raises(ValueError): output.acknowledge(proof)
+        assert output.acknowledge(proof) is False
         chunk=ScheduledAudio(scope,0,TTSAudioChunk(0,b'opus',OPUS_FORMAT))
         with pytest.raises(ValueError): await output.write(chunk,context)
     asyncio.run(scenario())
