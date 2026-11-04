@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { AuthRepository } from './auth.repository';
-import { AccessTokenPayload, RefreshTokenPayload, TokenPair } from './auth.types';
+import { AccessTokenPayload, EmailVerificationPayload, RefreshTokenPayload, TokenPair } from './auth.types';
 
 @Injectable()
 export class AuthService {
@@ -16,17 +16,31 @@ export class AuthService {
     private readonly config: ConfigService,
   ) {}
 
-  async register(email: string, displayName: string, password: string, actorId: string | null = null): Promise<{ id: string; email: string; display_name: string }> {
+  async register(email: string, displayName: string, password: string, actorId: string | null = null): Promise<{ id: string; email: string; display_name: string; verification_token: string }> {
     if (Buffer.byteLength(password, 'utf8') > 72) throw new BadRequestException('Password must be at most 72 UTF-8 bytes');
     const normalizedEmail = email.trim().toLowerCase();
     const passwordHash = await bcrypt.hash(password, 12);
     try {
       const user = await this.repository.createUser(normalizedEmail, displayName.trim(), passwordHash, actorId);
-      return { id: user.id, email: user.email, display_name: user.display_name };
+      return { id: user.id, email: user.email, display_name: user.display_name, verification_token: await this.createEmailVerificationToken(user.id) };
     } catch (error) {
       if (this.isDuplicate(error)) throw new ConflictException('Email is already registered');
       throw error;
     }
+  }
+
+  async verifyEmail(token: string): Promise<{ success: true }> {
+    let payload: EmailVerificationPayload;
+    try {
+      payload = await this.jwt.verifyAsync<EmailVerificationPayload>(token, {
+        secret: this.config.getOrThrow<string>('auth.accessTokenSecret'), issuer: 'aiva-iot', audience: 'aiva-email-verification',
+      });
+      if (payload.typ !== 'email_verification' || !payload.sub) throw new Error('Invalid verification token');
+    } catch {
+      throw new BadRequestException('Invalid or expired email verification token');
+    }
+    if (!await this.repository.verifyEmail(payload.sub)) throw new BadRequestException('User account was not found');
+    return { success: true };
   }
 
   async login(email: string, password: string): Promise<TokenPair> {
@@ -84,6 +98,13 @@ export class AuthService {
       }),
       ttl,
     };
+  }
+
+  private async createEmailVerificationToken(userId: string): Promise<string> {
+    return this.jwt.signAsync<EmailVerificationPayload>({ sub: userId, typ: 'email_verification' }, {
+      secret: this.config.getOrThrow<string>('auth.accessTokenSecret'), expiresIn: 900,
+      issuer: 'aiva-iot', audience: 'aiva-email-verification',
+    });
   }
 
   private async createRefreshToken(userId: string): Promise<{ token: string; expiresAt: Date }> {

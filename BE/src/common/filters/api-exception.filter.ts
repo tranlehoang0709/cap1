@@ -37,19 +37,12 @@ export class ApiExceptionFilter implements ExceptionFilter {
       code = exception.code;
       message = status < 500 ? exception.message : 'The request could not be completed';
     } else if (exception instanceof AiServiceError) {
-      const statuses: Record<string, number> = { PROVIDER_NOT_FOUND: 404, PROVIDER_UNAVAILABLE: 409, API_KEY_NOT_FOUND: 404, CONVERSATION_NOT_FOUND: 404, QUOTA_EXCEEDED: 429, AI_PIPELINE_UNAVAILABLE: 503 };
+      const statuses: Record<string, number> = { PROVIDER_NOT_FOUND: 404, PROVIDER_UNAVAILABLE: 409, API_KEY_NOT_FOUND: 404, CONVERSATION_NOT_FOUND: 404, QUOTA_EXCEEDED: 429, QUOTA_NOT_FOUND: 404 };
       status = statuses[exception.code] ?? HttpStatus.INTERNAL_SERVER_ERROR; code = exception.code;
       message = status < 500 ? exception.message : 'The request could not be completed';
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       const payload = exception.getResponse();
-      // Internal service clients need machine-readable denial/replay reasons.
-      // Only forward explicitly constructed safe internal errors, never SQL errors.
-      if (request.url.split('?')[0].startsWith('/internal/') && payload && typeof payload === 'object'
-        && 'reason' in payload && typeof payload.reason === 'string' && /^[A-Z][A-Z0-9_]+$/.test(payload.reason)) {
-        response.status(status).json({ allowed: false, reason: payload.reason });
-        return;
-      }
       if (typeof payload === 'string') message = payload;
       else if (payload && typeof payload === 'object') {
         const body = payload as { message?: string | string[]; error?: string };

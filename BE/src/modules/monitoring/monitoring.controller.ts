@@ -1,23 +1,29 @@
-import{Controller,Get}from'@nestjs/common';import{ApiTags}from'@nestjs/swagger';import{Roles}from'../../common/decorators/roles.decorator';import{MonitoringService}from'./monitoring.service';@ApiTags('monitoring')@Controller('admin')export class MonitoringController{constructor(private s:MonitoringService){}@Get('dashboard')@Roles('ADMIN')dashboard(){return this.s.dashboard()}@Get('monitoring/instances')@Roles('ADMIN')instances(){return this.s.instances()}}
-import { Body, HttpCode, Param, Post, Req, UseGuards } from '@nestjs/common';
-import { Public } from '../../common/decorators/public.decorator';
-import { InternalDeviceGuard } from '../devices/internal-device.guard';
-import { AdminDeviceGuard } from '../devices/admin-device.guard';
-import { UserPairingGuard } from '../pairing/user-pairing.guard';
-import { AuthenticatedRequest } from '../auth/access-role.guard';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { IsIn, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { MonitoringService } from './monitoring.service';
 
-@Controller('internal/devices') @Public() @UseGuards(InternalDeviceGuard)
-export class HeartbeatController {
-  constructor(private readonly service:MonitoringService){}
-  @Post('heartbeat') @HttpCode(200) heartbeat(@Body() body:unknown){return this.service.processHeartbeat(body);}
+class HeartbeatDto {
+  @IsString() instance_code!: string;
+  @IsOptional() @IsIn(['online', 'offline', 'degraded', 'starting', 'stopped']) status?: string;
+  @IsOptional() @IsString() started_at?: string;
 }
-@Controller('admin/devices') @Public() @UseGuards(AdminDeviceGuard)
-export class AdminMonitoringController {
-  constructor(private readonly service:MonitoringService){}
-  @Get(':id/monitoring') get(@Req() req:AuthenticatedRequest,@Param('id') id:string){return this.service.getDeviceMonitoring(req.currentUser,id);}
+class MetricsDto {
+  @IsOptional() @IsNumber() cpu_percent?: number;
+  @IsOptional() @IsNumber() memory_percent?: number;
+  @IsOptional() @IsNumber() gpu_percent?: number;
+  @IsOptional() @IsNumber() gpu_memory_percent?: number;
+  @IsOptional() @IsInt() @Min(0) active_sessions?: number;
+  @IsOptional() @IsString() recorded_at?: string;
 }
-@Controller('user/devices') @Public() @UseGuards(UserPairingGuard)
-export class UserMonitoringController {
-  constructor(private readonly service:MonitoringService){}
-  @Get(':id/monitoring') get(@Req() req:AuthenticatedRequest,@Param('id') id:string){return this.service.getDeviceMonitoring(req.currentUser,id);}
+
+@ApiTags('monitoring')
+@Controller('admin')
+export class MonitoringController {
+  constructor(private readonly service: MonitoringService) {}
+  @Get('dashboard') @Roles('ADMIN') dashboard() { return this.service.dashboard(); }
+  @Get('monitoring/instances') @Roles('ADMIN') instances() { return this.service.instances(); }
+  @Post('monitoring/instances/heartbeat') @Roles('ADMIN') heartbeat(@Body() dto: HeartbeatDto) { return this.service.heartbeat(dto as unknown as Record<string, unknown>); }
+  @Post('monitoring/instances/:id/metrics') @Roles('ADMIN') metrics(@Param('id') id: string, @Body() dto: MetricsDto) { return this.service.metrics(id, dto as unknown as Record<string, unknown>); }
 }
