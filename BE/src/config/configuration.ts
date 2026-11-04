@@ -21,7 +21,6 @@ export interface RuntimeConfiguration {
     adminDisplayName: string;
   };
   crypto: { encryptionKey: string };
-  internal: { aiServerServiceToken: string };
 }
 
 export function validateEnvironment(environment: Record<string, unknown>): Record<string, unknown> {
@@ -124,6 +123,5 @@ export default function configuration(): RuntimeConfiguration {
       adminDisplayName: process.env.ADMIN_DISPLAY_NAME ?? '',
     },
     crypto: { encryptionKey: process.env.APP_ENCRYPTION_KEY ?? '' },
-    internal: { aiServerServiceToken: process.env.AI_SERVER_SERVICE_TOKEN ?? '' },
   };
 }

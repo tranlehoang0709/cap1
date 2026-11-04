@@ -5,7 +5,6 @@ from collections.abc import AsyncIterator
 from fastapi import FastAPI
 
 from app.api.device_profiles import router as device_profiles_router
-from app.api.backend import router as backend_router
 from app.api.health import router
 from app.api.websocket import router as websocket_router
 from app.core.config import Settings, get_settings
@@ -40,7 +39,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(router)
     application.include_router(websocket_router)
     application.include_router(device_profiles_router)
-    application.include_router(backend_router)
     return application
 
 

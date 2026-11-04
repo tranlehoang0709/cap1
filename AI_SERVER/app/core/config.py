@@ -31,8 +31,6 @@ class Settings(BaseSettings):
     log_level: Literal["critical", "error", "warning", "info", "debug", "trace"] = "warning"
     reload: bool = True
     ws_max_message_bytes: int = Field(default=4096, ge=1, le=4096)
-    backend_url: str = ""
-    backend_service_token: str = ""
 
     @field_validator("host")
     @classmethod
@@ -75,8 +73,6 @@ def get_settings() -> Settings:
             "log_level": "AI_SERVER_LOG_LEVEL: critical, error, warning, info, debug or trace",
             "reload": "AI_SERVER_RELOAD: boolean such as true or false",
             "ws_max_message_bytes": "AI_SERVER_WS_MAX_MESSAGE_BYTES: integer between 1 and 4096",
-            "backend_url": "AI_SERVER_BACKEND_URL: backend base URL",
-            "backend_service_token": "AI_SERVER_BACKEND_SERVICE_TOKEN: service token",
         }
         fields = {item["loc"][0] for item in error.errors(include_input=False, include_context=False)}
         details = "; ".join(hints[field] for field in hints if field in fields)
