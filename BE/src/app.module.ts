@@ -22,6 +22,7 @@ import { QuotasModule } from './modules/quotas/quotas.module';
 import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
 import { UsersModule } from './modules/users/users.module';
 import { WebChatModule } from './modules/web-chat/web-chat.module';
+import { InternalApiModule } from './modules/internal-api/internal-api.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { WebChatModule } from './modules/web-chat/web-chat.module';
     LogsModule,
     MonitoringModule,
     SystemSettingsModule,
+    InternalApiModule,
   ],
   controllers: [HealthController],
   providers: [

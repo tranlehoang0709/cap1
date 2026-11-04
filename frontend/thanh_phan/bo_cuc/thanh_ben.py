@@ -3,6 +3,7 @@ from html import escape
 import streamlit as st
 from thanh_phan.dung_chung.nut_chuyen_chu_de import render_theme_switch
 from nen_tang.dieu_huong import USER_LABELS, user_destination
+from nen_tang.trang_thai import api_client
 
 
 def render_sidebar(account, routes):
@@ -25,6 +26,13 @@ def render_sidebar(account, routes):
     st.sidebar.divider()
     st.sidebar.markdown(f'<div class="sidebar-account"><span class="avatar">{escape(account["name"][:1])}</span><div><strong>{escape(account["name"])}</strong><small>{escape(account["email"])}</small></div></div>', unsafe_allow_html=True)
     if st.sidebar.button("Đăng xuất", width="stretch"):
+        client = api_client()
+        if client and client.enabled:
+            try:
+                client.logout()
+            except Exception:
+                pass
+        st.session_state.pop("api_user", None)
         st.session_state.identity = None
         st.rerun()
     with st.sidebar:

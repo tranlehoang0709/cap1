@@ -1,5 +1,6 @@
 import streamlit as st
-from nen_tang.trang_thai import data, uid, done
+from nen_tang.trang_thai import api_client, api_enabled, data, set_api_user, uid, done
+from nen_tang.api import ApiError
 from nen_tang.kiem_tra_du_lieu import email_valid
 
 
@@ -26,6 +27,14 @@ def render_forms():
             st.checkbox("Ghi nhớ đăng nhập trong phiên", value=True)
             submitted = st.form_submit_button("Đăng nhập mẫu", type="primary", width="stretch")
         if submitted:
+            if api_enabled():
+                try:
+                    set_api_user(api_client().login(email.strip(), password))
+                    st.session_state.flash = "Đăng nhập backend thành công."
+                    st.rerun()
+                except ApiError as exc:
+                    st.error(str(exc))
+                    return
             account = next((u for u in data()["users"] if u["email"].casefold() == email.strip().casefold() and u["password"] == password), None)
             if not account:
                 st.error("Email hoặc mật khẩu mẫu không đúng.")
@@ -54,6 +63,12 @@ def render_forms():
         if submitted:
             if not name.strip() or not email_valid(email.strip()) or len(password) < 8 or password != repeat:
                 st.error("Nhập họ tên, email hợp lệ và mật khẩu ít nhất 8 ký tự; hai mật khẩu phải trùng nhau.")
+            elif api_enabled():
+                try:
+                    api_client().register(email.strip(), name.strip(), password)
+                    st.success("Tạo tài khoản thành công. Hãy đăng nhập.")
+                except ApiError as exc:
+                    st.error(str(exc))
             elif any(u["email"].casefold() == email.strip().casefold() for u in data()["users"]):
                 st.error("Email đã tồn tại trong dữ liệu mẫu.")
             else:

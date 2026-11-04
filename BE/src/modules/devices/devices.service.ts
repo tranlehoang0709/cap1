@@ -17,6 +17,7 @@ export class DevicesService {
   }
 
   async list(userId: string | null, page: number, limit: number) { return this.wrap(() => this.repository.listDevices(userId, page, limit)); }
+  async getOwned(userId:string,deviceId:string){const device=await this.repository.findOwnedByUser(deviceId,userId);if(!device)throw new DevicesServiceError('DEVICE_NOT_OWNED','Device is not owned by this user');return device;}
 
   async rename(userId: string, deviceId: string, name: string): Promise<DeviceRecord> {
     return this.repository.transaction(async (repo) => {

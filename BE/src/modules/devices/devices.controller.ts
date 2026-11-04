@@ -19,6 +19,7 @@ export class DevicesController {
   async listMine(@CurrentUser() user: AuthenticatedUser, @Query() query: PageQueryDto) {
     return this.page(await this.devices.list(user.id, query.page, query.limit), query);
   }
+  @Get(':id') @ApiOperation({ summary: 'Read one caller-owned device' }) getMine(@CurrentUser() user: AuthenticatedUser,@Param('id')id:string){return this.devices.getOwned(user.id,id);}
 
   @Patch(':id') @ApiOperation({ summary: 'Rename caller-owned device' })
   rename(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() dto: RenameDeviceDto) { return this.devices.rename(user.id, id, dto.display_name); }

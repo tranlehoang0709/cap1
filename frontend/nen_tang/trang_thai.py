@@ -3,6 +3,7 @@ from datetime import datetime
 from uuid import uuid4
 
 import streamlit as st
+from nen_tang.api import AivaApi
 
 PROVIDERS = ["Local AI", "OpenAI", "Gemini"]
 
@@ -19,8 +20,10 @@ def now():
 
 def init_demo():
     if "demo" in st.session_state:
+        st.session_state.setdefault("api", AivaApi())
         return
     st.session_state.identity = None
+    st.session_state.api = AivaApi()
     st.session_state.demo = {
         "users": [
             {"id": "admin", "name": "Quản trị viên mẫu", "email": "admin@example.test", "password": "Demo123!", "role": "Admin", "locked": False},
@@ -54,7 +57,29 @@ def data():
 
 
 def current_user():
+    api_user = st.session_state.get("api_user")
+    if api_user:
+        return api_user
     return next((u for u in data()["users"] if u["id"] == st.session_state.identity), None)
+
+
+def api_client():
+    return st.session_state.get("api")
+
+
+def api_enabled():
+    client = api_client()
+    return bool(client and client.enabled)
+
+
+def set_api_user(user):
+    normalized = dict(user)
+    normalized["name"] = normalized.get("name") or normalized.get("display_name") or normalized.get("email", "User")
+    normalized["email"] = normalized.get("email", "")
+    normalized["role"] = "Admin" if str(normalized.get("role", "")).upper() == "ADMIN" else "User"
+    normalized["locked"] = str(normalized.get("status", "")).upper() in {"LOCKED", "SUSPENDED"}
+    st.session_state.api_user = normalized
+    st.session_state.identity = normalized.get("id")
 
 
 def approved_devices(user_id):
