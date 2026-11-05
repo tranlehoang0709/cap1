@@ -3,6 +3,7 @@
 #include "board.h"
 #include "settings.h"
 #include "secure_url.h"
+#include "secure_transport_config.h"
 #include "system_info.h"
 
 #include <esp_log.h>

@@ -66,7 +66,7 @@ if not errorlevel 1 (
 echo Starting AIVA-IoT services in separate windows...
 rem Clear ERRORLEVEL left by successful negative findstr checks above.
 ver >nul
-start "AIVA AI Server" /D "%~dp0AI_SERVER" cmd /k ".venv\Scripts\python.exe scripts\run_dev.py"
+start "AIVA AI Server LAN" /D "%~dp0AI_SERVER" cmd /k "call run_lan.cmd"
 if errorlevel 1 goto :start_failed
 ver >nul
 start "AIVA Backend" /D "%~dp0BE" cmd /k "npm.cmd run start:dev"
@@ -75,7 +75,7 @@ ver >nul
 start "AIVA Frontend" /D "%~dp0frontend" cmd /k ".venv\Scripts\python.exe -m streamlit run app.py"
 if errorlevel 1 goto :start_failed
 
-echo Started AI Server at the configured port (default 8000), Backend at port 3000, and Streamlit at port 8501.
+echo Started AI Server LAN with HTTPS/WSS at the configured port (default 8000), Backend at port 3000, and Streamlit at port 8501.
 echo Backend requires MySQL and the aiva_iot database migration to be ready.
 echo Frontend currently uses demo data and does not call the backend.
 echo Firmware is built separately after loading ESP-IDF 6.0.2:

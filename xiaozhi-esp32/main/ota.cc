@@ -4,6 +4,7 @@
 #include "system_info.h"
 #include "secure_url.h"
 #include "secure_ota.h"
+#include "secure_transport_config.h"
 
 #include <esp_app_format.h>
 #include <esp_efuse.h>

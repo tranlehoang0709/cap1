@@ -1,4 +1,3 @@
-
 {
   "type": "aiva-iot-s3-st7789",
   "manufacturer": "custom",
@@ -12,8 +11,6 @@
       ]
     },
     {
-<<<<<<< HEAD
-=======
       "name": "aiva-iot-s3-st7789-lan",
       "sdkconfig_append": [
         "CONFIG_BOARD_TYPE_AIVA_IOT_S3_ST7789=y",
@@ -33,7 +30,6 @@
       ]
     },
     {
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
       "name": "aiva-iot-s3-st7789-dev-voice",
       "sdkconfig_append": [
         "CONFIG_BOARD_TYPE_AIVA_IOT_S3_ST7789=y",
@@ -41,6 +37,26 @@
         "CONFIG_AIVA_DEV_VOICE=y",
         "CONFIG_AIVA_SD2_USB_DEV_CONSOLE=y",
         "CONFIG_AIVA_I2S_TX_DRAIN_PROOF=y"
+      ]
+    },
+    {
+      "name": "aiva-iot-s3-st7789-funnel",
+      "sdkconfig_append": [
+        "CONFIG_BOARD_TYPE_AIVA_IOT_S3_ST7789=y",
+        "CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y",
+        "CONFIG_AIVA_DEV_VOICE=y",
+        "CONFIG_AIVA_LAN_BOOTSTRAP=y",
+        "CONFIG_AIVA_SD2_USB_DEV_CONSOLE=y",
+        "CONFIG_AIVA_I2S_TX_DRAIN_PROOF=y",
+        "CONFIG_USE_CUSTOM_WAKE_WORD=y",
+        "CONFIG_CUSTOM_WAKE_WORD=\"hello\"",
+        "CONFIG_CUSTOM_WAKE_WORD_DISPLAY=\"hello\"",
+        "CONFIG_CUSTOM_WAKE_WORD_THRESHOLD=20",
+        "CONFIG_SR_MN_EN_MULTINET5_SINGLE_RECOGNITION_QUANT8=y",
+        "CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y",
+        "CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y",
+        "CONFIG_MBEDTLS_CUSTOM_CERTIFICATE_BUNDLE=n",
+        "CONFIG_ESP_TLS_INSECURE=n"
       ]
     }
   ]
