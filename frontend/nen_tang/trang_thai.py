@@ -82,6 +82,93 @@ def set_api_user(user):
     st.session_state.identity = normalized.get("id")
 
 
+def sync_api_data():
+    """Load the backend-backed read models into the existing page adapters."""
+    client = api_client()
+    user = current_user()
+    if not client or not client.enabled or not user:
+        return
+    uid_value = str(user["id"])
+    try:
+        privacy_value = client.get("/users/me/privacy")
+        data()["privacy"][uid_value] = {"history": bool(privacy_value.get("save_history", True)), "memory": False}
+
+        profile = client.get("/ai/profile")
+        data()["assistant"][uid_value] = {
+            "name": profile.get("assistant_name") or "Xiaozhi",
+            "personality": "Thân thiện",
+            "address": "Bạn",
+            "prompt": profile.get("system_prompt") or "Trả lời rõ ràng, lịch sự bằng tiếng Việt.",
+            "language": profile.get("language_code") or "Tiếng Việt",
+            "voice": profile.get("voice_code") or "Giọng mẫu A",
+            "provider": profile.get("preferred_provider_id") or "Local AI",
+        }
+
+        device_result = client.get("/devices")
+        devices = device_result.get("items", device_result if isinstance(device_result, list) else [])
+        data()["devices"] = [{
+            "id": str(item.get("device_uid") or item.get("deviceUid") or item.get("id")),
+            "code": str(item.get("device_uid") or item.get("deviceUid") or item.get("id")),
+            "name": item.get("display_name") or item.get("displayName") or "Xiaozhi",
+            "owner": uid_value,
+            "online": (item.get("connection_status") or item.get("connectionStatus")) == "online",
+            "heartbeat": str(item.get("last_seen_at") or item.get("lastSeenAt") or "Chưa có"),
+            "battery": item.get("battery_percent") or item.get("batteryPercent") or 0,
+            "rssi": item.get("wifi_rssi") or item.get("wifiRssi") or 0,
+            "firmware": "Chưa rõ",
+        } for item in devices]
+
+        pairing_requests = client.get("/devices/pairing-requests/mine", {"page": 1, "limit": 100})
+        request_items = pairing_requests.get("items", []) if isinstance(pairing_requests, dict) else []
+        data()["requests"] = [{
+            "id": str(item.get("id")),
+            "device": str(item.get("device_id") or item.get("deviceId")),
+            "user": uid_value,
+            "status": str(item.get("status", "pending")),
+            "created": str(item.get("created_at") or item.get("createdAt") or ""),
+            "note": item.get("review_note") or item.get("reviewNote") or "",
+        } for item in request_items]
+
+        providers = client.get("/ai/providers")
+        for provider in providers if isinstance(providers, list) else []:
+            name = provider.get("name") or provider.get("code")
+            if name:
+                data()["providers"].setdefault(name, {})
+                data()["providers"][name].update({"enabled": bool(provider.get("is_enabled", provider.get("isEnabled", False))), "status": provider.get("health_status") or provider.get("healthStatus") or "Chưa kiểm tra"})
+
+        conversations = client.get("/conversations", {"page": 1, "limit": 100})
+        items = conversations.get("items", []) if isinstance(conversations, dict) else []
+        data()["conversations"] = [{"id": str(item.get("id")), "user": uid_value, "title": item.get("title") or "Hội thoại", "provider": item.get("provider_id") or item.get("providerId") or "Local AI", "created": str(item.get("started_at") or item.get("startedAt") or ""), "active": item.get("status") == "active", "messages": []} for item in items]
+
+        if str(user.get("role", "")).upper() == "ADMIN":
+            users = client.get("/users", {"page": 1, "limit": 100})
+            user_items = users.get("items", []) if isinstance(users, dict) else []
+            data()["users"] = [{
+                "id": str(item.get("id")), "name": item.get("display_name") or item.get("displayName") or item.get("email", "User"),
+                "email": item.get("email", ""), "role": "Admin" if str(item.get("role", "")).upper() == "ADMIN" else "User",
+                "locked": str(item.get("status", "")).upper() in {"LOCKED", "SUSPENDED"},
+            } for item in user_items]
+            all_devices = client.get("/devices/admin/all", {"page": 1, "limit": 100})
+            device_items = all_devices.get("items", []) if isinstance(all_devices, dict) else []
+            data()["devices"] = [{
+                "id": str(item.get("device_uid") or item.get("deviceUid") or item.get("id")),
+                "code": str(item.get("device_uid") or item.get("deviceUid") or item.get("id")),
+                "name": item.get("display_name") or item.get("displayName") or "Xiaozhi", "owner": item.get("owner_id") or item.get("ownerId"),
+                "online": (item.get("connection_status") or item.get("connectionStatus")) == "online",
+                "heartbeat": str(item.get("last_seen_at") or item.get("lastSeenAt") or "Chưa có"),
+                "battery": item.get("battery_percent") or item.get("batteryPercent") or 0, "rssi": item.get("wifi_rssi") or item.get("wifiRssi") or 0, "firmware": "Chưa rõ",
+            } for item in device_items]
+            admin_requests = client.get("/devices/admin/pairing-requests", {"page": 1, "limit": 100})
+            request_items = admin_requests.get("items", []) if isinstance(admin_requests, dict) else []
+            data()["requests"] = [{"id": str(item.get("id")), "device": str(item.get("device_id") or item.get("deviceId")), "user": str(item.get("user_id") or item.get("userId")), "status": str(item.get("status")), "created": str(item.get("created_at") or item.get("createdAt") or ""), "note": item.get("review_note") or item.get("reviewNote") or ""} for item in request_items]
+            logs = client.get("/admin/logs", {"page": 1, "limit": 100})
+            log_items = logs.get("items", []) if isinstance(logs, dict) else []
+            data()["logs"] = [{"id": str(item.get("id")), "time": str(item.get("created_at") or item.get("createdAt") or ""), "level": item.get("severity") or "INFO", "actor": item.get("actor_user_id") or item.get("actorUserId") or "system", "type": item.get("component") or "system", "event": item.get("message") or ""} for item in log_items]
+    except Exception:
+        # A failed optional read must not prevent the user from entering the portal.
+        return
+
+
 def approved_devices(user_id):
     return [d for d in data()["devices"] if d["owner"] == user_id]
 

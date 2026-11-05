@@ -1,5 +1,5 @@
 import streamlit as st
-from nen_tang.trang_thai import api_client, api_enabled, data, set_api_user, uid, done
+from nen_tang.trang_thai import api_client, api_enabled, data, set_api_user, sync_api_data, uid, done
 from nen_tang.api import ApiError
 from nen_tang.kiem_tra_du_lieu import email_valid
 
@@ -30,6 +30,7 @@ def render_forms():
             if api_enabled():
                 try:
                     set_api_user(api_client().login(email.strip(), password))
+                    sync_api_data()
                     st.session_state.flash = "Đăng nhập backend thành công."
                     st.rerun()
                 except ApiError as exc:

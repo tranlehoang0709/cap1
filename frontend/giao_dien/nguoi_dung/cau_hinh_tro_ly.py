@@ -1,6 +1,6 @@
 """Trang Người dùng: cau_hinh_tro_ly."""
 import streamlit as st
-from nen_tang.trang_thai import data, current_user, preferences, done, allowed_providers
+from nen_tang.trang_thai import data, current_user, preferences, done, allowed_providers, api_enabled, api_client, sync_api_data
 from thanh_phan.dung_chung.khung_noi_dung import panel
 
 
@@ -19,8 +19,16 @@ def assistant():
             if not all(v.strip() for v in [name, personality, address, prompt]):
                 st.error("Các trường không được để trống.")
             else:
-                p.update(name=name.strip(), personality=personality.strip(), address=address.strip(), prompt=prompt.strip())
-                done("Lưu cá nhân hóa trợ lý", "Cấu hình AI")
+                if api_enabled():
+                    try:
+                        api_client().patch("/ai/profile", {"assistant_name": name.strip(), "system_prompt": prompt.strip()})
+                        sync_api_data()
+                        st.success("Đã lưu cấu hình trợ lý vào backend.")
+                    except Exception as exc:
+                        st.error(str(exc))
+                else:
+                    p.update(name=name.strip(), personality=personality.strip(), address=address.strip(), prompt=prompt.strip())
+                    done("Lưu cá nhân hóa trợ lý", "Cấu hình AI")
     with language:
         st.caption("Tiếng Việt theo Proposal. Các ngôn ngữ khác cần xác nhận dịch vụ ASR/TTS hỗ trợ trước khi bổ sung.")
         with st.form("assistant_language"):
@@ -54,8 +62,21 @@ def provider():
         selected = st.selectbox("AI Provider", allowed, index=allowed.index(p["provider"]) if p["provider"] in allowed else 0)
         save = st.form_submit_button("Lưu lựa chọn mẫu")
     if save:
-        p["provider"] = selected
-        done(f"Chọn Provider {selected}", "Cấu hình AI")
+        if api_enabled():
+            try:
+                providers = api_client().get("/ai/providers")
+                match = next((item for item in providers if (item.get("name") or item.get("code")) == selected), None)
+                if not match or not match.get("id"):
+                    st.error("Không tìm thấy provider tương ứng trong backend.")
+                else:
+                    api_client().patch("/ai/profile", {"preferred_provider_id": match["id"]})
+                    sync_api_data()
+                    st.success(f"Đã chọn Provider {selected}.")
+            except Exception as exc:
+                st.error(str(exc))
+        else:
+            p["provider"] = selected
+            done(f"Chọn Provider {selected}", "Cấu hình AI")
 
 
 

@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { AuthRepository } from './auth.repository';
-import { AccessTokenPayload, EmailVerificationPayload, RefreshTokenPayload, TokenPair } from './auth.types';
+import { AccessTokenPayload, EmailVerificationPayload, PasswordResetPayload, RefreshTokenPayload, TokenPair } from './auth.types';
 
 @Injectable()
 export class AuthService {
@@ -40,6 +40,33 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired email verification token');
     }
     if (!await this.repository.verifyEmail(payload.sub)) throw new BadRequestException('User account was not found');
+    return { success: true };
+  }
+
+  async resendVerification(email: string): Promise<{ success: true; verification_token?: string }> {
+    const user = await this.repository.findCredentialsByEmail(email.trim().toLowerCase());
+    if (!user || user.email_verified_at) return { success: true };
+    return { success: true, verification_token: await this.createEmailVerificationToken(user.id) };
+  }
+
+  async forgotPassword(email: string): Promise<{ success: true; reset_token?: string }> {
+    const user = await this.repository.findCredentialsByEmail(email.trim().toLowerCase());
+    if (!user) return { success: true };
+    return { success: true, reset_token: await this.createPasswordResetToken(user.id) };
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ success: true }> {
+    let payload: PasswordResetPayload;
+    try {
+      payload = await this.jwt.verifyAsync<PasswordResetPayload>(token, {
+        secret: this.config.getOrThrow<string>('auth.accessTokenSecret'), issuer: 'aiva-iot', audience: 'aiva-password-reset',
+      });
+      if (payload.typ !== 'password_reset' || !payload.sub) throw new Error('Invalid reset token');
+    } catch {
+      throw new BadRequestException('Invalid or expired password reset token');
+    }
+    if (Buffer.byteLength(newPassword, 'utf8') > 72) throw new BadRequestException('Password must be at most 72 UTF-8 bytes');
+    if (!await this.repository.resetPassword(payload.sub, await bcrypt.hash(newPassword, 12))) throw new BadRequestException('User account was not found');
     return { success: true };
   }
 
@@ -104,6 +131,13 @@ export class AuthService {
     return this.jwt.signAsync<EmailVerificationPayload>({ sub: userId, typ: 'email_verification' }, {
       secret: this.config.getOrThrow<string>('auth.accessTokenSecret'), expiresIn: 900,
       issuer: 'aiva-iot', audience: 'aiva-email-verification',
+    });
+  }
+
+  private async createPasswordResetToken(userId: string): Promise<string> {
+    return this.jwt.signAsync<PasswordResetPayload>({ sub: userId, typ: 'password_reset' }, {
+      secret: this.config.getOrThrow<string>('auth.accessTokenSecret'), expiresIn: 900,
+      issuer: 'aiva-iot', audience: 'aiva-password-reset',
     });
   }
 

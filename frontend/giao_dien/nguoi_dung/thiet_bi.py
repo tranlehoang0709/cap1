@@ -1,6 +1,6 @@
 """Trang Người dùng: thiet_bi."""
 import streamlit as st
-from nen_tang.trang_thai import data, current_user, approved_devices, done, uid, now, mine
+from nen_tang.trang_thai import data, current_user, approved_devices, done, uid, now, mine, api_enabled, api_client, sync_api_data
 from thanh_phan.dung_chung.khung_noi_dung import panel
 from thanh_phan.dung_chung.bang_du_lieu import table, select_record
 from thanh_phan.bieu_mau.xac_nhan import confirm
@@ -36,6 +36,17 @@ def pairing():
         code = st.text_input("Mã ghép nối robot")
         send = st.form_submit_button("Gửi yêu cầu mẫu", type="primary")
     if send:
+        if api_enabled():
+            if len(code.strip()) < 32:
+                st.error("Mã ghép nối backend phải dài ít nhất 32 ký tự.")
+            else:
+                try:
+                    api_client().post("/devices/pairing-requests", {"pairing_code": code.strip()})
+                    sync_api_data()
+                    st.success("Đã gửi yêu cầu ghép nối lên backend.")
+                except Exception as exc:
+                    st.error(str(exc))
+            return
         robot = next((d for d in data()["devices"] if d["code"] == code.strip()), None)
         if not robot:
             st.error("Bạn chưa nhập mã. Nhập mã robot rồi gửi lại yêu cầu." if not code.strip() else
@@ -68,15 +79,31 @@ def robots(*, show_pairing=True):
             if not name.strip():
                 st.error("Tên robot không được trống.")
             else:
-                robot["name"] = name.strip()
-                done(f"Đổi tên robot {robot['id']}", "Thiết bị")
+                if api_enabled():
+                    try:
+                        api_client().patch(f"/devices/{robot['id']}", {"display_name": name.strip()})
+                        sync_api_data()
+                        st.success("Đã đổi tên robot trên backend.")
+                    except Exception as exc:
+                        st.error(str(exc))
+                else:
+                    robot["name"] = name.strip()
+                    done(f"Đổi tên robot {robot['id']}", "Thiết bị")
         accepted = confirm(f"unlink_{robot['id']}", "Xác nhận hủy liên kết robot khỏi tài khoản trong dữ liệu mẫu")
         if st.button("Hủy liên kết mẫu"):
             if not accepted:
                 st.error("Cần xác nhận hủy liên kết.")
             else:
-                robot["owner"] = None
-                done(f"Hủy liên kết robot {robot['id']}", "Thiết bị")
+                if api_enabled():
+                    try:
+                        api_client().delete(f"/devices/{robot['id']}/assignment")
+                        sync_api_data()
+                        st.success("Đã hủy liên kết robot trên backend.")
+                    except Exception as exc:
+                        st.error(str(exc))
+                else:
+                    robot["owner"] = None
+                    done(f"Hủy liên kết robot {robot['id']}", "Thiết bị")
 
 
 

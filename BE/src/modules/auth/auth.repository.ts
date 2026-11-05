@@ -90,6 +90,24 @@ export class AuthRepository {
     return result.affectedRows === 1;
   }
 
+  async resetPassword(userId: string, passwordHash: string): Promise<boolean> {
+    const connection = await this.pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      const [result] = await connection.execute<ResultSetHeader>(
+        'UPDATE users SET password_hash=?,updated_at=CURRENT_TIMESTAMP WHERE id=?', [passwordHash, userId],
+      );
+      await connection.execute('UPDATE auth_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE user_id=? AND revoked_at IS NULL', [userId]);
+      await connection.commit();
+      return result.affectedRows === 1;
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  }
+
   async createRefreshSession(userId: string, tokenHash: string, expiresAt: Date): Promise<void> {
     await this.pool.execute(
       'INSERT INTO auth_sessions (user_id, refresh_token_hash, expires_at, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',

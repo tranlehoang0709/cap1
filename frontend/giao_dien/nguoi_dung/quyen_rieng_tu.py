@@ -1,6 +1,6 @@
 """Trang Người dùng: quyen_rieng_tu."""
 import streamlit as st
-from nen_tang.trang_thai import data, current_user, privacy, done
+from nen_tang.trang_thai import data, current_user, privacy, done, api_enabled, api_client, sync_api_data
 from thanh_phan.bieu_mau.xac_nhan import confirm
 
 
@@ -18,8 +18,16 @@ def privacy_page():
         memory_enabled = st.checkbox("Đồng ý lưu bộ nhớ dài hạn (cờ mô phỏng)", value=config["memory"])
         save = st.form_submit_button("Lưu lựa chọn quyền riêng tư")
     if save:
-        config.update(history=history_enabled, memory=memory_enabled)
-        done("Cập nhật lựa chọn quyền riêng tư", "Quyền riêng tư")
+        if api_enabled():
+            try:
+                api_client().patch("/users/me/privacy", {"save_history": history_enabled})
+                sync_api_data()
+                st.success("Đã lưu quyền riêng tư vào backend.")
+            except Exception as exc:
+                st.error(str(exc))
+        else:
+            config.update(history=history_enabled, memory=memory_enabled)
+            done("Cập nhật lựa chọn quyền riêng tư", "Quyền riêng tư")
     action = st.selectbox("Dữ liệu cần xóa", ["Lịch sử hội thoại", "Bộ nhớ dài hạn", "Tài liệu cá nhân", "Toàn bộ dữ liệu AI cá nhân"], on_change=_reset_delete_confirmation)
     accept = confirm("privacy_delete", "Xác nhận xóa dữ liệu mẫu đã chọn")
     if st.button("Xóa dữ liệu mẫu"):

@@ -1,6 +1,6 @@
 """Trang Người dùng: tro_chuyen_ai."""
 import streamlit as st
-from nen_tang.trang_thai import data, current_user, preferences, privacy, uid, now, mine, allowed_providers, approved_devices
+from nen_tang.trang_thai import data, current_user, preferences, privacy, uid, now, mine, allowed_providers, approved_devices, api_enabled, api_client, sync_api_data
 from nen_tang.dieu_huong import go
 from thanh_phan.dung_chung.trang_thai_robot import render_robot_status
 
@@ -120,6 +120,28 @@ def render_chat():
     text = st.chat_input("Nhắn tin cho AIVA…", disabled=not can_chat, key="aiva_chat_input")
     st.caption("Phản hồi mô phỏng · Chưa kết nối backend" + (" · Không lưu lịch sử" if private else ""))
     if text and text.strip():
+        if api_enabled():
+            try:
+                providers = api_client().get("/ai/providers") or []
+                provider = next((item for item in providers if (item.get("name") or item.get("code")) == selected_provider), None)
+                if not provider:
+                    st.error("Không tìm thấy provider trong backend.")
+                else:
+                    result = api_client().post("/web-chat/messages", {"content": text.strip(), "provider_id": provider["id"]})
+                    sync_api_data()
+                    conversation = result or {}
+                    data()["conversations"].insert(0, {
+                        "id": str(conversation.get("id")), "user": u["id"],
+                        "title": conversation.get("title") or text.strip()[:48],
+                        "provider": selected_provider, "created": str(conversation.get("started_at") or now()),
+                        "active": conversation.get("status") == "active",
+                        "messages": [{"role": m.get("role"), "content": m.get("content", "")} for m in conversation.get("messages", [])],
+                    })
+                    st.session_state[selected_key] = str(conversation.get("id"))
+                    st.rerun()
+            except Exception as exc:
+                st.error(str(exc))
+            return
         if not chat:
             first = " ".join(text.split())
             chat = {"id": uid("CHAT"), "user": u["id"], "title": first[:48] + ("…" if len(first) > 48 else ""),
