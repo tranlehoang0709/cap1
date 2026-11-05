@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-sys.modules.setdefault('streamlit', types.SimpleNamespace(session_state={}))
+# Use real Streamlit; patch only the module under test inside each test.
 from giao_dien import ket_noi, live
 from nen_tang import trang_thai
 from nen_tang.backend import BackendError
@@ -14,10 +14,16 @@ from nen_tang.backend import BackendError
 
 class LiveRouteTests(unittest.TestCase):
     def test_no_session_store_can_be_created(self):
-        with self.assertRaises(RuntimeError):
-            trang_thai.init_demo()
-        with self.assertRaises(RuntimeError):
-            trang_thai.data()
+        state = types.SimpleNamespace()
+        class SessionState(dict):
+            __getattr__ = dict.__getitem__
+            __setattr__ = dict.__setitem__
+        state.session_state = SessionState()
+        with patch.object(trang_thai, 'st', state):
+            with self.assertRaises(RuntimeError):
+                trang_thai.init_demo()
+            with self.assertRaises(RuntimeError):
+                trang_thai.data()
 
     def test_admin_page_requires_backend_admin(self):
         with patch.object(ket_noi, 'api', return_value={'role': 'USER'}), \

@@ -43,9 +43,9 @@ describe('Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E)',
     const response=await get('/user/devices/pairing-requests');expect(response.status).toBe(200);
     expect(await response.json()).toEqual({items:[],pagination:{page:1,limit:20,total:0}});
   });
-  it.each([['/admin/devices','1'],['/admin/pairing-requests','1'],['/user/devices','7'],
-    ['/user/dashboard/access','7'],['/ai/providers','7'],['/user/ai/profile','7'],
-    ['/user/ai/credentials','7'],['/admin/ai/credentials','1']])('wires %s to real guard/controller/service/repository',async(path,userId)=>{
+  it.each([['/devices/admin/all','1'],['/admin/pairing-requests','1'],['/user/devices','7'],
+    ['/user/dashboard/access','7'],['/ai/providers','7'],['/ai/profile','7'],
+    ['/api-keys','7'],['/admin/api-keys/system','1']])('wires %s to real guard/controller/service/repository',async(path,userId)=>{
     expect((await get(path,userId)).status).toBe(200);
   });
   it.each(['/admin/devices/42/monitoring','/admin/devices/42/recovery','/admin/devices/42/reset-status'])('finds %s and returns business 404, not a missing route',async path=>{
@@ -56,7 +56,16 @@ describe('Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E)',
     const response=await fetch(base+path,{method:'POST',headers:{authorization:`Bearer ${source}`}});
     expect(response.status).toBe(403);
   });
-  it('User cannot bypass Admin role through the full application graph',async()=>{expect((await get('/admin/devices','7')).status).toBe(403);});
+  it('wires User AI profile with its original JWT and User-role boundary',async()=>{
+    expect((await get('/user/ai/profile','7')).status).toBe(200);
+    expect((await get('/user/ai/profile','1')).status).toBe(403);
+    expect((await fetch(base+'/user/ai/profile')).status).toBe(401);
+  });
+  it('User cannot bypass Admin role through the full application graph',async()=>{expect((await get('/devices/admin/all','7')).status).toBe(403);});
+  it.each([undefined,'invalid',token('1')])('reset source rejects missing, invalid or user JWT before its contract gate',async bearer=>{
+    const response=await fetch(base+'/internal/device-reset-jobs/claim',{method:'POST',headers:bearer?{authorization:`Bearer ${bearer}`}:{}});
+    expect(response.status).toBe(401);expect(mockPool.getConnection).not.toHaveBeenCalled();
+  });
   it('quota routes fail closed without the separately applied schema, before opening a data transaction',async()=>{
     for(const [path,userId]of [['/admin/ai/quotas/users/7/providers/2','1'],['/user/ai/usage','7']]){
       const response=await get(path,userId);expect(response.status).toBe(409);expect(await response.json()).toMatchObject({message:'QUOTA_SCHEMA_NOT_READY'});

@@ -49,7 +49,7 @@ def field(value, key, default=""):
 def login_screen():
     st.title("AIVA-IoT")
     st.caption("Đăng nhập bằng tài khoản được lưu trong Backend.")
-    login_tab, register_tab = st.tabs(["Đăng nhập", "Đăng ký User"])
+    login_tab, register_tab, verify_tab = st.tabs(["Đăng nhập", "Đăng ký User", "Xác minh email"])
     with login_tab:
         with st.form("backend_login"):
             email = st.text_input("Email", autocomplete="username")
@@ -72,7 +72,19 @@ def login_screen():
         if submit_register:
             try:
                 api("/auth/register", "POST", {"email": reg_email.strip(), "display_name": display_name.strip(), "password": reg_password}, auth=False)
-                st.success("Đăng ký thành công. Hãy đăng nhập bằng tài khoản vừa tạo.")
+                st.info("Đã đăng ký. Tài khoản cần xác minh email trước khi đăng nhập; hãy dùng mã được cấp qua kênh xác minh của hệ thống.")
+            except BackendError as error:
+                api_error(error)
+
+    with verify_tab:
+        st.caption("Dùng mã xác minh của hệ thống. Trang không tự xác minh hoặc bỏ qua kiểm tra email.")
+        with st.form("backend_verify_email"):
+            verification_token = st.text_input("Mã xác minh email", type="password")
+            verify = st.form_submit_button("Xác minh email")
+        if verify:
+            try:
+                api("/auth/verify-email", "POST", {"token": verification_token.strip()}, auth=False)
+                st.success("Email đã được xác minh. Bạn có thể đăng nhập.")
             except BackendError as error:
                 api_error(error)
 

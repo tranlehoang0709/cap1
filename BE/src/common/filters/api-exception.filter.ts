@@ -23,6 +23,9 @@ export class ApiExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let code = 'INTERNAL_ERROR';
     let message = 'An unexpected error occurred';
+    let reason: string | undefined;
+    // Only these public denial codes may cross the internal service boundary.
+    const safeReasons = new Set(['CONTRACT_NOT_APPROVED', 'SERVICE_UNAUTHORIZED', 'QUOTA_SCHEMA_NOT_READY']);
     if (exception instanceof UsersServiceError) {
       status = USER_ERROR_STATUS[exception.code] ?? HttpStatus.INTERNAL_SERVER_ERROR;
       code = exception.code;
@@ -45,11 +48,27 @@ export class ApiExceptionFilter implements ExceptionFilter {
       const payload = exception.getResponse();
       if (typeof payload === 'string') message = payload;
       else if (payload && typeof payload === 'object') {
-        const body = payload as { message?: string | string[]; error?: string };
+        const body = payload as { message?: string | string[]; error?: string; reason?: unknown };
         code = body.error?.toUpperCase().replaceAll(' ', '_') ?? 'HTTP_ERROR';
         message = Array.isArray(body.message) ? body.message.join('; ') : body.message ?? message;
+        if (status < 500 && typeof body.reason === 'string' && safeReasons.has(body.reason)) {
+          reason = body.reason;
+          code = reason;
+          message = reason;
+        }
       }
     }
-    response.status(status).json({ statusCode: status, code, message, path: request.url, timestamp: new Date().toISOString() });
+    const safeServerMessages = new Set([
+      'AI_CONFIGURATION_CONTRACT_NOT_APPROVED', 'AI_SERVICE_AUTHENTICATION_FAILED',
+      'LOCAL_RUNTIME_UNAVAILABLE', 'PROVIDER_RUNTIME_UNAVAILABLE', 'QUOTA_SCHEMA_NOT_READY',
+      'CREDENTIAL_DELIVERY_NOT_APPROVED', 'AI_SERVER_NOT_CONFIGURED', 'AI_SERVER_TIMEOUT',
+      'AI_SERVER_UNAVAILABLE', 'AI_SERVER_REQUEST_FAILED', 'AI_SERVER_INVALID_RESPONSE',
+      'AI_TURN_NOT_PERSISTED', 'AI_CONFIGURATION_UNAVAILABLE', 'AI_EXECUTION_FAILED', 'QUOTA_UNAVAILABLE',
+    ]);
+    if (status >= 500) {
+      if (safeServerMessages.has(message)) code = message;
+      else message = 'The request could not be completed';
+    }
+    response.status(status).json({ statusCode: status, code, message, ...(reason ? { reason } : {}), path: request.url, timestamp: new Date().toISOString() });
   }
 }

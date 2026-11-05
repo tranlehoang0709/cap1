@@ -45,6 +45,9 @@ async def web_chat(request: Request):
         config = await state.backend_client.resolve_config(dto.ConfigRequest(userId=data.userId), context)
         session = SimpleNamespace(valid=True, config=config, client=state.backend_client,
             key=ConversationKey(data.userId, uuid4().hex, 'web'))
+        if config.provider.code == 'LOCAL':
+            # No synthetic response or Cloud fallback when the Local adapter is unavailable.
+            raise HTTPException(503, 'LOCAL_RUNTIME_UNAVAILABLE')
         if config.provider.code != 'GEMINI':
             raise HTTPException(503, 'PROVIDER_RUNTIME_UNAVAILABLE')
         if config.credential is None:

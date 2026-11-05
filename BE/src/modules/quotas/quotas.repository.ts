@@ -59,7 +59,7 @@ export class QuotaTransaction {
   policies(userId: string,providerId: string) {return this.rows<QuotaPolicy>(`SELECT CAST(id AS CHAR) AS id,CAST(user_id AS CHAR) AS userId,
     CAST(provider_id AS CHAR) AS providerId,requests_per_minute AS requestsPerMinute,requests_per_day AS requestsPerDay,
     CAST(tokens_per_month AS CHAR) AS tokensPerMonth FROM quota_policies WHERE user_id=? AND provider_id=? AND is_active=1 ORDER BY id FOR UPDATE`,[userId,providerId]);}
-  async request(id: string) {return (await this.rows<UsageRow>(`SELECT ${usageColumns} FROM usage_records WHERE request_id=? FOR UPDATE`,[id]))[0]??null;}
+  async request(id: string): Promise<UsageRow | null> {return (await this.rows<UsageRow>(`SELECT ${usageColumns} FROM usage_records WHERE request_id=? FOR UPDATE`,[id]))[0]??null;}
   async userMinuteRequests(userId: string, now: Date): Promise<string> {
     return (await this.rows<{count:string}>(`SELECT CAST(COUNT(*) AS CHAR) AS count FROM usage_records
       WHERE user_id=? AND request_kind='LLM' AND occurred_at>? AND occurred_at<=?`,[userId,new Date(now.getTime()-60000),now]))[0].count;

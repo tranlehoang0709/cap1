@@ -86,6 +86,18 @@ describe('AI provider/profile/credential service',()=>{
     expect(result.assistantName).toBe('AIVA');expect(tx.saveProfile).toHaveBeenCalledWith('7',expect.objectContaining({systemPrompt:'hello\nworld'}));
     await expect(service.updateAIProfile(user,{userId:'8'})).rejects.toMatchObject({status:400});
   });
+  it('defaults an unset provider to LOCAL and never looks up a Cloud credential',async()=>{
+    tx.profile.mockResolvedValue(null);tx.setting.mockResolvedValue({defaultLlmModelId:'3'});
+    tx.provider.mockResolvedValue({id:'1',code:'LOCAL',isEnabled:1});
+    tx.model.mockResolvedValue({id:'3',providerId:'1',modelCode:'local-installed-model',isEnabled:1,capability:'llm'});
+    expect(await service.resolveAIConfiguration({userId:'7'})).toMatchObject({provider:{code:'LOCAL'},credentialScope:'NONE'});
+    expect(tx.activeCredential).not.toHaveBeenCalled();expect(tx.saveProfile).not.toHaveBeenCalled();
+  });
+  it('does not silently choose Cloud when LOCAL is unavailable',async()=>{
+    tx.profile.mockResolvedValue(null);tx.providers.mockResolvedValue([{id:'2',code:'GEMINI',isEnabled:1}]);
+    await expect(service.resolveAIConfiguration({userId:'7'})).rejects.toThrow('LOCAL_PROVIDER_UNAVAILABLE');
+    expect(tx.activeCredential).not.toHaveBeenCalled();
+  });
   it('supports LOCAL without ever resolving a Cloud credential',async()=>{
     tx.provider.mockResolvedValue({id:'1',code:'LOCAL',isEnabled:1});tx.model.mockResolvedValue({id:'3',providerId:'1',isEnabled:1,capability:'llm'});
     await service.updateAIProfile(user,{preferredProviderId:'1',preferredLlmModelId:'3'});expect(tx.activeCredential).not.toHaveBeenCalled();

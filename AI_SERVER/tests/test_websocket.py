@@ -109,6 +109,8 @@ def live_server(tmp_path):
     environment.update({
         "AI_SERVER_HOST": "127.0.0.1", "AI_SERVER_PORT": str(port),
         "AI_SERVER_RELOAD": "false", "AI_SERVER_LOG_LEVEL": "warning",
+        # This child is an offline echo fixture, never an integrated deployment.
+        "AI_SERVER_BACKEND_MODE": "development-mock",
         "AI_SERVER_WS_MAX_MESSAGE_BYTES": "4096", "PYTHONDONTWRITEBYTECODE": "1",
     })
     log_path = tmp_path / "server.log"

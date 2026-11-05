@@ -26,7 +26,8 @@ async function bootstrap(): Promise<void> {
     .addBearerAuth()
     .build();
   SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, swaggerConfig), { jsonDocumentUrl: 'api/docs-json' });
-  await app.listen(config.getOrThrow<number>('app.port'));
+  const host = config.get<string>('BE_HOST') ?? '127.0.0.1';
+  await app.listen(config.getOrThrow<number>('app.port'), host);
 }
 
 void bootstrap();

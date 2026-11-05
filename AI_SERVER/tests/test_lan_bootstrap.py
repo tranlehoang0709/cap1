@@ -244,6 +244,8 @@ def test_standalone_wss_requires_local_device_credential_before_hello(monkeypatc
     monkeypatch.setenv("AI_SERVER_ROBOT_LOCAL_DEVICE_CREDENTIALS", '{"provisioned-sd2":"' + "D" * 43 + '"}')
     monkeypatch.setenv("AI_SERVER_LLM_PROVIDER", "gemini")
     monkeypatch.setenv("GEMINI_API_KEY", "fixture-provider-key-not-used")
+    # The handshake fixture requires an explicit model; no generation is sent.
+    monkeypatch.setenv("GEMINI_MODEL", "fixture-gemini-model")
     app = create_app()
     with TestClient(app, base_url="https://testserver", client=("127.0.0.1", 1234)) as client:
         with pytest.raises(WebSocketDisconnect):

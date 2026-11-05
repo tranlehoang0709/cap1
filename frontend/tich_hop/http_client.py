@@ -24,7 +24,14 @@ class ApiError(Exception):
             "response": "Phản hồi Backend không hợp lệ.",
             "redirect": "Backend yêu cầu chuyển địa chỉ ngoài luồng được phép.",
         }
-        super().__init__(messages.get(kind, "Không thể hoàn tất yêu cầu Backend."))
+        readiness_messages = {
+            "AI_CONFIGURATION_CONTRACT_NOT_APPROVED": "Web Chat đang bị khóa cấu hình. Quản trị viên cần phê duyệt kết nối AI trước khi sử dụng.",
+            "LOCAL_RUNTIME_UNAVAILABLE": "Local AI chưa có dịch vụ hoặc model sẵn sàng. Hãy cấu hình Local AI trước khi trò chuyện.",
+            "PROVIDER_RUNTIME_UNAVAILABLE": "Nhà cung cấp AI đã chọn chưa có dịch vụ xử lý sẵn sàng.",
+            "QUOTA_SCHEMA_NOT_READY": "Chức năng quota chưa sẵn sàng. Liên hệ quản trị viên.",
+            "AI_SERVICE_AUTHENTICATION_FAILED": "Kết nối nội bộ AI chưa xác thực được. Liên hệ quản trị viên.",
+        }
+        super().__init__(readiness_messages.get(self.code, messages.get(kind, "Không thể hoàn tất yêu cầu Backend.")))
 
 class IntegrationBlocked(Exception):
     """Chưa có contract được thống nhất; không chuyển sang mock thay thế."""

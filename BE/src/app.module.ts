@@ -38,6 +38,8 @@ import { RecoveryModule } from './modules/device-recovery/recovery.module';
     DatabaseModule,
     AuthModule,
     UsersModule,
+    // Static pairing routes must precede UserDevicesController /:id.
+    PairingModule,
     DevicesModule,
     ConversationsModule,
     WebChatModule,
@@ -51,7 +53,6 @@ import { RecoveryModule } from './modules/device-recovery/recovery.module';
     MonitoringModule,
     SystemSettingsModule,
     InternalApiModule,
-    PairingModule,
     RecoveryModule,
   ],
   controllers: [HealthController],

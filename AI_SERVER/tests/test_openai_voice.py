@@ -202,8 +202,11 @@ def test_openai_selected_robot_session_audio_path_and_history_with_host_fixtures
     from app.services.opus_codec import OpusCodec
     from app.services.robot_transport import OPUS_FORMAT
 
-    opus_dll = Path(__file__).resolve().parents[1] / ".venv" / "Lib" / "site-packages" / "pyogg" / "opus.dll"
-    if not opus_dll.exists():
+    # conftest discovers native Opus from the active venv, including external venvs.
+    from app.core.config import Settings
+    opus_path = Settings(_env_file=None).opus_library
+    opus_dll = Path(opus_path) if opus_path else None
+    if opus_dll is None or not opus_dll.is_file():
         pytest.skip("The test environment has no native libopus DLL")
     monkeypatch.setenv("AI_SERVER_OPUS_LIBRARY", str(opus_dll))
     get_settings.cache_clear()

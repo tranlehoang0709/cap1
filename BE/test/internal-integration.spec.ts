@@ -144,7 +144,9 @@ describe('Full AppModule internal integration (mock repositories)',()=>{
       expect((await fetch(base+'/admin/ai/quotas/users/7/providers/2',{headers:{authorization:`Bearer ${token}`}})).status).toBe(status);
     }
   });
-  const python=resolve(__dirname,'../../AI_SERVER/.venv-win/Scripts/python.exe');
+  // Test-only override supports isolated environments outside the checkout.
+  const python=process.env.AIVA_TEST_PYTHON ?? resolve(__dirname,'../../AI_SERVER/.venv-win/Scripts/python.exe');
+  if(process.env.AIVA_TEST_PYTHON && !existsSync(python))throw new Error('AIVA_TEST_PYTHON does not exist');
   (existsSync(python)?it:it.skip)('calls real TCP HTTP using the unchanged AI_SERVER BackendClient (mock Backend repositories)',async()=>{
     const script=`import asyncio,time,uuid
 from pydantic import SecretStr

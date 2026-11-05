@@ -8,13 +8,13 @@ from unittest.mock import patch
 from urllib.error import HTTPError, URLError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-sys.modules.setdefault('streamlit', types.SimpleNamespace(session_state={}))
+# Use real Streamlit; patch only the module under test inside each test.
 from nen_tang import backend
 
 
 class ClientContractTests(unittest.TestCase):
     def setUp(self):
-        self.state = patch.object(backend.st, 'session_state', {'access_token': 'test-jwt'})
+        self.state = patch.object(backend, 'st', types.SimpleNamespace(session_state={'access_token': 'test-jwt'}))
         self.state.start()
         self.addCleanup(self.state.stop)
 

@@ -11,5 +11,5 @@ import { OwnershipService } from './ownership.service';
 import { UserPairingGuard } from '../pairing/user-pairing.guard';
 import { InternalDeviceGuard } from './internal-device.guard';
 
-@Module({ imports: [DatabaseModule, ConfigModule, UsersModule], controllers: [DevicesController, UserDevicesController, DashboardAccessController, InternalDevicesController], providers: [DevicesRepository, DevicesService, OwnershipRepository, OwnershipService, UserPairingGuard, InternalDeviceGuard], exports: [DevicesService] })
+@Module({ imports: [DatabaseModule, ConfigModule, UsersModule], controllers: [DevicesController, UserDevicesController, DashboardAccessController, InternalDevicesController], providers: [DevicesRepository, DevicesService, OwnershipRepository, OwnershipService, UserPairingGuard, InternalDeviceGuard], exports: [DevicesService, OwnershipService] })
 export class DevicesModule {}

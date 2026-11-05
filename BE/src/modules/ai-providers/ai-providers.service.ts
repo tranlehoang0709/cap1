@@ -5,6 +5,7 @@ import { emptyProfile, id, objectInput, Owner, Profile, profileInput, Scope, sec
 import { CurrentUser } from '../auth/access-role.guard';
 import { SecretEncryptionService } from '../api-keys/secret-encryption.service';
 import { createDecipheriv } from 'node:crypto';
+import { v15SettledUsage } from '../quotas/v15-quota-ledger';
 
 @Injectable()
 export class AiProvidersService {
@@ -86,9 +87,11 @@ export class AiProvidersService {
       await this.activeUser(tx,userId);
       if (deviceId && !await tx.ownership.verifyDeviceOwnership(userId,deviceId)) throw new ForbiddenException('DEVICE_ACCESS_DENIED');
       const profile = await tx.profile(userId);
-      const selectedProvider = providerId ?? profile?.preferredProviderId ?? null;
+      // An unset preference defaults to LOCAL, never to a paid Cloud provider.
+      const selectedProvider = providerId ?? profile?.preferredProviderId
+        ?? (await tx.providers()).find(p => p.code === 'LOCAL' && p.isEnabled)?.id ?? null;
       const selectedModel = modelId ?? (providerId && providerId !== profile?.preferredProviderId ? null : profile?.preferredLlmModelId) ?? null;
-      if (!selectedProvider) throw new ConflictException('PROVIDER_REQUIRED');
+      if (!selectedProvider) throw new ConflictException('LOCAL_PROVIDER_UNAVAILABLE');
       const p = await this.checkProviderPermission(tx,userId,selectedProvider,selectedModel);
       let credential: string | null = null;
       if (input.includeCredential === true && p.credentialReference) {
@@ -136,7 +139,9 @@ export class AiProvidersService {
       const s=(await tx.rows<{conversationId:string;status:string;deviceId:string|null}>(`SELECT CAST(s.conversation_id AS CHAR) AS conversationId,s.status,CAST(s.device_id AS CHAR) AS deviceId FROM ai_sessions s JOIN conversations c ON c.id=s.conversation_id WHERE s.id=? AND c.user_id=? AND c.deleted_at IS NULL FOR UPDATE`,[sessionId,userId]))[0];
       if(!s)throw new ForbiddenException('INVALID_AI_CONTEXT');
       if(s.deviceId&&!await tx.ownership.verifyDeviceOwnership(userId,s.deviceId))throw new ForbiddenException('DEVICE_ACCESS_DENIED');
-      const usage=(await tx.rows<{providerId:string}>(`SELECT CAST(provider_id AS CHAR) AS providerId FROM usage_records WHERE request_id=? AND user_id=? AND ai_session_id=? AND conversation_id=? AND finalized_at IS NOT NULL AND status='success' FOR UPDATE`,[input.requestId,userId,sessionId,s.conversationId]))[0];
+      const usage=this.config.get<string>('AI_QUOTA_STORAGE')==='v15-settings'
+        ? await v15SettledUsage(tx,userId,sessionId,s.conversationId,input.requestId as string)
+        : (await tx.rows<{providerId:string}>(`SELECT CAST(provider_id AS CHAR) AS providerId FROM usage_records WHERE request_id=? AND user_id=? AND ai_session_id=? AND conversation_id=? AND finalized_at IS NOT NULL AND status='success' FOR UPDATE`,[input.requestId,userId,sessionId,s.conversationId]))[0];
       if(!usage)throw new ConflictException('USAGE_NOT_SETTLED');
       const privacy=(await tx.rows<{save:number}>('SELECT save_history AS save FROM privacy_preferences WHERE user_id=? FOR UPDATE',[userId]))[0];
       const saved=privacy?.save===1;

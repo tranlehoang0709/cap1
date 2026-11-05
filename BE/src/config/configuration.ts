@@ -93,6 +93,8 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
     if (environment[flag] !== undefined && !['true','false'].includes(String(environment[flag]))) throw new Error(`${flag} must be true or false`);
     if (environment[flag] === 'true' && (typeof environment[token] !== 'string' || !/^[A-Za-z0-9_-]{43,128}$/.test(environment[token] as string))) throw new Error(`${token} must be an independent base64url service token`);
   }
+  if (environment.AI_QUOTA_STORAGE !== undefined && !['extended','v15-settings'].includes(String(environment.AI_QUOTA_STORAGE))) throw new Error('AI_QUOTA_STORAGE must be extended or v15-settings');
+  if (environment.AI_QUOTA_V15_CONTRACT_APPROVED !== undefined && !['true','false'].includes(String(environment.AI_QUOTA_V15_CONTRACT_APPROVED))) throw new Error('AI_QUOTA_V15_CONTRACT_APPROVED must be true or false');
   const configuredTokens = contracts.map(([,key])=>environment[key]).filter(value=>typeof value==='string' && value!=='');
   if (new Set(configuredTokens).size !== configuredTokens.length) throw new Error('Internal service tokens must be independent');
   for (const token of configuredTokens) if ([environment.JWT_ACCESS_SECRET,environment.JWT_REFRESH_SECRET,environment.ADMIN_ACCESS_JWT_SECRET].includes(token)) throw new Error('Service tokens must differ from JWT secrets');

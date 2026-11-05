@@ -1,7 +1,34 @@
-import { BadGatewayException, GatewayTimeoutException, HttpException, Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { BadGatewayException, ForbiddenException, GatewayTimeoutException, HttpException, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 interface AIWebReply { content: string; conversation_id: string; usage: { input_tokens: number; output_tokens: number }; }
+
+/** Read at most 4 KiB and never pass arbitrary upstream error bodies to the UI. */
+async function safeDenial(response: Response): Promise<string | undefined> {
+  if (![403, 503].includes(response.status) ||
+      response.headers.get('content-type')?.split(';')[0].trim() !== 'application/json' || !response.body) {
+    await response.body?.cancel();
+    return undefined;
+  }
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    while (true) {
+      const part = await reader.read();
+      if (part.done) break;
+      size += part.value.length;
+      if (size > 4096) { await reader.cancel(); return undefined; }
+      chunks.push(part.value);
+    }
+  } finally { reader.releaseLock(); }
+  try {
+    const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as { detail?: unknown };
+    const allowed = ['CONTRACT_NOT_APPROVED', 'LOCAL_RUNTIME_UNAVAILABLE', 'PROVIDER_RUNTIME_UNAVAILABLE',
+      'QUOTA_SCHEMA_NOT_READY', 'CREDENTIAL_DELIVERY_NOT_APPROVED'];
+    return typeof body.detail === 'string' && allowed.includes(body.detail) ? body.detail : undefined;
+  } catch { return undefined; }
+}
 
 /** BE-only caller. Never retries generation, follows redirects or persists estimated usage. */
 @Injectable()
@@ -27,7 +54,11 @@ export class AIWebChatClient {
         body: JSON.stringify({ userId, content }),
       });
       if (!response.ok) {
-        await response.body?.cancel();
+        const denial = await safeDenial(response);
+        if (denial === 'CONTRACT_NOT_APPROVED') throw new ServiceUnavailableException('AI_CONFIGURATION_CONTRACT_NOT_APPROVED');
+        if (denial) throw new ServiceUnavailableException(denial);
+        if (response.status === 401) throw new ServiceUnavailableException('AI_SERVICE_AUTHENTICATION_FAILED');
+        if (response.status === 403) throw new ForbiddenException('AI_ACCESS_DENIED');
         if (response.status === 429) throw new HttpException('AI_SERVER_RATE_LIMITED', 429);
         if (response.status === 504) throw new GatewayTimeoutException('AI_SERVER_TIMEOUT');
         if (response.status === 503) throw new ServiceUnavailableException('AI_SERVER_UNAVAILABLE');
