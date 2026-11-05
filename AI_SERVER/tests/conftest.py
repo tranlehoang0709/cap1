@@ -9,11 +9,8 @@ import pytest
 from app.core.config import Settings, get_settings
 from app.core.backend_config import BackendSettings
 from app.core.robot_config import RobotSettings
-<<<<<<< HEAD
-=======
 from app.core.lan_config import LanSettings
 from app.core.live_config import LiveSettings
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
 
 
 @pytest.fixture(autouse=True)
@@ -34,11 +31,8 @@ def isolated_settings(monkeypatch):
     monkeypatch.setitem(Settings.model_config, "env_file", None)
     monkeypatch.setitem(BackendSettings.model_config, "env_file", None)
     monkeypatch.setitem(RobotSettings.model_config, "env_file", None)
-<<<<<<< HEAD
-=======
     monkeypatch.setitem(LanSettings.model_config, "env_file", None)
     monkeypatch.setitem(LiveSettings.model_config, "env_file", None)
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()

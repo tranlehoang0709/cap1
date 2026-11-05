@@ -14,6 +14,19 @@ def test_confirmed_defaults():
     )
 
 
+@pytest.mark.parametrize("field", ["opus_library", "tls_certfile", "tls_keyfile"])
+def test_optional_native_and_tls_paths_accept_blank_env_values(monkeypatch, field):
+    monkeypatch.setenv("AI_SERVER_" + field.upper(), "   ")
+    assert getattr(Settings(), field) is None
+
+
+def test_tls_certificate_and_key_paths_are_preserved(tmp_path):
+    cert, key = tmp_path / "server.crt", tmp_path / "server.key"
+    settings = Settings(tls_certfile=cert, tls_keyfile=key)
+    assert settings.tls_certfile == cert
+    assert settings.tls_keyfile == key
+
+
 def test_dotenv_and_environment_precedence(dotenv_file, monkeypatch):
     settings = get_settings()
     assert (settings.host, settings.port, settings.log_level, settings.reload) == (

@@ -6,17 +6,52 @@ import { MYSQL_POOL } from '../../database/database.constants';
 export class AiRepository {
   constructor(@Inject(MYSQL_POOL) private readonly pool: Pool) {}
   async providers() { const [rows] = await this.pool.execute<ProviderRow[]>('SELECT id, code, name, is_enabled, health_status FROM ai_providers ORDER BY code'); return rows.map(provider); }
-  async models(providerId:string){const [rows]=await this.pool.execute<RowDataPacket[]>('SELECT id,provider_id,model_code,capability,is_enabled FROM ai_models WHERE provider_id=? ORDER BY capability,model_code',[providerId]);return rows.map((r)=>({id:String(r.id),provider_id:String(r.provider_id),model_code:r.model_code,capability:r.capability,is_enabled:Boolean(r.is_enabled)}));}
+  async models(providerId:string){const [rows]=await this.pool.execute<RowDataPacket[]>('SELECT id,provider_id,model_code,capability,is_enabled FROM ai_models WHERE provider_id=? AND is_enabled=1 ORDER BY capability,model_code',[providerId]);return rows.map((r)=>({id:String(r.id),provider_id:String(r.provider_id),model_code:r.model_code,capability:r.capability,is_enabled:Boolean(r.is_enabled)}));}
   async provider(id: string) { const [rows] = await this.pool.execute<ProviderRow[]>('SELECT id, code, name, is_enabled, health_status FROM ai_providers WHERE id = ? LIMIT 1', [id]); return rows[0] ? provider(rows[0]) : null; }
   async setProvider(id: string, enabled: boolean, health: string | null) { await this.pool.execute('UPDATE ai_providers SET is_enabled = ?, health_status = ? WHERE id = ?', [enabled, health, id]); return this.provider(id); }
   async profile(userId: string) {
     const [rows] = await this.pool.execute<ProfileRow[]>(`SELECT p.user_id,p.assistant_name,p.system_prompt,p.language_code,p.voice_code,p.preferred_provider_id,p.preferred_llm_model_id,p.updated_at
       FROM ai_profiles p WHERE p.user_id = ? LIMIT 1`, [userId]); return rows[0] ?? null;
   }
-  async upsertProfile(userId: string, data: ProfileInput) {
-    await this.pool.execute(`INSERT INTO ai_profiles (user_id,assistant_name,system_prompt,language_code,voice_code,preferred_provider_id,preferred_llm_model_id,updated_at)
-      VALUES (?,?,?,?,?,?,?,CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE assistant_name=VALUES(assistant_name),system_prompt=VALUES(system_prompt),language_code=VALUES(language_code),voice_code=VALUES(voice_code),preferred_provider_id=VALUES(preferred_provider_id),preferred_llm_model_id=VALUES(preferred_llm_model_id),updated_at=CURRENT_TIMESTAMP`,
-      [userId,data.assistant_name,data.system_prompt,data.language_code,data.voice_code,data.preferred_provider_id,data.preferred_llm_model_id]); return this.profile(userId);
+  async model(id:string) {
+    const [rows]=await this.pool.execute<RowDataPacket[]>('SELECT id,provider_id,capability,is_enabled FROM ai_models WHERE id=? LIMIT 1',[id]);
+    const row=rows[0];
+    return row?{id:String(row.id),provider_id:String(row.provider_id),capability:String(row.capability),is_enabled:Boolean(row.is_enabled)}:null;
+  }
+  async patchProfile(userId:string,data:ProfileInput,
+    validate:(effective:ProfileRow,repository:AiRepository)=>Promise<void>) {
+    const connection=await this.pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      // Khóa User để cả lần tạo profile đầu tiên cũng được tuần tự hóa.
+      const [users]=await connection.execute<RowDataPacket[]>('SELECT id FROM users WHERE id=? FOR UPDATE',[userId]);
+      if(!users[0])throw new Error('Profile owner unavailable');
+      const repository=new AiRepository(connection as unknown as Pool);
+      const current=await repository.profile(userId);
+      const keys=PROFILE_FIELDS.filter(key=>data[key]!==undefined);
+      if(!keys.length)throw new Error('Empty profile patch');
+      const values=keys.map(key=>{
+        const value=data[key];
+        if(value===undefined)throw new Error('Undefined profile value');
+        return value;
+      });
+      const effective={...(current??{user_id:userId}),...Object.fromEntries(PROFILE_FIELDS.map(key=>[key,current?.[key]??null])),...data} as ProfileRow;
+      await validate(effective,repository);
+      // Tên cột chỉ lấy từ allowlist; values luôn dùng parameter binding.
+      await connection.execute(
+        'INSERT INTO ai_profiles (user_id,'+keys.join(',')+',updated_at) VALUES ('+
+        ['?',...keys.map(()=>'?'),'CURRENT_TIMESTAMP'].join(',')+
+        ') ON DUPLICATE KEY UPDATE '+keys.map(key=>key+'=VALUES('+key+')').join(',')+',updated_at=CURRENT_TIMESTAMP',
+        [userId,...values]);
+      const saved=await repository.profile(userId);
+      if(!saved)throw new Error('Profile was not saved');
+      await connection.commit();
+      return saved;
+    } catch(error) {
+      try {await connection.rollback();}
+      catch {throw new Error('Profile transaction failed');}
+      throw error;
+    } finally {connection.release();}
   }
   async createCredential(providerId: string, userId: string, label: string, encrypted: string, hint: string) {
     const [r] = await this.pool.execute<ResultSetHeader>(`INSERT INTO api_credentials (provider_id,owner_scope,owner_user_id,label,secret_ciphertext,secret_hint,is_active,created_at) VALUES (?,'USER',?,?,?,?,1,CURRENT_TIMESTAMP)`, [providerId,userId,label,encrypted,hint]); return String(r.insertId);
@@ -49,7 +84,8 @@ export class AiRepository {
   async conversations(userId:string,page:number,limit:number) { const [n]=await this.pool.execute<CountRow[]>('SELECT COUNT(*) total FROM conversations WHERE user_id=? AND deleted_at IS NULL',[userId]); const [rows]=await this.pool.execute<ConversationRow[]>('SELECT id,user_id,device_id,channel,title,status,started_at,ended_at FROM conversations WHERE user_id=? AND deleted_at IS NULL ORDER BY started_at DESC LIMIT ? OFFSET ?',[userId,limit,(page-1)*limit]);return {items:rows.map(conversation),total:Number(n[0]?.total??0)}; }
   async deleteConversation(id:string,userId:string) {const [r]=await this.pool.execute<ResultSetHeader>('UPDATE conversations SET deleted_at=CURRENT_TIMESTAMP,status=\'deleted\' WHERE id=? AND user_id=? AND deleted_at IS NULL',[id,userId]);return r.affectedRows===1;}
 }
-export interface ProfileInput {assistant_name:string|null;system_prompt:string|null;language_code:string|null;voice_code:string|null;preferred_provider_id:string|null;preferred_llm_model_id:string|null}
+export const PROFILE_FIELDS=['assistant_name','system_prompt','language_code','voice_code','preferred_provider_id','preferred_llm_model_id'] as const;
+export type ProfileInput=Partial<Record<typeof PROFILE_FIELDS[number],string|null>>;
 interface ProviderRow extends RowDataPacket{id:string;code:string;name:string;is_enabled:number|boolean;health_status:string|null} const provider=(r:ProviderRow)=>({id:String(r.id),code:r.code,name:r.name,is_enabled:Boolean(r.is_enabled),health_status:r.health_status});
 export interface ProfileRow extends RowDataPacket{user_id:string;assistant_name:string|null;system_prompt:string|null;language_code:string|null;voice_code:string|null;preferred_provider_id:string|null;preferred_llm_model_id:string|null;updated_at:Date}
 interface CredentialRow extends RowDataPacket{id:string;provider_id:string;label:string;secret_hint:string|null;is_active:number|boolean;created_at:Date;revoked_at:Date|null} const credential=(r:CredentialRow)=>({id:String(r.id),provider_id:String(r.provider_id),label:r.label,secret_hint:r.secret_hint?`****${r.secret_hint}`:null,is_active:Boolean(r.is_active),created_at:r.created_at,revoked_at:r.revoked_at});

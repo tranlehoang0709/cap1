@@ -27,8 +27,6 @@ def test_usb_configuration_sends_only_device_token_and_restarts(monkeypatch):
     port.close.assert_called_once()
 
 
-<<<<<<< HEAD
-=======
 def test_lan_wss_configuration_uses_provisioned_device_proof_not_shared_token(monkeypatch):
     cloud_key = 'fixture-cloud-key-must-stay-server-side'
     monkeypatch.setenv('GEMINI_API_KEY', cloud_key)
@@ -46,7 +44,6 @@ def test_lan_wss_configuration_uses_provisioned_device_proof_not_shared_token(mo
     port.close.assert_called_once()
 
 
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
 @pytest.mark.parametrize('url', ['ws://8.8.8.8:8000/ws/dev-robot', 'ws://user:password@192.168.1.95:8000/ws/dev-robot'])
 def test_usb_configuration_rejects_public_or_embedded_credentials(monkeypatch, url):
     monkeypatch.setattr(robot_config, 'RobotSettings', lambda: SimpleNamespace(token=SimpleNamespace(get_secret_value=lambda: 'x' * 43)))

@@ -38,9 +38,24 @@ if st.sidebar.button("Đăng xuất", width="stretch"):
     except BackendError:
         pass
     clear_auth()
+    for key in list(st.session_state):
+        if key.startswith('api_chat_'):
+            del st.session_state[key]
     st.rerun()
 st.title(page)
 try:
-    render_page(page, account)
+    if page == "AI Chat" and role == "USER":
+        from nen_tang.backend import base_url
+        from tich_hop.giao_dien import api_chat
+        from tich_hop.portal import AuthenticatedChatPortal
+        from tich_hop.http_client import ApiError
+        try:
+            api_chat(AuthenticatedChatPortal(account, st.session_state.get("access_token"), base_url(), clear_auth))
+        except ApiError as error:
+            st.error(str(error))
+            if error.kind in ("timeout", "connection", "server"):
+                st.caption("Yêu cầu có thể đã được xử lý. Hãy kiểm tra kết quả trước khi gửi lại.")
+    else:
+        render_page(page, account)
 except BackendError as error:
     api_error(error)

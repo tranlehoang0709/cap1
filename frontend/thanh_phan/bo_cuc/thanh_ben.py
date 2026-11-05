@@ -26,6 +26,16 @@ def render_sidebar(account, routes):
     st.sidebar.divider()
     st.sidebar.markdown(f'<div class="sidebar-account"><span class="avatar">{escape(account["name"][:1])}</span><div><strong>{escape(account["name"])}</strong><small>{escape(account["email"])}</small></div></div>', unsafe_allow_html=True)
     if st.sidebar.button("Đăng xuất", width="stretch"):
+        from tich_hop.phien_xac_thuc import AUTH_KEY
+        if AUTH_KEY in st.session_state:
+            from tich_hop.giao_dien import service, clear_widgets
+            from tich_hop.http_client import ApiError
+            try:
+                service().logout()
+            except ApiError:
+                st.session_state.logout_warning = "Đã xóa phiên giao diện; chưa xác nhận thu hồi phiên tại Backend."
+            clear_widgets()
+            st.rerun()
         client = api_client()
         if client and client.enabled:
             try:

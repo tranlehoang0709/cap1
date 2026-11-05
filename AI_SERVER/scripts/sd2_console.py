@@ -29,11 +29,8 @@ def read_lines(port, seconds, redact=()):
                     line = line.replace(secret, '<redacted>')
             lines.append(line)
             if any(marker in line for marker in ('AIVA_', 'WS:', 'WebSocket:', 'StateMachine:',
-<<<<<<< HEAD
-=======
                                                   'LAN server admitted microphone turn',
                                                   'LAN microphone turn ended',
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
                                                   'Guru Meditation', 'Backtrace', 'panic', 'ERROR', 'failed')):
                 print(line, flush=True)
     return lines
@@ -53,10 +50,7 @@ def main():
     from app.core.robot_config import RobotSettings
     settings = RobotSettings()
     token = settings.token.get_secret_value() if settings.token else ''
-<<<<<<< HEAD
-=======
     command_token = token
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
     if args.command == 'configure':
         if not args.url:
             parser.error('--url is required for configure')
@@ -67,15 +61,11 @@ def main():
             private = False
         if parsed.scheme not in ('ws', 'wss') or not private or parsed.username or parsed.password or parsed.query or len(args.url) > 256:
             parser.error('Use an explicit private IP WebSocket URL without embedded credentials')
-<<<<<<< HEAD
-        if not 32 <= len(token) <= 128 or any(c.isspace() for c in token):
-=======
         lan_device_auth = parsed.scheme == 'wss' and bool(settings.local_device_credentials)
         if lan_device_auth:
             # LAN firmware authenticates with the separately provisioned per-device proof.
             command_token = '-'
         elif not 32 <= len(token) <= 128 or any(c.isspace() for c in token):
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
             parser.error('Configure AI_SERVER_ROBOT_TOKEN in .env first')
     port = serial.Serial()
     port.port, port.baudrate, port.timeout = args.port, 115200, .1
@@ -84,26 +74,15 @@ def main():
     try:
         port.write(b'\n')  # Discard any partial command left by a closed USB host.
         port.flush()
-<<<<<<< HEAD
-        read_lines(port, .2, (token,))
-        if args.command == 'configure':
-            port.write(f'ws {args.url} {token} {args.version}\n'.encode('ascii'))
-            lines = read_lines(port, 3, (token,))
-=======
         read_lines(port, .2, (token, command_token))
         if args.command == 'configure':
             port.write(f'ws {args.url} {command_token} {args.version}\n'.encode('ascii'))
             lines = read_lines(port, 3, (token, command_token))
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
             if not any('AIVA_WS saved' in line for line in lines):
                 raise SystemExit('SD2 did not confirm configuration; check dev-voice firmware and idle state.')
             port.write(b'reboot\n')
             port.flush()
-<<<<<<< HEAD
-            read_lines(port, 2, (token,))
-=======
             read_lines(port, 2, (token, command_token))
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
             print('SD2 restarting to apply the connection settings.', flush=True)
         elif args.command == 'record':
             port.write(b'record\n')

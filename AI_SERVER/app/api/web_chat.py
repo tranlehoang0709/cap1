@@ -20,7 +20,6 @@ router = APIRouter()
 
 class WebRequest(dto.ContractModel):
     userId: str
-    providerId: str
     content: str = Field(min_length=1, max_length=16000, repr=False)
 
 
@@ -43,10 +42,13 @@ async def web_chat(request: Request):
                     raise HTTPException(413, 'REQUEST_TOO_LARGE')
         data = WebRequest.model_validate(json.loads(body))
         context = AudioContext(deadline=time.monotonic()+90)
-        config = await state.backend_client.resolve_config(dto.ConfigRequest(userId=data.userId,
-            providerId=data.providerId, includeCredential=True), context)
+        config = await state.backend_client.resolve_config(dto.ConfigRequest(userId=data.userId), context)
         session = SimpleNamespace(valid=True, config=config, client=state.backend_client,
             key=ConversationKey(data.userId, uuid4().hex, 'web'))
+        if config.provider.code != 'GEMINI':
+            raise HTTPException(503, 'PROVIDER_RUNTIME_UNAVAILABLE')
+        if config.credential is None:
+            raise HTTPException(503, 'CREDENTIAL_DELIVERY_NOT_APPROVED')
         prompt = config.profile.systemPrompt
         if prompt is None:
             raise BackendError(BackendCode.BLOCKED)

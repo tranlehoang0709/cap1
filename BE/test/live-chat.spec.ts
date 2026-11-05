@@ -1,28 +1,30 @@
 import { ConfigService } from '@nestjs/config';
 import { AiService } from '../src/modules/ai/ai.service';
+import { AIWebChatClient } from '../src/modules/web-chat/ai-web-chat.client';
 import { AiProvidersService } from '../src/modules/ai-providers/ai-providers.service';
 
 describe('BE live chat boundary',()=>{
   const token='t'.repeat(43);
   const config=new ConfigService({AI_SERVER_URL:'http://127.0.0.1:8000',AI_SERVER_WEB_TOKEN:token});
-  const service=new AiService({} as never,{} as never,config);
+  const conversation={id:'11',user_id:'7',messages:[{role:'assistant',content:'Hello'}]};
+  const service=new AiService({conversation:jest.fn(async()=>conversation)} as never,{} as never,new AIWebChatClient(config));
   afterEach(()=>jest.restoreAllMocks());
   it('forwards trusted user ID and returns only safe response fields',async()=>{
     const f=jest.spyOn(globalThis,'fetch').mockResolvedValue(new Response(JSON.stringify({content:'Hello',conversation_id:'11',
       credential:'must-not-leak',usage:{input_tokens:2,output_tokens:3,credential:'must-not-leak'}}),{headers:{'Content-Type':'application/json'}}));
-    const result=await service.chat('7','Hi','2');
-    expect(result).toEqual({content:'Hello',conversation_id:'11',usage:{input_tokens:2,output_tokens:3}});
-    expect(JSON.parse(f.mock.calls[0][1]?.body as string)).toEqual({userId:'7',providerId:'2',content:'Hi'});
+    const result=await service.chat('7','Hi');
+    expect(result).toEqual(conversation);
+    expect(JSON.parse(f.mock.calls[0][1]?.body as string)).toEqual({userId:'7',content:'Hi'});
     expect(JSON.stringify(result)).not.toContain('must-not-leak');
   });
   it('propagates quota denial without provider retries',async()=>{
     const f=jest.spyOn(globalThis,'fetch').mockResolvedValue(new Response('{}',{status:429}));
-    await expect(service.chat('7','Hi','2')).rejects.toMatchObject({status:429});
+    await expect(service.chat('7','Hi')).rejects.toMatchObject({status:429});
     expect(f).toHaveBeenCalledTimes(1);
   });
   it('normalizes unavailable AI Server without exposing exceptions',async()=>{
     jest.spyOn(globalThis,'fetch').mockRejectedValue(new Error('private-token-value'));
-    await expect(service.chat('7','Hi','2')).rejects.toMatchObject({code:'AI_PIPELINE_UNAVAILABLE'});
+    await expect(service.chat('7','Hi')).rejects.toMatchObject({status:502,message:'AI_SERVER_REQUEST_FAILED'});
   });
 });
 

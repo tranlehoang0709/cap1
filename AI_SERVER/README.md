@@ -1,5 +1,11 @@
 # AIVA-IoT AI Server — D2-S1-01 đến D2-S1-07
 
+Backend 3001 integration audit (2026-11-04): [actual contract, configuration and blockers](docs/backend-3001-integration.md).
+Security follow-up: [secret presence, gates, local paths and rotation procedure](docs/backend-3001-security-readiness.md).
+The local configuration uses integrated mode and loopback HTTP. Real service tokens
+are required before startup; the specified Backend currently lacks the config,
+admission, settlement and turn endpoints required by the existing AI client.
+
 Current LAN bootstrap/control work: [D2-S2-14 setup, commands and acceptance](docs/d2-s2-14-lan.md).
 Integrated Gemini execution: [D2-S2-15 contract, tests and deployment blockers](../BE/docs/d2-s2-15-live-gemini.md).
 Secure LAN gateway status and TLS setup: [D2-S2-19](docs/d2-s2-19-secure-wifi-gateway.md).

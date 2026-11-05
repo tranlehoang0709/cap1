@@ -101,7 +101,9 @@ def test_real_count_tokens_request_includes_system_prompt_and_closes_client():
         adapter=GeminiLLMAdapter(api_key='fixture-secret',client_factory=lambda *_:client)
         _,_,_,_,request=setup()
         assert await adapter.count_input_tokens(request,context())==9
-        assert count.call_args.kwargs['config']['system_instruction']==request.system_prompt
+        instruction = count.call_args.kwargs['config']['system_instruction']
+        assert instruction.startswith(request.system_prompt + '\n\nCurrent server local date and time: ')
+        assert 'Do not claim to have live access to other current events or facts.' in instruction
         closed.assert_awaited_once()
     asyncio.run(run())
 
@@ -127,11 +129,13 @@ def test_internal_web_chat_requires_service_auth_and_settles_before_response(mon
     with TestClient(create_app()) as client:
         assert client.post('/internal/web-chat',json={}).status_code==401
         response=client.post('/internal/web-chat',headers={'Authorization':'Bearer '+'W'*43},
-                             json={'userId':'7','providerId':'2','content':'Hi'})
+                             json={'userId':'7','content':'Hi'})
         assert response.status_code==200,response.text
         assert response.json()['content']=='Hello.'
         assert 'credential' not in response.text
         assert backend.report_usage.called and backend.complete_turn.called
+        resolved = backend.resolve_config.call_args.args[0]
+        assert resolved.providerId is None and resolved.modelId is None and resolved.includeCredential is None
 
 
 def test_gemini_usage_can_be_reconciled_idempotently_without_another_generation():
@@ -142,3 +146,30 @@ def test_gemini_usage_can_be_reconciled_idempotently_without_another_generation(
         await wrapper.reporter.submit(report,context())
         assert backend.report_usage.await_count==1 and delegate.calls==1
     asyncio.run(run())
+
+def test_web_chat_reference_only_config_blocks_before_execution(monkeypatch):
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    from app.core.backend_config import BackendSettings
+    backend, _, _, _, _ = setup()
+    backend.aclose = AsyncMock()
+    backend.resolve_config = AsyncMock(return_value=config().model_copy(update={"credential": None}))
+    monkeypatch.setenv("AI_SERVER_BACKEND_MODE", "integrated")
+    monkeypatch.setenv("AI_SERVER_LIVE_WEB_TOKEN", "W" * 43)
+    for name, char in [("DEVICE", "A"), ("CONFIG", "B"), ("QUOTA", "C")]:
+        monkeypatch.setenv("AI_SERVER_BACKEND_" + name + "_TOKEN", char * 43)
+    monkeypatch.setattr(BackendSettings, "create_client", lambda _: backend)
+    with TestClient(create_app()) as client:
+        headers = {"Authorization": "Bearer " + "W" * 43}
+        response = client.post("/internal/web-chat", headers=headers, json={"userId": "7", "content": "Hi"})
+        assert response.status_code == 503
+        assert response.json()["detail"] == "CREDENTIAL_DELIVERY_NOT_APPROVED"
+        resolved = backend.resolve_config.call_args.args[0]
+        assert resolved.userId == "7"
+        assert resolved.providerId is None and resolved.modelId is None and resolved.includeCredential is None
+        backend.start_turn.assert_not_called()
+        backend.admit.assert_not_called()
+        response = client.post("/internal/web-chat", headers=headers,
+                               json={"userId": "7", "content": "Hi", "providerId": "8"})
+        assert response.status_code == 400
+        assert backend.resolve_config.await_count == 1
