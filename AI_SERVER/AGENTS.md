@@ -473,8 +473,6 @@ worked with mock tone; do not infer production acceptance from that result.
 Server tests: 507 PASS and one pre-existing historical snapshot hash FAIL;
 do not overwrite historical snapshots to force approval. Firmware host build
 and asset tests: 70 PASS. See `docs/sd2-gemini-lan.md`.
-<<<<<<< HEAD
-=======
 
 ## D2-S2 robot live audio follow-up (2026-11-04)
 
@@ -494,4 +492,3 @@ unary WAV remains for adapters without a stream method. Firmware waits for the
 scoped `status/listening` acknowledgement before mic capture. No audio file is
 written. Status events carry session and turn IDs. Real BE, TLS, Gemini
 credential readiness and SD2 hardware remain separate acceptance gates.
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)

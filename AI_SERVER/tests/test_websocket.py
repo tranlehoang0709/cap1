@@ -110,6 +110,7 @@ def live_server(tmp_path):
         "AI_SERVER_HOST": "127.0.0.1", "AI_SERVER_PORT": str(port),
         "AI_SERVER_RELOAD": "false", "AI_SERVER_LOG_LEVEL": "warning",
         "AI_SERVER_WS_MAX_MESSAGE_BYTES": "4096", "PYTHONDONTWRITEBYTECODE": "1",
+            "AI_SERVER_TLS_CERTFILE": "", "AI_SERVER_TLS_KEYFILE": "",
     })
     log_path = tmp_path / "server.log"
     with log_path.open("w+", encoding="utf-8") as output:
