@@ -107,3 +107,21 @@ Use the guide at `AI_SERVER/docs/sd2-gemini-lan.md` in the workspace root.
 The API key stays on the server. Native TX/DMA proof remains experimental.
 The real trial produced audible Gemini output but was interrupted by provider
 rate_limited; full-turn/repeated-conversation acceptance is still pending.
+
+### LAN and WIFI_INTERNET profiles
+
+The `aiva-iot-s3-st7789-funnel` build keeps the historical LAN profile intact and
+adds an explicit `WIFI_INTERNET` profile. A missing mode key always means `LAN`;
+the firmware never migrates endpoints or falls back between modes.
+
+- `mode lan` selects LAN NVS (`wifi/ota_url`, `websocket/*`).
+- `mode wifi_internet` selects the independent Funnel profile (`aiva_iota/*`,
+  `aiva_iws/*`) with the compiled HTTPS/WSS hostname.
+- `wifi` enters the existing SoftAP Wi-Fi provisioning flow. It does not ask for
+  an AI server address and does not change the selected connection profile.
+- `status` reports the selected profile. Reboot after changing it.
+
+Both profiles use the same provisioned per-device UID/credential and fail closed
+when it is absent. Changing mode never erases either profile or Wi-Fi NVS.
+The Funnel build combines ESP-IDF's full public CA bundle with the existing AIVA
+LAN root, so hostname verification remains enabled for both profiles.

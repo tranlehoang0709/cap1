@@ -12,5 +12,6 @@ import { UserPairingGuard } from './user-pairing.guard';
   imports:[ConfigModule,DatabaseModule,UsersModule],
   controllers:[UserPairingController,AdminPairingController],
   providers:[PairingRepository,PairingService,AdminDeviceGuard,UserPairingGuard],
+  exports:[PairingService],
 })
 export class PairingModule {}

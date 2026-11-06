@@ -1,0 +1,6 @@
+-mdisable-hardware-atomics
+"-specs=E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-final/specs/picolibc.specs"
+-mlongcalls
+-fno-builtin-memcpy
+-fno-builtin-memset
+-fno-builtin-bzero

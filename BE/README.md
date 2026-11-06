@@ -55,7 +55,7 @@ Swagger UI: `GET /api/docs`; OpenAPI JSON: `GET /api/docs-json`. The Nest proces
 |---|---|---|---|
 | GET | `/devices` | User/Admin | List caller-owned devices |
 | PATCH | `/devices/{id}` | Owner | Rename a device |
-| DELETE | `/devices/{id}/assignment` | Owner | Unlink device and revoke its credential |
+| DELETE | `/devices/{id}/assignment` | Disabled | Returns 403 `ADMIN_RECOVERY_REQUIRED`; use Admin revoke/reset |
 | POST | `/devices/pairing-requests` | User/Admin | Consume a one-time code and request pairing |
 | GET | `/devices/pairing-requests/mine` | User/Admin | List caller pairing requests |
 | POST | `/devices/admin` | Admin | Register a physical device |
@@ -122,3 +122,5 @@ See [live Gemini contract, Windows commands and readiness](docs/d2-s2-15-live-ge
 Web Chat now delegates to authenticated AI_SERVER execution; live acceptance
 still requires the existing quota schema, model, credential, policy and gates.
 
+
+Robot registration/handover changes, existing-DB migration and verification: [docs/robot-handover.md](docs/robot-handover.md).

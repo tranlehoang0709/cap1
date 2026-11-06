@@ -78,6 +78,7 @@ export class AiProvidersService {
     const modelId = input.modelId === undefined || input.modelId === null ? null : id(input.modelId);
     if (input.includeCredential !== undefined && typeof input.includeCredential !== 'boolean') throw new BadRequestException('INVALID_CREDENTIAL_REQUEST');
     return this.database(async tx => {
+      await tx.requireApprovedRobot(userId);
       if (deviceId) {
         const d = await tx.ownership.devices.findDeviceById(deviceId);
         const a = d ? await tx.ownership.devices.getActiveAssignment(deviceId) : null;
@@ -118,6 +119,7 @@ export class AiProvidersService {
     if(!['web','robot'].includes(input.channel as string) || (input.channel==='robot'&&!deviceId) || (input.channel==='web'&&deviceId)) throw new BadRequestException('INVALID_AI_CONTEXT');
     return this.database(async tx=>{
       await this.activeUser(tx,userId);
+      if(deviceId)await tx.ownership.devices.findDeviceById(deviceId);
       if(deviceId&&!await tx.ownership.verifyDeviceOwnership(userId,deviceId))throw new ForbiddenException('DEVICE_ACCESS_DENIED');
       await tx.rows("INSERT INTO conversations(user_id,device_id,channel,status,started_at) VALUES(?,?,?,'active',UTC_TIMESTAMP())",[userId,deviceId,input.channel]);
       const conversationId=(await tx.rows<{id:string}>('SELECT CAST(LAST_INSERT_ID() AS CHAR) AS id'))[0].id;
@@ -135,7 +137,10 @@ export class AiProvidersService {
       await this.activeUser(tx,userId);
       const s=(await tx.rows<{conversationId:string;status:string;deviceId:string|null}>(`SELECT CAST(s.conversation_id AS CHAR) AS conversationId,s.status,CAST(s.device_id AS CHAR) AS deviceId FROM ai_sessions s JOIN conversations c ON c.id=s.conversation_id WHERE s.id=? AND c.user_id=? AND c.deleted_at IS NULL FOR UPDATE`,[sessionId,userId]))[0];
       if(!s)throw new ForbiddenException('INVALID_AI_CONTEXT');
-      if(s.deviceId&&!await tx.ownership.verifyDeviceOwnership(userId,s.deviceId))throw new ForbiddenException('DEVICE_ACCESS_DENIED');
+      if(s.deviceId){
+        await tx.ownership.devices.findDeviceById(s.deviceId);
+        if(!await tx.ownership.verifyDeviceOwnership(userId,s.deviceId))throw new ForbiddenException('DEVICE_ACCESS_DENIED');
+      }
       const usage=(await tx.rows<{providerId:string}>(`SELECT CAST(provider_id AS CHAR) AS providerId FROM usage_records WHERE request_id=? AND user_id=? AND ai_session_id=? AND conversation_id=? AND finalized_at IS NOT NULL AND status='success' FOR UPDATE`,[input.requestId,userId,sessionId,s.conversationId]))[0];
       if(!usage)throw new ConflictException('USAGE_NOT_SETTLED');
       const privacy=(await tx.rows<{save:number}>('SELECT save_history AS save FROM privacy_preferences WHERE user_id=? FOR UPDATE',[userId]))[0];
@@ -154,11 +159,12 @@ export class AiProvidersService {
   }
   async getAIProfile(actor: CurrentUser) {
     const userId=this.actor(actor,'USER');
-    return this.database(async tx=>{await this.activeUser(tx,userId);return {...(await tx.profile(userId) ?? emptyProfile),credentialScope:await tx.scope(userId)};});
+    return this.database(async tx=>{await tx.requireApprovedRobot(userId);await this.activeUser(tx,userId);return {...(await tx.profile(userId) ?? emptyProfile),credentialScope:await tx.scope(userId)};});
   }
   async updateAIProfile(actor: CurrentUser, body: unknown) {
     const userId=this.actor(actor,'USER'),patch=profileInput(body);
     return this.database(async tx=>{
+      await tx.requireApprovedRobot(userId);
       await this.activeUser(tx,userId);
       const {credentialScope,...fields}=patch,profile:Profile={...(await tx.profile(userId) ?? emptyProfile),...fields};
       const scope=credentialScope ?? await tx.scope(userId);

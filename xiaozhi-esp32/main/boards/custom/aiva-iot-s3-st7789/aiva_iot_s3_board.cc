@@ -18,6 +18,7 @@
 #include <cstdio>
 #include <sstream>
 #include "settings.h"
+#include "aiva_connection_mode.h"
 #endif
 
 #if defined(LCD_TYPE_ILI9341_SERIAL)
@@ -141,19 +142,53 @@ private:
     static void HandleUsbCommand(const std::string& command) {
         auto& app = Application::GetInstance();
         if (command == "status") {
+#if CONFIG_AIVA_DUAL_CONNECTION_MODE
+            const auto mode = aiva::connection::GetMode();
+            Settings settings(aiva::connection::WebsocketNamespace(mode), false);
+#else
             Settings settings("websocket", false);
+#endif
 #if CONFIG_AIVA_LAN_BOOTSTRAP
             Settings device("device", false);
-            const bool configured = !settings.GetString("url").empty() &&
+            const bool configured =
+#if CONFIG_AIVA_DUAL_CONNECTION_MODE
+                                    !aiva::connection::GetWebsocketUrl().empty() &&
+#else
+                                    !settings.GetString("url").empty() &&
+#endif
                                     !device.GetString("uid").empty() &&
                                     !device.GetString("credential").empty();
 #else
             const bool configured = !settings.GetString("url").empty() &&
                                     !settings.GetString("token").empty();
 #endif
-            ESP_LOGI(TAG, "AIVA_STATUS state=%d ws_configured=%d",
+            ESP_LOGI(TAG, "AIVA_STATUS state=%d ws_configured=%d mode=%s",
                      static_cast<int>(app.GetDeviceState()),
-                     configured);
+                     configured,
+#if CONFIG_AIVA_DUAL_CONNECTION_MODE
+                     aiva::connection::ModeName(mode));
+#else
+                     "lan");
+#endif
+        } else if (command.rfind("mode ", 0) == 0) {
+#if CONFIG_AIVA_DUAL_CONNECTION_MODE
+            const auto state = app.GetDeviceState();
+            if (state != kDeviceStateIdle && state != kDeviceStateActivating &&
+                state != kDeviceStateWifiConfiguring) {
+                ESP_LOGW(TAG, "AIVA_MODE rejected: device is busy");
+                return;
+            }
+            std::istringstream input(command);
+            std::string verb, value, extra;
+            input >> verb >> value;
+            if (input >> extra || !aiva::connection::SetMode(value)) {
+                ESP_LOGW(TAG, "AIVA_MODE invalid; expected lan or wifi_internet");
+                return;
+            }
+            ESP_LOGI(TAG, "AIVA_MODE saved=%s; reboot required", value.c_str());
+#else
+            ESP_LOGW(TAG, "AIVA_MODE unavailable in this firmware variant");
+#endif
         } else if (command.rfind("proof ", 0) == 0) {
             // One-time physical provisioning only; never print the credential.
             if (app.GetDeviceState() != kDeviceStateIdle &&
@@ -273,7 +308,8 @@ private:
                 }
             },
             "sd2_usb_dev", 4096, nullptr, 3, nullptr);
-        ESP_LOGI(TAG, "AIVA_USB_READY commands: proof, wifi, ws, record, stop, status, reboot");
+        ESP_LOGI(TAG,
+                 "AIVA_USB_READY commands: proof, wifi, ws, mode, record, stop, status, reboot");
     }
 #endif
 

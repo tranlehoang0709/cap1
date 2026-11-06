@@ -1,3 +1,6 @@
+import { DevicesService } from '../src/modules/devices/devices.service';
+import { DevicesController } from '../src/modules/devices/devices.controller';
+import { UserPairingController,AdminPairingController } from '../src/modules/pairing/pairing.controller';
 import { createHash } from 'node:crypto';
 import { PairingService } from '../src/modules/pairing/pairing.service';
 import { PairingRepository, PairingTransaction } from '../src/modules/pairing/pairing.repository';
@@ -31,6 +34,10 @@ describe('PairingService with transactional state model (no live fixtures)', () 
       setLifecycle:jest.fn(async (_:string,status:string)=>{state.device.lifecycleStatus=status;}),
       findRequest:jest.fn(async (id:string)=>{const r=state.requests.find(r=>r.id===id);return r ? {...r}:null;}),
       consumeCode:jest.fn(async ()=>{state.code.usable=0;}),
+      reserveCodeForApproval:jest.fn(async ()=>{
+        if(state.requests.filter(r=>['pending','approved'].includes(r.status)).length!==1)throw Object.assign(new Error('ambiguous reservation'),{code:'PAIRING_CONFLICT'});
+        if(state.code.usable)await tx.consumeCode('5');
+      }),
       createAssignment:jest.fn(async (r:unknown)=>{state.assignments.push(r);state.histories.push(r);}),
       reviewRequest:jest.fn(async (id:string,status:string,_:string,note:string|null)=>{Object.assign(state.requests.find(r=>r.id===id)!,{status,reviewNote:note});}),
       writePairingAudit:jest.fn(async (...args:unknown[])=>{state.audits.push(args);}),
@@ -52,10 +59,10 @@ describe('PairingService with transactional state model (no live fixtures)', () 
     };
     service=new PairingService(repository as unknown as PairingRepository);
   });
-  it('creates PENDING with exact SHA-256 lookup; code remains unused', async ()=>{
+  it('creates PENDING with exact SHA-256 lookup; code is consumed in the submission transaction', async ()=>{
     await expect(service.createPairingRequest(user,{pairingCode:'AbC123'})).resolves.toEqual({id:'10',deviceId:'42',status:'PENDING'});
     expect(tx.findCodeByHash).toHaveBeenCalledWith(createHash('sha256').update('AbC123').digest('hex'));
-    expect(state.device.lifecycleStatus).toBe('pending_approval'); expect(state.code.usable).toBe(1);
+    expect(state.device.lifecycleStatus).toBe('pending_approval'); expect(state.code.usable).toBe(0);
     expect(state.assignments).toHaveLength(0);
     expect(tx.writePairingRequestAudit).toHaveBeenCalledWith('7','10','42');
     expect(tx.findDeviceById.mock.invocationCallOrder[0]).toBeLessThan(tx.lockCode.mock.invocationCallOrder[0]);
@@ -77,10 +84,31 @@ describe('PairingService with transactional state model (no live fixtures)', () 
   });
   it('blocks duplicate requests, including concurrent submissions', async ()=>{
     const results=await Promise.allSettled([service.createPairingRequest(user,{pairingCode:'ABC123'}),
-      service.createPairingRequest(user,{pairingCode:'ABC123'})]);
+      service.createPairingRequest({userId:'8',role:'USER'},{pairingCode:'ABC123'})]);
     expect(results.filter(r=>r.status==='fulfilled')).toHaveLength(1);
     expect(state.requests).toHaveLength(1);
-    expect(results.find(r=>r.status==='rejected')).toMatchObject({reason:{status:409}});
+    expect(results.find(r=>r.status==='rejected')).toMatchObject({reason:{status:400}});
+  });
+  it.each(['legacy','current'])('both API groups submit and cross-review using one code policy (%s)',async first=>{
+    const legacy=new DevicesController(new DevicesService({findRequestById:async(id:string)=>{
+      const r=state.requests.find(r=>r.id===id)!;
+      return {id:r.id,device_id:r.deviceId,user_id:r.userId,status:r.status,reviewed_by:null,reviewed_at:null,review_note:null,created_at:new Date()};
+    }} as any,service));
+    const current=new UserPairingController(service),review=new AdminPairingController(service);
+    if(first==='legacy')await legacy.requestPairing({id:'7'} as any,{pairing_code:'ABC123'});
+    else await current.create({currentUser:user} as any,{pairingCode:'ABC123'});
+    expect(state.requests).toHaveLength(1);expect(state.code.usable).toBe(0);
+    // Both paths reject replay, independent of the creating path.
+    await expect(legacy.requestPairing({id:'8'} as any,{pairing_code:'ABC123'})).rejects.toMatchObject({status:400});
+    await expect(current.create({currentUser:{userId:'8',role:'USER'}} as any,{pairingCode:'ABC123'})).rejects.toMatchObject({status:400});
+    if(first==='legacy')expect(await review.approve({currentUser:admin} as any,'10',{})).toMatchObject({status:'APPROVED'});
+    else expect(await legacy.approve({id:'1'} as any,'10',{})).toMatchObject({status:'approved'});
+    expect(state.assignments).toHaveLength(1);expect(state.device.lifecycleStatus).toBe('assigned');
+  });
+  it('concurrent submissions across both API adapters still yield one pending',async()=>{
+    const legacy=new DevicesService({findRequestById:async()=>({id:'10',status:'pending'})} as any,service);
+    const outcomes=await Promise.allSettled([legacy.requestPairing('7','ABC123'),service.createPairingRequest({userId:'8',role:'USER'},{pairingCode:'ABC123'})]);
+    expect(outcomes.filter(r=>r.status==='fulfilled')).toHaveLength(1);expect(state.requests).toHaveLength(1);
   });
   it('scopes User lists and allows Admin lists with bounded filters', async ()=>{
     await service.listPairingRequests(user,{status:'PENDING',page:'2',limit:'5'});
@@ -102,6 +130,12 @@ describe('PairingService with transactional state model (no live fixtures)', () 
     await expect(service.approvePairing('10',admin,{})).rejects.toMatchObject({status:409});
     expect(state.assignments).toHaveLength(1);
   });
+  it('approves an already consumed reservation without consuming the code again',async()=>{
+    await service.createPairingRequest(user,{pairingCode:'ABC123'});
+    tx.consumeCode.mockClear();
+    await service.approvePairing('10',admin,{});
+    expect(tx.consumeCode).not.toHaveBeenCalled();expect(state.assignments).toHaveLength(1);
+  });
   it('rejects with audit and no assignment/history/code consumption', async ()=>{
     state.requests.push(request());state.device.lifecycleStatus='pending_approval';
     await expect(service.rejectPairing('10',admin,{reviewNote:'Not authorized'})).resolves.toEqual({status:'REJECTED',reviewNote:'Not authorized'});
@@ -116,12 +150,12 @@ describe('PairingService with transactional state model (no live fixtures)', () 
     state.device.lifecycleStatus='maintenance';await service.rejectPairing('11',admin,{});
     expect(state.device.lifecycleStatus).toBe('maintenance');
   });
-  it('concurrent approvals of competing requests yield exactly one owner in the transaction model', async ()=>{
+  it('ambiguous legacy competing requests sharing a code fail closed', async ()=>{
     state.requests.push(request(),request('11','8'));
     const results=await Promise.allSettled([service.approvePairing('10',admin,{}),service.approvePairing('11',admin,{})]);
-    expect(results.filter(r=>r.status==='fulfilled')).toHaveLength(1);
+    expect(results.filter(r=>r.status==='fulfilled')).toHaveLength(0);
     expect(results.find(r=>r.status==='rejected')).toMatchObject({reason:{status:409}});
-    expect(state.assignments).toHaveLength(1);expect(state.audits).toHaveLength(1);
+    expect(state.assignments).toHaveLength(0);expect(state.audits).toHaveLength(0);
   });
   it('concurrent approve/reject of the same request has one winner', async ()=>{
     state.requests.push(request());
@@ -157,9 +191,30 @@ describe('PairingService with transactional state model (no live fixtures)', () 
     state.assignments=[];tx.resetAllowsPairing.mockResolvedValue(false);state.requests.push(request());
     await expect(service.approvePairing('10',admin,{})).rejects.toMatchObject({status:409});
   });
+  it.each(['legacy','current'])('blocks submission and approval through %s API until reset is confirmed',async group=>{
+    const devices=new DevicesService({findRequestById:jest.fn()} as never,service);
+    tx.resetAllowsPairing.mockResolvedValue(false);
+    await expect(group==='legacy'?devices.requestPairing('7','ABC123'):service.createPairingRequest(user,{pairingCode:'ABC123'}))
+      .rejects.toMatchObject({status:409});
+    expect(state.code.usable).toBe(1);expect(state.requests).toHaveLength(0);
+    state.requests.push(request());
+    await expect(group==='legacy'?devices.reviewPairing('1','10',true):service.approvePairing('10',admin,{}))
+      .rejects.toMatchObject({status:409});
+    expect(state.assignments).toHaveLength(0);
+  });
+  it.each(['legacy','current'])('rejection through %s API never reactivates a code consumed on submission',async group=>{
+    const devices=new DevicesService({findRequestById:jest.fn(async()=>({id:'10',status:state.requests[0]?.status}))} as never,service);
+    if(group==='legacy')await devices.requestPairing('7','ABC123');
+    else await service.createPairingRequest(user,{pairingCode:'ABC123'});
+    expect(state.code.usable).toBe(0);
+    if(group==='legacy')await devices.reviewPairing('1','10',false);
+    else await service.rejectPairing('10',admin,{});
+    expect(state.code.usable).toBe(0);expect(state.device.lifecycleStatus).toBe('available');
+    await expect(devices.requestPairing('7','ABC123')).rejects.toMatchObject({status:400});
+  });
   it('returns 404 for absent request, 409 for invalid approval code and ineligible requester', async ()=>{
     await expect(service.approvePairing('10',admin,{})).rejects.toMatchObject({status:404});
-    state.requests.push(request());state.code.usable=0;
+    state.requests.push(request());tx.lockCode.mockResolvedValueOnce(null);
     await expect(service.approvePairing('10',admin,{})).rejects.toMatchObject({status:409});
     state.code.usable=1;tx.users.findByIdForUpdate.mockImplementation(async (id:string)=>({id,status:id==='7'?'disabled':'active',email_verified_at:new Date()}));
     await expect(service.approvePairing('10',admin,{})).rejects.toMatchObject({status:409});

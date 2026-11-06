@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../auth/access-role.guard';
 import { AdminDeviceGuard } from '../devices/admin-device.guard';
 import { RecoveryService } from './recovery.service';
 import { ResetSourceGuard } from './reset-source.guard';
+import { Public } from '../../common/decorators/public.decorator';
 
 @Controller('admin') @UseGuards(AdminDeviceGuard)
 export class RecoveryController {
@@ -16,7 +17,7 @@ export class RecoveryController {
   @Post('device-recovery/:backupId/restore') @HttpCode(200)
   restore(@Req() req:AuthenticatedRequest,@Param('backupId') id:string){return this.recovery.restoreDeviceAssignment(req.currentUser,id);}
 }
-@Controller('internal/device-reset-jobs') @UseGuards(ResetSourceGuard)
+@Controller('internal/device-reset-jobs') @Public() @UseGuards(ResetSourceGuard)
 export class InternalResetController {
   constructor(private readonly recovery:RecoveryService){}
   @Post('claim') @HttpCode(200)

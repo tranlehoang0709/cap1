@@ -1,5 +1,6 @@
 #include "ota.h"
 #include "assets/lang_config.h"
+#include "aiva_connection_mode.h"
 #include "settings.h"
 #include "system_info.h"
 #include "secure_url.h"
@@ -45,8 +46,12 @@ Ota::Ota() {
 Ota::~Ota() {}
 
 std::string Ota::GetCheckVersionUrl() {
+#if CONFIG_AIVA_DUAL_CONNECTION_MODE
+    std::string url = aiva::connection::GetOtaUrl();
+#else
     Settings settings("wifi", false);
     std::string url = settings.GetString("ota_url");
+#endif
 #if CONFIG_AIVA_LAN_BOOTSTRAP
     // Never send device proof to a plaintext or credential-bearing URL.
     if (!aiva::security::HasSecureUrl(url, "https")) {
@@ -191,7 +196,11 @@ esp_err_t Ota::CheckVersion() {
     }
 #endif
     if (cJSON_IsObject(websocket)) {
+#if CONFIG_AIVA_DUAL_CONNECTION_MODE
+        Settings settings(aiva::connection::WebsocketNamespace(aiva::connection::GetMode()), true);
+#else
         Settings settings("websocket", true);
+#endif
         cJSON* item = NULL;
         cJSON_ArrayForEach (item, websocket) {
             if (cJSON_IsString(item)) {

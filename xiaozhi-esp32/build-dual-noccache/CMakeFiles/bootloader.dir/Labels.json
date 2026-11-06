@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/CMakeFiles/bootloader"
+		},
+		{
+			"file" : "E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/CMakeFiles/bootloader.rule"
+		},
+		{
+			"file" : "E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/CMakeFiles/bootloader-complete.rule"
+		},
+		{
+			"file" : "E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule"
+		},
+		{
+			"file" : "E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule"
+		},
+		{
+			"file" : "E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule"
+		},
+		{
+			"file" : "E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule"
+		},
+		{
+			"file" : "E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule"
+		},
+		{
+			"file" : "E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule"
+		},
+		{
+			"file" : "E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"bootloader"
+		],
+		"name" : "bootloader"
+	}
+}

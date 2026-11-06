@@ -13,6 +13,13 @@ from nen_tang.backend import BackendError
 
 
 class LiveRouteTests(unittest.TestCase):
+    def test_nullable_backend_field_uses_form_default(self):
+        self.assertEqual(live.field({"voice_code": None}, "voice_code"), "")
+        self.assertEqual(live.field({"language_code": None}, "language_code", "vi"), "vi")
+        self.assertIsNone(live.optional_text(None))
+        self.assertIsNone(live.optional_text("  "))
+        self.assertEqual(live.optional_text(" Xiaozhi "), "Xiaozhi")
+
     def test_no_session_store_can_be_created(self):
         with self.assertRaises(RuntimeError):
             trang_thai.init_demo()

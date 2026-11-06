@@ -57,11 +57,16 @@ class GeminiLLMAdapter:
         client = None
         try:
             client = self._client_factory(self._api_key, self._timeout_seconds)
-            contents = [{'role': 'model' if item.role == 'assistant' else 'user',
-                         'parts': [{'text': item.text}]} for item in request.history]
+            # Gemini count_tokens does not accept GenerateContentConfig /
+            # system_instruction in current SDK releases. Include the exact
+            # instruction as bounded text solely for conservative accounting;
+            # generation still sends it through system_instruction below.
+            contents = [{'role': 'user', 'parts': [{'text': _system_instruction(request.system_prompt)}]}]
+            contents.extend({'role': 'model' if item.role == 'assistant' else 'user',
+                            'parts': [{'text': item.text}]} for item in request.history)
             contents.append({'role':'user','parts':[{'text':request.transcript}]})
             result = await context.run(lambda: client.aio.models.count_tokens(model=request.config.model,
-                contents=contents, config={'system_instruction':_system_instruction(request.system_prompt)}))
+                contents=contents))
             count = getattr(result, 'total_tokens', None)
             if type(count) is not int or count < 0:
                 raise LLMError(LLMErrorCode.INVALID_STREAM)

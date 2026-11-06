@@ -1,0 +1,13 @@
+INFO:     Started server process [25744]
+INFO:     Waiting for application startup.
+{"timestamp":"2026-11-04T07:14:49.334175+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+INFO:     Application startup complete.
+INFO:     Uvicorn running on https://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     192.168.0.106:58359 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     192.168.0.106:62643 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     192.168.0.106:62645 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     192.168.0.106:62647 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open

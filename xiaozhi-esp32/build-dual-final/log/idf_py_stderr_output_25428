@@ -1,0 +1,15 @@
+Command: C:\Users\troc\.espressif\python_env\idf6.0_py3.14_env\Scripts\python.exe E:\esp\v6.0.3\esp-idf\tools/idf_monitor.py -p COM3 -b 115200 --toolchain-prefix xtensa-esp32s3-elf- --target esp32s3 --revision 0 E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\xiaozhi.elf E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\bootloader\bootloader.elf --force-color -m 'C:\Users\troc\.espressif\python_env\idf6.0_py3.14_env\Scripts\python.exe' 'E:\esp\v6.0.3\esp-idf\tools\idf.py' '-p' 'COM3' '-B' 'build-dual-final'
+--- WARNING: GDB cannot open serial ports accessed as COMx
+--- NOTE: Using \\.\COM3 instead...
+--- esp-idf-monitor 1.10.0 on \\.\COM3 115200
+--- Quit: Ctrl+] | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+--- 0x4038279e: esp_cpu_wait_for_intr at E:/esp/v6.0.3/esp-idf/components/esp_hw_support/cpu.c:64
+--- 0x403c8700: _stext at ??:?
+--- 0x403c88f4: call_start_cpu0 at E:/esp/v6.0.3/esp-idf/components/bootloader/subproject/main/bootloader_start.c:27
+--- 0x40385642: esp_restart_noos at E:/esp/v6.0.3/esp-idf/components/esp_system/port/soc/esp32s3/system_internal.c:165
+--- 0x403c8700: _stext at ??:?
+--- 0x403c88f4: call_start_cpu0 at E:/esp/v6.0.3/esp-idf/components/bootloader/subproject/main/bootloader_start.c:27
+--- 0x40385642: esp_restart_noos at E:/esp/v6.0.3/esp-idf/components/esp_system/port/soc/esp32s3/system_internal.c:165
+--- 0x403c8700: _stext at ??:?
+--- 0x403c88f4: call_start_cpu0 at E:/esp/v6.0.3/esp-idf/components/bootloader/subproject/main/bootloader_start.c:27
+

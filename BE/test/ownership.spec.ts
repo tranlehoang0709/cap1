@@ -18,12 +18,13 @@ const serviceToken='s'.repeat(43);const credential='c'.repeat(43);
 let approved=false;
 const config={get:jest.fn((key:string)=>({ADMIN_ACCESS_JWT_SECRET:secret,ADMIN_ACCESS_JWT_ISSUER:'test',
   ADMIN_ACCESS_JWT_AUDIENCE:'user',AI_DEVICE_SERVICE_TOKEN:serviceToken,
-  DEVICE_AUTH_CONTRACT_APPROVED:approved?'true':'false'} as Record<string,string>)[key])};
+  DEVICE_AUTH_CONTRACT_APPROVED:approved?'true':'false',HEARTBEAT_TIMEOUT_SECONDS:'60'} as Record<string,string>)[key])};
 const users={canLogin:jest.fn(),getUserRole:jest.fn()};
 const repo={getUserDevices:jest.fn(),canAccessDashboard:jest.fn(),withTransaction:jest.fn()};
 const tx={devices:{findDeviceById:jest.fn(),getActiveAssignment:jest.fn(),
   users:{findByIdForUpdate:jest.fn(),findUserRoles:jest.fn()}},findDeviceIdByUid:jest.fn(),
-  verifyDeviceOwnership:jest.fn(),renameUserDevice:jest.fn(),validateDeviceCredential:jest.fn()};
+  verifyDeviceOwnership:jest.fn(),renameUserDevice:jest.fn(),validateDeviceCredential:jest.fn(),
+  now:jest.fn(),presence:jest.fn(),recordHeartbeat:jest.fn()};
 const pairing={listPairingRequests:jest.fn()};
 @Module({controllers:[UserPairingController,UserDevicesController,DashboardAccessController,InternalDevicesController],
   providers:[OwnershipService,UserPairingGuard,InternalDeviceGuard,
@@ -51,6 +52,8 @@ describe('Ownership HTTP and service authorization',()=>{
     tx.devices.users.findUserRoles.mockResolvedValue([{code:'USER'}]);
     tx.findDeviceIdByUid.mockResolvedValue('42');tx.validateDeviceCredential.mockResolvedValue(true);
     tx.verifyDeviceOwnership.mockResolvedValue({id:'42',deviceUid:'robot',displayName:'AIVA',connectionStatus:'offline'});
+    tx.now.mockResolvedValue(new Date('2026-11-06T01:00:30.000Z'));tx.presence.mockResolvedValue(null);
+    tx.recordHeartbeat.mockResolvedValue(undefined);
     tx.renameUserDevice.mockResolvedValue(undefined);pairing.listPairingRequests.mockResolvedValue({items:[]});
   });
   async function call(path:string,method='GET',body?:unknown,bearer:string|null=token()){
@@ -119,6 +122,25 @@ describe('Ownership HTTP and service authorization',()=>{
     expect(response.status).toBe(200);expect(await response.json()).toEqual({allowed:true,deviceId:'42',ownerUserId:'7'});
     expect(tx.validateDeviceCredential).toHaveBeenCalledWith('42',createHash('sha256').update(credential).digest('hex'));
     expect(tx.devices.findDeviceById.mock.invocationCallOrder[0]).toBeLessThan(tx.validateDeviceCredential.mock.invocationCallOrder[0]);
+  });
+  it('accepts a fresh authenticated heartbeat and ignores an exact duplicate',async()=>{
+    approved=true;const body={...authBody(),observedAt:'2026-11-06T01:00:00Z',
+      telemetry:{wifiRssi:-60,freeHeapBytes:'1234',batteryPercent:80}};
+    let response=await call('/internal/devices/heartbeat','POST',body,serviceToken);
+    expect(response.status).toBe(200);expect(await response.json()).toEqual({accepted:true,deviceId:'42',lastSeenAt:'2026-11-06T01:00:00.000Z'});
+    expect(tx.recordHeartbeat).toHaveBeenCalledWith('42',new Date('2026-11-06T01:00:00.000Z'),
+      {wifiRssi:-60,freeHeapBytes:'1234',batteryPercent:80,payload:null});
+    tx.presence.mockResolvedValue(new Date('2026-11-06T01:00:00.000Z'));
+    response=await call('/internal/devices/heartbeat','POST',body,serviceToken);
+    expect(await response.json()).toEqual({accepted:false,deviceId:'42',lastSeenAt:'2026-11-06T01:00:00.000Z',reason:'STALE_OR_DUPLICATE'});
+  });
+  it('rejects future heartbeat and unknown UID without changing presence',async()=>{
+    approved=true;let response=await call('/internal/devices/heartbeat','POST',
+      {...authBody(),observedAt:'2026-11-06T01:00:31Z'},serviceToken);
+    expect(response.status).toBe(409);expect(tx.recordHeartbeat).not.toHaveBeenCalled();
+    tx.findDeviceIdByUid.mockResolvedValue(null);response=await call('/internal/devices/heartbeat','POST',
+      {...authBody(),observedAt:'2026-11-06T01:00:00Z'},serviceToken);
+    expect(response.status).toBe(404);
   });
   it.each([null,[],{deviceUid:'robot'},{deviceUid:'robot',credential:'short'},{deviceUid:'',credential},
     {deviceUid:'robot',credential,extra:true}])('rejects invalid auth body %j',async body=>{

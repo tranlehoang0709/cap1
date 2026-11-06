@@ -34,7 +34,7 @@ describe('AI provider/profile/credential service',()=>{
   let service:AiProvidersService;let repo:{transaction:jest.Mock};let tx:any;let config:ConfigService;let crypto:SecretEncryptionService;
   beforeEach(()=>{
     config=configuration();crypto=new SecretEncryptionService(config);
-    tx={users:{findByIdForUpdate:jest.fn(async(id:string)=>({id,status:'active',email_verified_at:new Date()})),
+    tx={requireApprovedRobot:jest.fn(async()=>{}),users:{findByIdForUpdate:jest.fn(async(id:string)=>({id,status:'active',email_verified_at:new Date()})),
       findUserRoles:jest.fn(async(id:string)=>[{code:id==='1'?'ADMIN':'USER'}])},
       provider:jest.fn().mockResolvedValue({id:'2',code:'OPENAI',name:'OpenAI',isEnabled:1}),
       providers:jest.fn().mockResolvedValue([{id:'1',code:'LOCAL',name:'Local',isEnabled:1}]),
@@ -160,6 +160,22 @@ describe('AI provider/profile/credential service',()=>{
     const result=await service.resolveAIConfiguration({userId:'7',deviceId:'42'});
     expect(result).toMatchObject({userId:'7',profile:{assistantName:'Mine'},credentialScope:'USER',credentialReference:{id:'9'}});
     expect(JSON.stringify(result)).not.toMatch(/secret|ciphertext/);expect(tx.ownership.verifyDeviceOwnership).toHaveBeenCalledWith('7','42');
+  });
+  it('isolates OpenAI User A and Gemini User B credentials by owner and provider',async()=>{
+    const secrets:Record<string,string>={'7:2':'fixture-openai-user-a','8:3':'fixture-gemini-user-b'};
+    tx.provider.mockImplementation(async(providerId:string)=>({id:providerId,code:providerId==='2'?'OPENAI':'GEMINI',name:'fixture',isEnabled:1}));
+    tx.model.mockImplementation(async(modelId:string)=>({id:modelId,providerId:modelId==='21'?'2':'3',modelCode:'fixture-model',capability:'llm',isEnabled:1}));
+    tx.profile.mockImplementation(async(userId:string)=>({...emptyProfile,preferredProviderId:userId==='7'?'2':'3',preferredLlmModelId:userId==='7'?'21':'31'}));
+    tx.activeCredential.mockImplementation(async(o:any,providerId:string)=>{
+      const raw=secrets[`${o.userId}:${providerId}`];return raw?{id:o.userId==='7'?'91':'92',providerId,secretCiphertext:crypto.encrypt(raw,`USER:${o.userId}:${providerId}`)}:null;
+    });
+    const a=await service.resolveAIConfiguration({userId:'7',includeCredential:true});
+    const b=await service.resolveAIConfiguration({userId:'8',includeCredential:true});
+    expect(a).toMatchObject({userId:'7',provider:{code:'OPENAI'},credential:'fixture-openai-user-a'});
+    expect(b).toMatchObject({userId:'8',provider:{code:'GEMINI'},credential:'fixture-gemini-user-b'});
+    expect(a.credential).not.toBe(b.credential);
+    tx.profile.mockResolvedValue({...emptyProfile,preferredProviderId:'3',preferredLlmModelId:'31'});
+    await expect(service.resolveAIConfiguration({userId:'7',includeCredential:true})).rejects.toMatchObject({status:409});
   });
   it('internal contract fails closed and rejects unauthorized devices/users',async()=>{
     config.set('AI_CONFIG_CONTRACT_APPROVED','false');

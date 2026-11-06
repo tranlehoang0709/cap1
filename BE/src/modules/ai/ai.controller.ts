@@ -4,16 +4,20 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthenticatedUser } from '../auth/auth.types';
 import { AiService } from './ai.service';
-import { ChatDto, KeyDto, PageDto, ProfileDto, ProviderDto, QuotaDto } from './dto/ai.dto';
+import { ChatDto, KeyDto, ModelDto, ModelPatchDto, PageDto, ProfileDto, ProviderDto, QuotaDto, ReplaceKeyDto } from './dto/ai.dto';
 @ApiTags('ai') @ApiBearerAuth() @Controller()
 export class AiController {constructor(private readonly ai:AiService){}
  @Get('ai/providers') @ApiOperation({summary:'List AI providers'}) providers(){return this.ai.providers();}
  @Get('ai/providers/:id/models') @ApiOperation({summary:'List enabled models for a provider'}) models(@Param('id')id:string){return this.ai.models(id);}
  @Patch('admin/ai/providers/:id') @Roles('ADMIN') @ApiOperation({summary:'Enable or disable AI provider'}) provider(@Param('id')id:string,@Body()dto:ProviderDto){return this.ai.setProvider(id,dto.is_enabled,dto.health_status??null);}
+ @Get('admin/ai/models') @Roles('ADMIN') adminModels(){return this.ai.adminModels();}
+ @Post('admin/ai/models') @Roles('ADMIN') createModel(@Body()dto:ModelDto){return this.ai.createModel(dto.provider_id,dto.model_code,dto.capability,dto.is_enabled);}
+ @Patch('admin/ai/models/:id') @Roles('ADMIN') updateModel(@Param('id')id:string,@Body()dto:ModelPatchDto){return this.ai.updateModel(id,dto);}
  @Get('ai/profile') profile(@CurrentUser()u:AuthenticatedUser){return this.ai.profile(u.id);}
  @Patch('ai/profile') updateProfile(@CurrentUser()u:AuthenticatedUser,@Body()dto:ProfileDto){return this.ai.updateProfile(u.id,{assistant_name:dto.assistant_name??null,system_prompt:dto.system_prompt??null,language_code:dto.language_code??null,voice_code:dto.voice_code??null,preferred_provider_id:dto.preferred_provider_id??null,preferred_llm_model_id:dto.preferred_llm_model_id??null});}
  @Get('api-keys') keys(@CurrentUser()u:AuthenticatedUser){return this.ai.keys(u.id);}
  @Post('api-keys') key(@CurrentUser()u:AuthenticatedUser,@Body()dto:KeyDto){return this.ai.addKey(u.id,dto.provider_id,dto.label,dto.secret);}
+ @Patch('api-keys/:id') keyReplace(@CurrentUser()u:AuthenticatedUser,@Param('id')id:string,@Body()dto:ReplaceKeyDto){return this.ai.replaceKey(u.id,id,dto.label,dto.secret);}
  @Delete('api-keys/:id') @HttpCode(HttpStatus.OK) revoke(@CurrentUser()u:AuthenticatedUser,@Param('id')id:string){return this.ai.revokeKey(u.id,id);}
  @Get('admin/api-keys/system') @Roles('ADMIN') systemKeys(){return this.ai.systemKeys();}
  @Post('admin/api-keys/system') @Roles('ADMIN') systemKey(@Body()dto:KeyDto){return this.ai.addSystemKey(dto.provider_id,dto.label,dto.secret);}

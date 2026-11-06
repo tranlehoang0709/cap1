@@ -1,0 +1,29 @@
+Command: C:\Users\troc\.espressif\python_env\idf6.0_py3.14_env\Scripts\python.exe E:\esp\v6.0.3\esp-idf\tools/idf_monitor.py -p COM3 -b 115200 --toolchain-prefix xtensa-esp32s3-elf- --target esp32s3 --revision 0 E:\learn\AI_Project\cap1\xiaozhi-esp32\build-clean\xiaozhi.elf E:\learn\AI_Project\cap1\xiaozhi-esp32\build-clean\bootloader\bootloader.elf --force-color -m 'C:\Users\troc\.espressif\python_env\idf6.0_py3.14_env\Scripts\python.exe' 'E:\esp\v6.0.3\esp-idf\tools\idf.py' '-B' 'build-clean' '-p' 'COM3'
+--- WARNING: GDB cannot open serial ports accessed as COMx
+--- NOTE: Using \\.\COM3 instead...
+--- esp-idf-monitor 1.10.0 on \\.\COM3 115200
+--- Quit: Ctrl+] | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+--- 0x4038279e: esp_cpu_wait_for_intr at E:/esp/v6.0.3/esp-idf/components/esp_hw_support/cpu.c:64
+--- 0x403c8700: _stext at ??:?
+--- 0x403c88f4: call_start_cpu0 at E:/esp/v6.0.3/esp-idf/components/bootloader/subproject/main/bootloader_start.c:27
+--- NOTE: To exit from IDF monitor please use "Ctrl+]". Alternatively, you can use Ctrl+T Ctrl+X to exit.
+--- NOTE: To exit from IDF monitor please use "Ctrl+]". Alternatively, you can use Ctrl+T Ctrl+X to exit.
+--- NOTE: To exit from IDF monitor please use "Ctrl+]". Alternatively, you can use Ctrl+T Ctrl+X to exit.
+
+Traceback (most recent call last):
+  File [35m"E:\esp\v6.0.3\esp-idf\tools/idf_monitor.py"[0m, line [35m11[0m, in [35m<module>[0m
+    sys.exit([31msubprocess.run[0m[1;31m([sys.executable, '-m', 'esp_idf_monitor'] + sys.argv[1:])[0m.returncode)
+             [31m~~~~~~~~~~~~~~[0m[1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  File [35m"C:\Python314\Lib\subprocess.py"[0m, line [35m557[0m, in [35mrun[0m
+    stdout, stderr = [31mprocess.communicate[0m[1;31m(input, timeout=timeout)[0m
+                     [31m~~~~~~~~~~~~~~~~~~~[0m[1;31m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  File [35m"C:\Python314\Lib\subprocess.py"[0m, line [35m1213[0m, in [35mcommunicate[0m
+    [31mself.wait[0m[1;31m()[0m
+    [31m~~~~~~~~~[0m[1;31m^^[0m
+  File [35m"C:\Python314\Lib\subprocess.py"[0m, line [35m1279[0m, in [35mwait[0m
+    return [31mself._wait[0m[1;31m(timeout=timeout)[0m
+           [31m~~~~~~~~~~[0m[1;31m^^^^^^^^^^^^^^^^^[0m
+  File [35m"C:\Python314\Lib\subprocess.py"[0m, line [35m1605[0m, in [35m_wait[0m
+    result = _winapi.WaitForSingleObject(self._handle,
+                                         timeout_millis)
+[1;35mKeyboardInterrupt[0m

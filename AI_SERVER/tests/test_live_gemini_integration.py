@@ -101,7 +101,8 @@ def test_real_count_tokens_request_includes_system_prompt_and_closes_client():
         adapter=GeminiLLMAdapter(api_key='fixture-secret',client_factory=lambda *_:client)
         _,_,_,_,request=setup()
         assert await adapter.count_input_tokens(request,context())==9
-        instruction=count.call_args.kwargs['config']['system_instruction']
+        assert 'config' not in count.call_args.kwargs
+        instruction=count.call_args.kwargs['contents'][0]['parts'][0]['text']
         assert instruction.startswith(request.system_prompt+'\n\n')
         assert 'Current server local date and time:' in instruction
         closed.assert_awaited_once()

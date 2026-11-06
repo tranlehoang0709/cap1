@@ -122,7 +122,15 @@ def table(value, *, hide_index=True):
 
 
 def field(value, key, default=""):
-    return value.get(key, default) if isinstance(value, dict) else default
+    result = value.get(key, default) if isinstance(value, dict) else default
+    return default if result is None else result
+
+
+def optional_text(value):
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    return value or None
 
 
 def login_screen():
@@ -305,8 +313,8 @@ def assistant_settings():
         prompt = st.text_area("System prompt", value=field(profile, "system_prompt"), height=180)
         save = st.form_submit_button("Lưu cấu hình", disabled=bool(provider_id and (models_result is None or not model_options.get(model_label))))
     if save:
-        body = {"assistant_name": name.strip() or None, "system_prompt": prompt or None, "language_code": language.strip() or None,
-                "voice_code": voice.strip() or None, "preferred_provider_id": provider_id,
+        body = {"assistant_name": optional_text(name), "system_prompt": optional_text(prompt),
+                "language_code": optional_text(language), "voice_code": optional_text(voice), "preferred_provider_id": provider_id,
                 "preferred_llm_model_id": model_options.get(model_label)}
         result = write_api("profile", "/ai/profile", "PATCH", body)
         if result is not None:

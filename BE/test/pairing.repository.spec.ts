@@ -18,6 +18,22 @@ describe('PairingRepository SQL/transactions', ()=>{
     expect(connection.beginTransaction).toHaveBeenCalledTimes(1);expect(connection.commit).toHaveBeenCalledTimes(1);
     expect(connection.rollback).not.toHaveBeenCalled();expect(connection.release).toHaveBeenCalledTimes(1);
   });
+  it.each(['owner','pending','reset'])('refuses transition back to available with %s blocker',async blocker=>{
+    connection.execute.mockResolvedValue([[{now:new Date()}]]);
+    jest.spyOn(tx,'getActiveAssignment').mockResolvedValue(blocker==='owner'?{deviceId:'42',userId:'7'}:null);
+    jest.spyOn(tx,'hasAnyPending').mockResolvedValue(blocker==='pending');
+    jest.spyOn(tx,'resetAllowsPairing').mockResolvedValue(blocker!=='reset');
+    await expect(tx.setLifecycle('42','available')).rejects.toMatchObject({status:409});
+    expect(connection.execute.mock.calls.some(([sql])=>sql.startsWith('UPDATE devices'))).toBe(false);
+  });
+  it('permits rejection to return an unowned robot to available only after the reset gate',async()=>{
+    connection.execute.mockResolvedValue([[{now:new Date()}]]);
+    jest.spyOn(tx,'getActiveAssignment').mockResolvedValue(null);
+    jest.spyOn(tx,'hasAnyPending').mockResolvedValue(false);
+    jest.spyOn(tx,'resetAllowsPairing').mockResolvedValue(true);
+    await tx.setLifecycle('42','available');
+    expect(connection.execute).toHaveBeenLastCalledWith(expect.stringContaining('UPDATE devices'),['available','42']);
+  });
   it.each(['work','commit','rollback','begin'])('cleans up on %s failure', async stage=>{
     const error=new Error('failure');
     if(stage==='commit')connection.commit.mockRejectedValue(error);
@@ -38,6 +54,20 @@ describe('PairingRepository SQL/transactions', ()=>{
     connection.execute.mockResolvedValue([[]]);await tx.findCodeByHash('digest');
     const [sql,values]=connection.execute.mock.calls[0];expect(values).toEqual(['digest']);
     expect(sql).toContain('WHERE code_hash = ?');expect(sql.split('FROM')[0]).not.toContain('code_hash');
+  });
+  it('normalizes MySQL BIGINT boolean strings so zero is never treated as usable',async()=>{
+    connection.execute.mockResolvedValue([[{id:'5',deviceId:'42',usable:'0',createdAt:new Date()}]]);
+    expect((await tx.findCodeByHash('hash'))?.usable).toBe(0);expect((await tx.lockCode('5'))?.usable).toBe(0);
+  });
+  it('approval accepts a unique consumed reservation even after input expiry',async()=>{
+    connection.execute.mockResolvedValueOnce([[{consumedAt:new Date(),revokedAt:null,usable:'0'}]])
+      .mockResolvedValueOnce([[{id:'10'}]]);
+    await tx.reserveCodeForApproval('5','10');expect(connection.execute).toHaveBeenCalledTimes(2);
+  });
+  it.each(['revoked','ambiguous','missing'])('approval refuses %s reservation',async reason=>{
+    connection.execute.mockResolvedValueOnce([reason==='missing'?[]:[{consumedAt:new Date(),revokedAt:reason==='revoked'?new Date():null,usable:1}]])
+      .mockResolvedValueOnce([[{id:'10'},...(reason==='ambiguous'?[{id:'11'}]:[])]]);
+    await expect(tx.reserveCodeForApproval('5','10')).rejects.toMatchObject({code:'PAIRING_CONFLICT'});
   });
   it('uses a bound User scope for count and page, stable pagination and public fields', async ()=>{
     connection.execute.mockResolvedValueOnce([[{total:1}]]).mockResolvedValueOnce([[{id:'10',deviceId:'42',userId:'7',

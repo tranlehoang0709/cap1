@@ -1,4 +1,5 @@
 #include "websocket_protocol.h"
+#include "aiva_connection_mode.h"
 #include "application.h"
 #include "board.h"
 #include "settings.h"
@@ -103,10 +104,20 @@ void WebsocketProtocol::CloseAudioChannel(bool send_goodbye) {
 }
 
 bool WebsocketProtocol::OpenAudioChannel() {
+#if CONFIG_AIVA_DUAL_CONNECTION_MODE
+    const auto connection_mode = aiva::connection::GetMode();
+    Settings settings(aiva::connection::WebsocketNamespace(connection_mode), false);
+    std::string url = aiva::connection::GetWebsocketUrl();
+#else
     Settings settings("websocket", false);
     std::string url = settings.GetString("url");
+#endif
     std::string token = settings.GetString("token");
+#if CONFIG_AIVA_DUAL_CONNECTION_MODE
+    int version = aiva::connection::GetWebsocketVersion();
+#else
     int version = settings.GetInt("version");
+#endif
     if (version != 0) {
         version_ = version;
     }

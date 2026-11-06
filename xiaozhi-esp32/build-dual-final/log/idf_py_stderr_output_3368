@@ -1,0 +1,104 @@
+Command: C:\Users\troc\.espressif\python_env\idf6.0_py3.14_env\Scripts\python.exe E:\esp\v6.0.3\esp-idf\tools/idf_monitor.py -p COM3 -b 115200 --toolchain-prefix xtensa-esp32s3-elf- --target esp32s3 --revision 0 E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\xiaozhi.elf E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\bootloader\bootloader.elf --force-color -m 'C:\Users\troc\.espressif\python_env\idf6.0_py3.14_env\Scripts\python.exe' 'E:\esp\v6.0.3\esp-idf\tools\idf.py' '-p' 'COM3' '-B' 'build-dual-final'
+--- WARNING: GDB cannot open serial ports accessed as COMx
+--- NOTE: Using \\.\COM3 instead...
+--- esp-idf-monitor 1.10.0 on \\.\COM3 115200
+--- Quit: Ctrl+] | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+
+thread 'main' panicked at main.rs:54:9:
+assertion `left != right` failed: Failed to get path name. Error code: 5
+  left: 0
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1;31mxtensa-esp32s3-elf-addr2line -fiaC -e E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\xiaozhi.elf 0x4038279e: Command '['xtensa-esp32s3-elf-addr2line', '-fiaC', '-e', 'E:\\learn\\AI_Project\\cap1\\xiaozhi-esp32\\build-dual-final\\xiaozhi.elf', '0x4038279e']' returned non-zero exit status 101.[0m
+[1;31mELF file is missing or has changed, the build folder was probably modified.[0m
+
+thread 'main' panicked at main.rs:54:9:
+assertion `left != right` failed: Failed to get path name. Error code: 5
+  left: 0
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1;31mxtensa-esp32s3-elf-addr2line -fiaC -e E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\bootloader\bootloader.elf 0x403c8700: Command '['xtensa-esp32s3-elf-addr2line', '-fiaC', '-e', 'E:\\learn\\AI_Project\\cap1\\xiaozhi-esp32\\build-dual-final\\bootloader\\bootloader.elf', '0x403c8700']' returned non-zero exit status 101.[0m
+[1;31mELF file is missing or has changed, the build folder was probably modified.[0m
+
+thread 'main' panicked at main.rs:54:9:
+assertion `left != right` failed: Failed to get path name. Error code: 5
+  left: 0
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1;31mxtensa-esp32s3-elf-addr2line -fiaC -e E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\bootloader\bootloader.elf 0x403cb700: Command '['xtensa-esp32s3-elf-addr2line', '-fiaC', '-e', 'E:\\learn\\AI_Project\\cap1\\xiaozhi-esp32\\build-dual-final\\bootloader\\bootloader.elf', '0x403cb700']' returned non-zero exit status 101.[0m
+[1;31mELF file is missing or has changed, the build folder was probably modified.[0m
+
+thread 'main' panicked at main.rs:54:9:
+assertion `left != right` failed: Failed to get path name. Error code: 5
+  left: 0
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1;31mxtensa-esp32s3-elf-addr2line -fiaC -e E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\bootloader\bootloader.elf 0x403c88f4: Command '['xtensa-esp32s3-elf-addr2line', '-fiaC', '-e', 'E:\\learn\\AI_Project\\cap1\\xiaozhi-esp32\\build-dual-final\\bootloader\\bootloader.elf', '0x403c88f4']' returned non-zero exit status 101.[0m
+[1;31mELF file is missing or has changed, the build folder was probably modified.[0m
+
+thread 'main' panicked at main.rs:54:9:
+assertion `left != right` failed: Failed to get path name. Error code: 5
+  left: 0
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1;31mxtensa-esp32s3-elf-addr2line -fiaC -e E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\xiaozhi.elf 0x40385642: Command '['xtensa-esp32s3-elf-addr2line', '-fiaC', '-e', 'E:\\learn\\AI_Project\\cap1\\xiaozhi-esp32\\build-dual-final\\xiaozhi.elf', '0x40385642']' returned non-zero exit status 101.[0m
+[1;31mELF file is missing or has changed, the build folder was probably modified.[0m
+
+thread 'main' panicked at main.rs:54:9:
+assertion `left != right` failed: Failed to get path name. Error code: 5
+  left: 0
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1;31mxtensa-esp32s3-elf-addr2line -fiaC -e E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\bootloader\bootloader.elf 0x403c8700: Command '['xtensa-esp32s3-elf-addr2line', '-fiaC', '-e', 'E:\\learn\\AI_Project\\cap1\\xiaozhi-esp32\\build-dual-final\\bootloader\\bootloader.elf', '0x403c8700']' returned non-zero exit status 101.[0m
+[1;31mELF file is missing or has changed, the build folder was probably modified.[0m
+
+thread 'main' panicked at main.rs:54:9:
+assertion `left != right` failed: Failed to get path name. Error code: 5
+  left: 0
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1;31mxtensa-esp32s3-elf-addr2line -fiaC -e E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\bootloader\bootloader.elf 0x403cb700: Command '['xtensa-esp32s3-elf-addr2line', '-fiaC', '-e', 'E:\\learn\\AI_Project\\cap1\\xiaozhi-esp32\\build-dual-final\\bootloader\\bootloader.elf', '0x403cb700']' returned non-zero exit status 101.[0m
+[1;31mELF file is missing or has changed, the build folder was probably modified.[0m
+
+thread 'main' panicked at main.rs:54:9:
+assertion `left != right` failed: Failed to get path name. Error code: 5
+  left: 0
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1;31mxtensa-esp32s3-elf-addr2line -fiaC -e E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\bootloader\bootloader.elf 0x403c88f4: Command '['xtensa-esp32s3-elf-addr2line', '-fiaC', '-e', 'E:\\learn\\AI_Project\\cap1\\xiaozhi-esp32\\build-dual-final\\bootloader\\bootloader.elf', '0x403c88f4']' returned non-zero exit status 101.[0m
+[1;31mELF file is missing or has changed, the build folder was probably modified.[0m
+
+thread 'main' panicked at main.rs:54:9:
+assertion `left != right` failed: Failed to get path name. Error code: 5
+  left: 0
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1;31mxtensa-esp32s3-elf-addr2line -fiaC -e E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\xiaozhi.elf 0x40385642: Command '['xtensa-esp32s3-elf-addr2line', '-fiaC', '-e', 'E:\\learn\\AI_Project\\cap1\\xiaozhi-esp32\\build-dual-final\\xiaozhi.elf', '0x40385642']' returned non-zero exit status 101.[0m
+[1;31mELF file is missing or has changed, the build folder was probably modified.[0m
+
+thread 'main' panicked at main.rs:54:9:
+assertion `left != right` failed: Failed to get path name. Error code: 5
+  left: 0
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1;31mxtensa-esp32s3-elf-addr2line -fiaC -e E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\bootloader\bootloader.elf 0x403c8700: Command '['xtensa-esp32s3-elf-addr2line', '-fiaC', '-e', 'E:\\learn\\AI_Project\\cap1\\xiaozhi-esp32\\build-dual-final\\bootloader\\bootloader.elf', '0x403c8700']' returned non-zero exit status 101.[0m
+[1;31mELF file is missing or has changed, the build folder was probably modified.[0m
+
+thread 'main' panicked at main.rs:54:9:
+assertion `left != right` failed: Failed to get path name. Error code: 5
+  left: 0
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1;31mxtensa-esp32s3-elf-addr2line -fiaC -e E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\bootloader\bootloader.elf 0x403cb700: Command '['xtensa-esp32s3-elf-addr2line', '-fiaC', '-e', 'E:\\learn\\AI_Project\\cap1\\xiaozhi-esp32\\build-dual-final\\bootloader\\bootloader.elf', '0x403cb700']' returned non-zero exit status 101.[0m
+[1;31mELF file is missing or has changed, the build folder was probably modified.[0m
+
+thread 'main' panicked at main.rs:54:9:
+assertion `left != right` failed: Failed to get path name. Error code: 5
+  left: 0
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1;31mxtensa-esp32s3-elf-addr2line -fiaC -e E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\bootloader\bootloader.elf 0x403c88f4: Command '['xtensa-esp32s3-elf-addr2line', '-fiaC', '-e', 'E:\\learn\\AI_Project\\cap1\\xiaozhi-esp32\\build-dual-final\\bootloader\\bootloader.elf', '0x403c88f4']' returned non-zero exit status 101.[0m
+[1;31mELF file is missing or has changed, the build folder was probably modified.[0m
+--- ERROR: ClearCommError failed (PermissionError(13, 'The device does not recognize the command.', None, 22))
+--- Waiting for the device to reconnect..
+

@@ -17,9 +17,17 @@ def create_live_robot(state, ws, session, session_id, version):
     config, settings = session.config, state.robot_settings
     # Limits match the existing robot orchestrator: 16k history chars, 16 turns,
     # and <= 15 s input by default. Reserve before accepting turn audio.
-    prompt = config.profile.systemPrompt or ''
-    llm, limits = quota_gemini(state, session, input_bound_bytes=len(prompt.encode()) + 4 * (16000 + 16000),
-                               defer_turn_completion=True)
+    base_prompt = config.profile.systemPrompt or ''
+    prompt = (base_prompt.rstrip() + "\n\n" if base_prompt.strip() else "") + (
+        "Voice response requirements: Answer in Vietnamese using at most two short, complete sentences. "
+        "Keep the whole answer under 300 characters. Do not use Markdown, lists, headings, or unfinished text."
+    )
+    # Backend quota is denominated in provider tokens, not PCM/audio bytes.
+    # One UTF-8 byte per token is a conservative upper bound for the bounded
+    # prompt, transcript and 16k-character in-session history.
+    llm, limits = quota_gemini(state, session,
+                               input_bound_bytes=len(prompt.encode()) + 16000 + 16000,
+                               defer_turn_completion=True, expected_system_prompt=prompt)
     secret = config.credential
     stt_settings = GeminiSTTSettings(GEMINI_API_KEY=secret)
     tts_settings = GeminiTTSSettings(GEMINI_API_KEY=secret)
@@ -45,6 +53,10 @@ def create_live_robot(state, ws, session, session_id, version):
             playback_limits=PlaybackLimits(2, 4096, 1275, 8, 500, 16),
             limits=OrchestrationLimits(settings.deadline_seconds, .02, frames, frames*1920, 16, 16000),
             system_prompt=prompt, defer_stt_until_input_complete=True)
+        # The Gemini speech model has a tight request-rate budget. Preserve the
+        # generic streaming scheduler elsewhere, but use one TTS request per
+        # complete live robot answer so later turns are not cut mid-sentence.
+        orch.playback.coalesce_segments = True
         session.bind(orch)
         return orch, codec, llm, output
     except BaseException:
