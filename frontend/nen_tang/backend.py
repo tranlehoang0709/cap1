@@ -46,7 +46,7 @@ def _request(path, method="GET", body=None, *, auth=True, _retried=False):
             message = detail.get("code") if isinstance(detail, dict) else None
         if not isinstance(message, str):
             message = detail.get("reason") if isinstance(detail, dict) else None
-        if error.code == 401 and auth and not _retried and path not in ("/auth/login", "/auth/refresh"):
+        if error.code == 401 and auth and method == "GET" and not _retried and path not in ("/auth/login", "/auth/refresh"):
             refresh_token = st.session_state.get("refresh_token")
             if refresh_token:
                 try:
@@ -56,6 +56,8 @@ def _request(path, method="GET", body=None, *, auth=True, _retried=False):
                     return _request(path, method, body, auth=True, _retried=True)
                 except (BackendError, KeyError, TypeError):
                     clear_auth()
+        if error.code == 401 and auth:
+            clear_auth()
         raise BackendError(error.code, message or f"Backend trả mã HTTP {error.code}.") from None
     except (URLError, TimeoutError, OSError):
         raise BackendError(0, f"Không kết nối được Backend tại {base_url()}.") from None

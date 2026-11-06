@@ -1,10 +1,11 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Optional, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { AuthRepository } from './auth.repository';
+import { EmailVerificationService } from './email-verification.service';
 import { AccessTokenPayload, EmailVerificationPayload, RefreshTokenPayload, TokenPair } from './auth.types';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class AuthService {
     private readonly users: UsersService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    @Optional() private readonly verification?: EmailVerificationService,
   ) {}
 
   async register(email: string, displayName: string, password: string, actorId: string | null = null): Promise<{ id: string; email: string; display_name: string; verification_token: string }> {
@@ -27,6 +29,11 @@ export class AuthService {
       if (this.isDuplicate(error)) throw new ConflictException('Email is already registered');
       throw error;
     }
+  }
+
+  async resendVerification(email: string) {
+    if (!this.verification) throw new ServiceUnavailableException('EMAIL_VERIFICATION_DELIVERY_UNAVAILABLE');
+    return this.verification.resend(email, id => this.createEmailVerificationToken(id));
   }
 
   async verifyEmail(token: string): Promise<{ success: true }> {

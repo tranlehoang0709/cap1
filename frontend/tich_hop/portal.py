@@ -212,6 +212,37 @@ class PortalService(AuthService):
         return {"id": value["id"], "messages": messages}
 
 
+    def conversations(self, page=1, limit=10):
+        self._role("USER")
+        if type(page) is not int or page < 1 or type(limit) is not int or not 1 <= limit <= 100:
+            raise ApiError("validation", 400)
+        value = object_response(self.request("GET", "/conversations", query={"page": page, "limit": limit}))
+        if (not isinstance(value.get("items"), list) or type(value.get("total")) is not int
+                or value["total"] < 0 or len(value["items"]) > limit):
+            raise ApiError("response")
+        for item in value["items"]:
+            try:
+                identifier(object_response(item).get("id"))
+            except ValueError:
+                raise ApiError("response") from None
+            if item.get("user_id") is not None and item["user_id"] != self.session.identity().id:
+                raise ApiError("response")
+        return value
+
+    def conversation(self, conversation_id):
+        user = self._role("USER")
+        value = object_response(self.request("GET", "/conversations/" + identifier(conversation_id)))
+        if value.get("id") != conversation_id or value.get("user_id") != user.id:
+            raise ApiError("response")
+        messages = value.get("messages")
+        if (not isinstance(messages, list) or any(not isinstance(m, dict)
+                or m.get("role") not in ("user", "assistant", "system")
+                or not isinstance(m.get("content"), str) for m in messages)):
+            raise ApiError("response")
+        return {"id": conversation_id, "messages": [{"role": m["role"], "content": m["content"]} for m in messages]}
+
+
+
 class AuthenticatedChatPortal(PortalService):
     """Reuse main's verified login session for chat without a second auth store.
 

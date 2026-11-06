@@ -121,6 +121,17 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
     }
   }
 
+  const delivery = environment.EMAIL_VERIFICATION_DELIVERY ?? 'disabled';
+  if (!['disabled', 'development-console'].includes(String(delivery))) throw new Error('Invalid EMAIL_VERIFICATION_DELIVERY');
+  if (delivery === 'development-console') {
+    if (environment.NODE_ENV !== 'development') throw new Error('Console email verification requires development');
+    try {
+      const url = new URL(String(environment.EMAIL_VERIFICATION_FRONTEND_URL ?? ''));
+      if (!['http:', 'https:'].includes(url.protocol) || !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) ||
+          url.username || url.password || url.search || url.hash) throw new Error();
+    } catch { throw new Error('EMAIL_VERIFICATION_FRONTEND_URL must be a loopback HTTP(S) URL without credentials/query/fragment'); }
+  }
+
   return environment;
 }
 

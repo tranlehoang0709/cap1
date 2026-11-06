@@ -91,6 +91,11 @@ class Backend:
             return Response({"assistant_name": "Fixture assistant", "system_prompt": "Fixture prompt",
                              "preferred_provider_id": "2", "preferred_llm_model_id": "3",
                              "language_code": "vi", "voice_code": None})
+        if path == "/conversations":
+            query = parse_qs(url.query)
+            return Response({"items": [], "total": 0, "page": int(query["page"][0]), "limit": int(query["limit"][0])})
+        if path == "/ai/providers":
+            return Response([{"id": "2", "name": "Fixture Gemini", "code": "GEMINI", "is_enabled": True}])
         if path == "/web-chat/messages":
             return Response({"id": "11", "user_id": "9", "messages": [
                 {"role": "user", "content": body["content"]}, {"role": "assistant", "content": "Fixture answer"}]})

@@ -173,3 +173,7 @@
   .stApp .st-key-chat_main .chat-welcome{padding:24px 8px}
 }
 @media(prefers-reduced-motion:reduce){.stApp *,.stApp *::before,.stApp *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Restored API metrics can contain real assistant names, not only short demo labels. */
+.st-key-dashboard_metrics [data-testid="stMetricValue"], .st-key-dashboard_metrics [data-testid="stMetricValue"] > div { white-space:normal; overflow-wrap:anywhere; text-overflow:clip; line-height:1.2; }
+@media(max-width:767px){.st-key-dashboard_metrics [data-testid="stMetricValue"]{font-size:clamp(1.25rem,5vw,1.8rem)}}

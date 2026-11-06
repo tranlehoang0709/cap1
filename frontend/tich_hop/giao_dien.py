@@ -243,30 +243,112 @@ def account_page(api, account):
 
 
 def api_chat(api):
-    """Display only authenticated Backend answers; no demo state or provider override."""
+    """Baseline workspace, with only authenticated Backend data and execution."""
     identity = api.session.identity()
     if identity is None or identity.role != "USER":
         raise ApiError("forbidden", 403)
     profile = api.ai_profile()
-    st.subheader(profile.get("assistant_name") or "Trợ lý AI")
-    st.caption("Nhà cung cấp và model theo cấu hình trợ lý đã lưu trên Backend.")
     configured = profile.get("preferred_provider_id") is not None
-    if not configured:
-        st.info("Chưa có nhà cung cấp trong cấu hình trợ lý. Cần lưu AI Profile trước khi trò chuyện.")
-    result_key = "api_chat_result_" + identity.id
-    result = st.session_state.get(result_key)
-    if result:
-        for message in result["messages"]:
-            if message["role"] in ("user", "assistant"):
-                with st.chat_message(message["role"]):
-                    st.write(message["content"])
-    text = st.chat_input("Nhắn tin cho AIVA…", disabled=not configured, key="api_chat_input_" + identity.id)
-    st.caption("Yêu cầu có thể mất tới 100 giây. Khi lỗi mạng hoặc hết thời gian chờ, hãy kiểm tra kết quả trước khi gửi lại.")
-    if text:
-        with st.spinner("Đang chờ phản hồi từ AI Server…"):
-            # Assignment occurs only on a validated response; an error never creates a fake answer.
-            st.session_state[result_key] = api.chat(text)
-        st.rerun()
+    uid = identity.id
+    result_key = "api_chat_result_" + uid
+    selected_key = "chat_selected_" + uid
+    with st.container(key="chat_workspace"):
+        rail, main = st.columns([1, 3.4], gap="large")
+        with rail, st.container(key="chat_history"):
+            st.subheader("Hội thoại")
+            if st.button("＋ Đoạn chat mới", width="stretch", key="chat_new_" + uid):
+                st.session_state.pop(result_key, None)
+                st.session_state.pop(selected_key, None)
+                st.rerun()
+            search = st.text_input("Tìm kiếm hội thoại…", key="chat_search_" + uid,
+                                   placeholder="Tìm kiếm hội thoại…", label_visibility="collapsed").strip()
+            listing = None
+            try:
+                page_key = "chat_history_page_" + uid
+                page = max(1, int(st.session_state.get(page_key, 1)))
+                listing = api.conversations(page, 10)
+                records = listing["items"]
+                if search:
+                    records = []
+                    total = None
+                    for index in range(1, 101):
+                        batch = api.conversations(index, 100)
+                        if total is not None and total != batch["total"]:
+                            raise ApiError("conflict", 409)
+                        total = batch["total"]
+                        records.extend(batch["items"])
+                        if len(records) == total:
+                            break
+                        if not batch["items"] or len(records) > total:
+                            raise ApiError("response")
+                    else:
+                        raise ApiError("response")
+                    records = [item for item in records if search.casefold() in
+                               str(item.get("title") or "").casefold()]
+                    st.caption(f"{len(records)} kết quả tìm kiếm")
+                else:
+                    pages = max(1, (listing["total"] + 9) // 10)
+                    if page > pages:
+                        st.session_state[page_key] = pages
+                        st.rerun()
+                    st.number_input("Trang hội thoại", min_value=1, max_value=pages,
+                                    key=page_key, disabled=pages == 1)
+                if not records:
+                    st.caption("Chưa có hội thoại phù hợp.")
+                for item in records:
+                    title = str(item.get("title") or "Hội thoại chưa đặt tên")
+                    if st.button(title, key="open_chat_" + item["id"], width="stretch",
+                                 type="primary" if st.session_state.get(selected_key) == item["id"] else "secondary"):
+                        saved = api.conversation(item["id"])
+                        st.session_state[result_key] = saved
+                        st.session_state[selected_key] = item["id"]
+                        st.rerun()
+            except ApiError as error:
+                st.warning(str(error))
+            st.caption("Danh sách gồm các hội thoại đã được Backend lưu.")
+        with main, st.container(key="chat_main"):
+            st.subheader(profile.get("assistant_name") or "Trợ lý AI")
+            provider = "Chưa chọn provider"
+            if configured:
+                provider = "Provider " + profile["preferred_provider_id"]
+                try:
+                    available = api.request("GET", "/ai/providers")
+                    if isinstance(available, list):
+                        provider = next((p.get("name") or p.get("code") for p in available
+                                         if p.get("id") == profile["preferred_provider_id"]), provider)
+                except ApiError:
+                    pass
+            st.caption(f"{provider} · Nhà cung cấp và model theo cấu hình trợ lý đã lưu trên Backend.")
+            if not configured:
+                st.info("Chưa có nhà cung cấp trong cấu hình trợ lý. Cần lưu AI Profile trước khi trò chuyện.")
+            viewing = st.session_state.get(selected_key) is not None
+            if viewing:
+                st.info("Đang xem lịch sử. Chọn Đoạn chat mới để gửi câu hỏi mới.")
+            with st.popover("⋯ Hội thoại"):
+                st.caption("Đổi tên, kết thúc và tiếp tục hội thoại chưa có API được thống nhất.")
+                st.button("Đổi tên", disabled=True, key="chat_rename_unavailable")
+                st.button("Kết thúc phiên chat", disabled=True, key="chat_end_unavailable")
+                st.button("Tiếp tục trò chuyện", disabled=True, key="chat_resume_unavailable")
+            result = st.session_state.get(result_key)
+            with st.container(key="chat_messages", height=380):
+                if result:
+                    for message in result["messages"]:
+                        if message["role"] in ("user", "assistant"):
+                            with st.chat_message(message["role"]):
+                                st.write(message["content"])
+                else:
+                    st.markdown('<div class="chat-welcome"><h2>Bạn muốn trò chuyện về điều gì?</h2><p>Bắt đầu một câu hỏi cùng AIVA.</p></div>', unsafe_allow_html=True)
+            text = st.chat_input("Nhắn tin cho AIVA…", disabled=not configured or viewing,
+                                 key="api_chat_input_" + uid)
+            st.caption("Yêu cầu có thể mất tới 100 giây. Khi lỗi mạng hoặc hết thời gian chờ, hãy kiểm tra kết quả trước khi gửi lại.")
+            if text:
+                with st.spinner("Đang chờ phản hồi từ AI Server…"):
+                    reply = api.chat(text)
+                    st.session_state[result_key] = reply
+                st.rerun()
+
+
+
 
 
 def run():

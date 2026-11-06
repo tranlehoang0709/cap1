@@ -12,7 +12,7 @@ def render_frame(frame, **kwargs):
 
 
 
-def table(rows, key, filters=()):
+def table(rows, key, filters=(), *, page_only=False):
     """Bảng phân trang với bộ lọc và thanh công cụ Streamlit hiện có."""
     if not rows:
         st.info("Chưa có dữ liệu để hiển thị.")
@@ -72,7 +72,8 @@ def table(rows, key, filters=()):
         st.info("Không có kết quả phù hợp. Thử từ khóa khác hoặc xóa bộ lọc.")
     else:
         render_frame(frame.iloc[(page - 1) * size:page * size], hide_index=True, width="stretch")
-    return frame.to_dict("records")
+    result = frame.iloc[(page - 1) * size:page * size] if page_only else frame
+    return result.to_dict("records")
 
 
 

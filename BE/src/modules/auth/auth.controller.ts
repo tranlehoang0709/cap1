@@ -10,6 +10,7 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -22,6 +23,15 @@ export class AuthController {
   @ApiCreatedResponse({ description: 'Account created with the USER role' })
   register(@Body() dto: RegisterDto) {
     return this.auth.register(dto.email, dto.display_name, dto.password);
+  }
+
+  @Public()
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Request email verification without disclosing account eligibility' })
+  resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.auth.resendVerification(dto.email);
   }
 
   @Public()

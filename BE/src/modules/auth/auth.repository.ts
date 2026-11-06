@@ -7,6 +7,14 @@ import { PublicUser, UserWithCredential } from '../users/users.types';
 export class AuthRepository {
   constructor(@Inject(MYSQL_POOL) private readonly pool: Pool) {}
 
+  async findEmailVerificationAccount(email: string) {
+    const [rows] = await this.pool.execute<Array<RowDataPacket & { id: string; status: string; email_verified_at: Date | null; role_count: number; role: string }>>(
+      `SELECT u.id,u.status,u.email_verified_at,COUNT(r.code) AS role_count,MAX(r.code) AS role
+       FROM users u LEFT JOIN user_roles ur ON ur.user_id=u.id LEFT JOIN roles r ON r.id=ur.role_id
+       WHERE u.email=? GROUP BY u.id,u.status,u.email_verified_at LIMIT 1`, [email]);
+    return rows[0] ?? null;
+  }
+
   async findCredentialsByEmail(email: string): Promise<UserWithCredential | null> {
     const [rows] = await this.pool.execute<UserRow[]>(
       `SELECT id, email, password_hash, display_name, status, email_verified_at, last_login_at, created_at, updated_at

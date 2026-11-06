@@ -877,3 +877,16 @@ The currently active application routes include `/auth/register`, `/auth/login`,
 Registration returns a one-time `verification_token` for development delivery;
 the token is signed for 15 minutes and is consumed by `POST /auth/verify-email`.
 Production deployments should deliver that token through the configured email provider.
+
+
+## Email verification resend (local development)
+
+`POST /auth/resend-verification` accepts only `{email}` (valid email, max 255).
+HTTP 202 always uses `{"message":"Nếu tài khoản đủ điều kiện, hướng dẫn xác minh sẽ được gửi."}`
+for eligible, unknown, already-verified, disabled and per-email limited accounts.
+IP limit: 5/minute => 429. Email limits: 60 seconds and 3/rolling hour in one
+process's RAM; reset on process restart. Missing/redirected/production console
+channel fails closed (503); no production transport is provisioned.
+Existing `/auth/verify-email` and register response contracts remain unchanged.
+See `docs/email-verification.md` for TTY, fragment handling, token-replay limitations,
+production blockers and the operator workflow. This is not password recovery.

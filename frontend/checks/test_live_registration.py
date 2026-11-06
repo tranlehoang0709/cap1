@@ -13,6 +13,7 @@ class RegistrationTests(unittest.TestCase):
         app.text_input[2].set_value('AIVA Local User')
         app.text_input[3].set_value('unit@example.invalid')
         app.text_input[4].set_value('unit-only-password')
+        app.text_input[5].set_value('unit-only-password')
         with patch.object(live,'api',return_value={'id':'7','verification_token':'unit-only-private-verification'}) as api:
             app.button[1].click().run()
             self.assertEqual(api.call_count,1)
@@ -23,7 +24,7 @@ class RegistrationTests(unittest.TestCase):
         self.assertEqual(len(app.success),0)
     def test_explicit_verification_uses_official_endpoint(self):
         app=AppTest.from_string(APP).run()
-        app.text_input[5].set_value('unit-only-private-verification')
+        next(i for i in app.text_input if i.label == 'Mã xác minh email').set_value('unit-only-private-verification')
         with patch.object(live,'api',return_value={'success':True}) as api:
             app.button[2].click().run()
             api.assert_called_once_with('/auth/verify-email','POST',{'token':'unit-only-private-verification'},auth=False)
