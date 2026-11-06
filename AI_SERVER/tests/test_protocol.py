@@ -24,7 +24,7 @@ def test_firmware_snapshot_hashes_match_workspace_sources():
     assert snapshot["files"]
 
     assert snapshot["baseline_status"] == "SOURCE_HASHES_ONLY_NOT_BUILD_OR_HARDWARE_APPROVAL"
-    assert hashlib.sha256(HISTORICAL_SNAPSHOT.read_bytes()).hexdigest() == snapshot["previous_snapshot"]["sha256"]
+    assert hashlib.sha256(HISTORICAL_SNAPSHOT.read_bytes().replace(b"\r\n", b"\n")).hexdigest() == snapshot["previous_snapshot"]["sha256"]
     problems = []
     for source in snapshot["files"]:
         path = (SERVER_ROOT / source["path"]).resolve()

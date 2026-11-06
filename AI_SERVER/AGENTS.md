@@ -495,3 +495,18 @@ scoped `status/listening` acknowledgement before mic capture. No audio file is
 written. Status events carry session and turn IDs. Real BE, TLS, Gemini
 credential readiness and SD2 hardware remain separate acceptance gates.
 >>>>>>> 8656999 (Update AIVA IoT integration and SD2)
+
+
+## D4-S1-05 isolated mock diagnostic
+
+| From | Via | Note |
+|---|---|---|
+| `tools/mock_chat/run.py` | Explicit mock children | Loopback only |
+| `scripts/mock_chat.py` | `/internal/web-chat` | Fixture token |
+| Nest mock runtime | FastAPI mock reply | RAM only |
+
+The standalone mock app is never imported by `app.main`. It requires explicit
+development/test opt-in, uses no provider key or database, and does not replace
+production authentication, Local routing, quota, history/privacy or TLS behavior.
+See `../../tools/mock_chat/README.md`. Cross-process mock evidence is not a live
+provider or hardware acceptance result.

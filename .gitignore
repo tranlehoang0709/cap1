@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+!.env.test.example
+.venv/
+node_modules/
+__pycache__/
+.pytest_cache/
+.aiva-local-private/
+*.log
+*.bak
+*.backup*
+run_all.bat.backup*s
