@@ -22,7 +22,8 @@ _REDACTIONS = (
     re.compile(r"\bsk-[A-Za-z0-9_-]{12,}\b"),
 )
 _SAFE_CONTEXT = {"connection_id", "session_ref", "device_ref", "close_code", "reason", "error_type",
-                 "turn_ref", "state", "stage", "latency_ms"}
+                 "turn_ref", "state", "stage", "latency_ms", "session_valid", "config_present",
+                 "gemini_provider", "credential_present", "credential_reference", "system_prompt"}
 _SECRET_KEY = re.compile(
     r"(?i)^(?:authorization|device[_ -]?token|access[_ -]?token|refresh[_ -]?token|"
     r"api[_ -]?key|secret|password)$"

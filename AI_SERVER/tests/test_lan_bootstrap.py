@@ -21,6 +21,7 @@ class Backend:
     def __init__(self):
         self.calls = []
         self.fail = None
+        self.resolved = config()
 
     async def aclose(self):
         pass
@@ -41,7 +42,7 @@ class Backend:
         self.calls.append(("resolve", request.deviceId))
         if self.fail:
             raise self.fail
-        return config()
+        return self.resolved
 
 
 @pytest.fixture
@@ -54,8 +55,11 @@ def configured(monkeypatch):
     monkeypatch.setattr(BackendSettings, "create_client", lambda self: backend)
     from app.api import lan_robot
     def pipeline(state,ws,session,session_id,version):
-        orch=SimpleNamespace(state=SessionState.LISTENING,turn=None,task=None)
-        return orch,SimpleNamespace(close=Mock()),SimpleNamespace(prepare=AsyncMock()),SimpleNamespace()
+        orch=SimpleNamespace(key=session.key,state=SessionState.LISTENING,turn=None,task=None,
+                             start_turn=Mock())
+        session.bind(orch)
+        backend.llm=SimpleNamespace(prepare=AsyncMock())
+        return orch,SimpleNamespace(close=Mock()),backend.llm,SimpleNamespace()
     monkeypatch.setattr(lan_robot,'create_live_robot',pipeline)
     return create_app(), backend
 
@@ -282,6 +286,20 @@ def test_config_failure_cannot_start_media(configured):
             ws.send_json({'type': 'listen', 'state': 'start', 'mode':'manual', 'session_id': session})
             assert ws.receive()['code'] == 1013
         assert backend.calls[-1] == ('resolve', '42')
+
+
+def test_listen_ack_does_not_reserve_quota_before_audio(configured):
+    app, backend = configured
+    with secure_client(app) as client:
+        with client.websocket_connect('wss://testserver/ws/robot', headers=PROOF) as ws:
+            session = hello(ws)
+            ws.send_json({'type': 'listen', 'state': 'start', 'mode': 'manual',
+                          'session_id': session})
+            message = ws.receive_json()
+            assert message['type'] == 'status'
+            assert message['state'] == 'listening'
+            assert message['turn_id']
+            backend.llm.prepare.assert_not_awaited()
 
 
 def test_silent_peer_times_out_and_releases_capacity(configured, monkeypatch):

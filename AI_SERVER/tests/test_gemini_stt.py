@@ -71,6 +71,19 @@ def test_valid_ogg_transcribes_via_adapter_and_returns_real_provider_text():
     assert part.inline_data.data == ogg_opus()
 
 
+def test_dedicated_transcribe_model_uses_audio_only_contract():
+    client = Client(text="Xin chao.")
+    dedicated = GeminiSTTAdapter(api_key="fixture-secret", model="gemini-3.5-transcribe",
+        client_factory=lambda *_: client)
+    result = asyncio.run(transcribe(dedicated, Audio([ogg_opus()]),
+        AudioContext(deadline=time.monotonic() + 5)))
+    assert result.text == "Xin chao."
+    args = client.calls[0]
+    assert len(args["contents"]) == 1
+    assert args["contents"][0].inline_data.mime_type == "audio/ogg"
+    assert args["config"].audio_transcription_config.language_codes == ["vi-VN"]
+
+
 def test_empty_audio_rejected_before_provider_request():
     client, source = Client(), Audio([])
     with pytest.raises(AudioError) as error:

@@ -6257,6 +6257,19 @@
                         "children": [
                             {
                                 "children": [],
+                                "depends_on": "AIVA_LAN_BOOTSTRAP",
+                                "help": "Cancel an admitted voice turn if VAD has not detected real speech in\nthis interval. This is independent from the fixed 2000 ms end-of-speech\nsilence window and therefore never limits how long the user may speak.",
+                                "id": "AIVA_SPEECH_START_TIMEOUT_MS",
+                                "name": "AIVA_SPEECH_START_TIMEOUT_MS",
+                                "range": [
+                                    3000,
+                                    30000
+                                ],
+                                "title": "Timeout waiting for speech after wake word (ms)",
+                                "type": "int"
+                            },
+                            {
+                                "children": [],
                                 "depends_on": "AIVA_LAN_BOOTSTRAP && AIVA_SD2_USB_DEV_CONSOLE",
                                 "help": "Preserve the historical LAN wifi/websocket NVS namespaces and add an\nindependent WIFI_INTERNET profile using the public Funnel hostname.\nMissing mode state defaults to LAN. There is no automatic migration or\nfallback between profiles.",
                                 "id": "AIVA_DUAL_CONNECTION_MODE",
@@ -6348,7 +6361,7 @@
                 ],
                 "depends_on": null,
                 "help": "Select the assets to flash.",
-                "id": "xiaozhi-assistant-flash-assets-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-65",
+                "id": "xiaozhi-assistant-flash-assets-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-75",
                 "name": null,
                 "title": "Flash Assets",
                 "type": "choice"
@@ -6758,7 +6771,7 @@
                 ],
                 "depends_on": null,
                 "help": "Select device display language",
-                "id": "xiaozhi-assistant-default-language-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-92",
+                "id": "xiaozhi-assistant-default-language-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-102",
                 "name": null,
                 "title": "Default Language",
                 "type": "choice"
@@ -8398,7 +8411,7 @@
                 ],
                 "depends_on": null,
                 "help": "Select the physical board hardware implementation.\nThe OTA board type and firmware variant name are configured separately.",
-                "id": "xiaozhi-assistant-target-board-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-178",
+                "id": "xiaozhi-assistant-target-board-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-188",
                 "name": "BOARD_TYPE",
                 "title": "Target Board",
                 "type": "choice"
@@ -8428,7 +8441,7 @@
                 ],
                 "depends_on": "BOARD_TYPE_WAVESHARE_ESP32_P4_NANO",
                 "help": "Select the network connection used by this board.",
-                "id": "xiaozhi-assistant-network-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-682",
+                "id": "xiaozhi-assistant-network-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-692",
                 "name": "XIAOZHI_NETWORK_TYPE",
                 "title": "Network Type",
                 "type": "choice"
@@ -8450,7 +8463,7 @@
                         ],
                         "depends_on": "XIAOZHI_NETWORK_ETHERNET",
                         "help": null,
-                        "id": "xiaozhi-assistant-ethernet-configuration-ethernet-phy-device-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-703",
+                        "id": "xiaozhi-assistant-ethernet-configuration-ethernet-phy-device-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-713",
                         "name": "XIAOZHI_ETH_PHY_MODEL",
                         "title": "Ethernet PHY Device",
                         "type": "choice"
@@ -8497,7 +8510,7 @@
                     }
                 ],
                 "depends_on": "XIAOZHI_NETWORK_ETHERNET",
-                "id": "xiaozhi-assistant-ethernet-configuration-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-700",
+                "id": "xiaozhi-assistant-ethernet-configuration-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-710",
                 "title": "Ethernet Configuration",
                 "type": "menu"
             },
@@ -8526,7 +8539,7 @@
                 ],
                 "depends_on": "BOARD_TYPE_ESP32_S3_LCD_EV_BOARD",
                 "help": null,
-                "id": "xiaozhi-assistant-ev_board-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-747",
+                "id": "xiaozhi-assistant-ev_board-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-757",
                 "name": "ESP32_S3_LCD_EV_BOARD_VERSION",
                 "title": "EV_BOARD Type",
                 "type": "choice"
@@ -8556,7 +8569,7 @@
                 ],
                 "depends_on": "BOARD_TYPE_WK_ESP32S3_DEV",
                 "help": "Select display type for WK ESP32S3 DEV board.",
-                "id": "xiaozhi-assistant-wk-esp32s3-dev-display-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-758",
+                "id": "xiaozhi-assistant-wk-esp32s3-dev-display-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-768",
                 "name": "WK_ESP32S3_DEV_DISPLAY_TYPE",
                 "title": "WK ESP32S3 DEV Display Type",
                 "type": "choice"
@@ -8596,7 +8609,7 @@
                 ],
                 "depends_on": "BOARD_TYPE_BREAD_COMPACT_WIFI || BOARD_TYPE_BREAD_COMPACT_ML307 || BOARD_TYPE_BREAD_COMPACT_NT26 || BOARD_TYPE_BREAD_COMPACT_ESP32 || BOARD_TYPE_HU_087 || (BOARD_TYPE_WK_ESP32S3_DEV && WK_ESP32S3_DEV_DISPLAY_OLED)",
                 "help": "OLED Monochrome Display Type",
-                "id": "xiaozhi-assistant-oled-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-773",
+                "id": "xiaozhi-assistant-oled-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-783",
                 "name": "DISPLAY_OLED_TYPE",
                 "title": "OLED Type",
                 "type": "choice"
@@ -8776,7 +8789,7 @@
                 ],
                 "depends_on": "BOARD_TYPE_BREAD_COMPACT_WIFI_LCD || BOARD_TYPE_BREAD_COMPACT_ESP32_LCD || BOARD_TYPE_WDMOMO_CGC || BOARD_TYPE_BREAD_COMPACT_WIFI_CAM || (BOARD_TYPE_WK_ESP32S3_DEV && WK_ESP32S3_DEV_DISPLAY_LCD)",
                 "help": "LCD Display Type",
-                "id": "xiaozhi-assistant-lcd-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-788",
+                "id": "xiaozhi-assistant-lcd-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-798",
                 "name": "DISPLAY_LCD_TYPE",
                 "title": "LCD Type",
                 "type": "choice"
@@ -8806,7 +8819,7 @@
                 ],
                 "depends_on": "BOARD_TYPE_WK_ESP32S3_DEV",
                 "help": "Board Type",
-                "id": "xiaozhi-assistant-board_type_wk_esp32s3_dev-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-830",
+                "id": "xiaozhi-assistant-board_type_wk_esp32s3_dev-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-840",
                 "name": "WK_BOARD_TYPE",
                 "title": "BOARD_TYPE_WK_ESP32S3_DEV",
                 "type": "choice"
@@ -8836,7 +8849,7 @@
                 ],
                 "depends_on": "BOARD_TYPE_ESP32_S3_KORVO_2_V3 || BOARD_TYPE_ESP32_S3_KORVO_2_V3_RNDIS",
                 "help": "LCD Display Type",
-                "id": "xiaozhi-assistant-esp32s3_korvo2_v3-lcd-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-843",
+                "id": "xiaozhi-assistant-esp32s3_korvo2_v3-lcd-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-853",
                 "name": "DISPLAY_ESP32S3_KORVO2_V3",
                 "title": "ESP32S3_KORVO2_V3 LCD Type",
                 "type": "choice"
@@ -8886,7 +8899,7 @@
                 ],
                 "depends_on": "BOARD_TYPE_WAVESHARE_ESP32_S3_CAM_XXXX",
                 "help": "LCD Display Type",
-                "id": "xiaozhi-assistant-esp32s3_cam-lcd-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-855",
+                "id": "xiaozhi-assistant-esp32s3_cam-lcd-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-865",
                 "name": "DISPLAY_ESP32S3_CAM_XXXX",
                 "title": "ESP32S3_CAM LCD Type",
                 "type": "choice"
@@ -8916,7 +8929,7 @@
                 ],
                 "depends_on": "BOARD_TYPE_WAVESHARE_ESP32_S3_AUDIO_BOARD",
                 "help": "LCD Display Type",
-                "id": "xiaozhi-assistant-esp32s3_audio_board-lcd-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-874",
+                "id": "xiaozhi-assistant-esp32s3_audio_board-lcd-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-884",
                 "name": "DISPLAY_ESP32S3_AUDIO_BOARD",
                 "title": "ESP32S3_AUDIO_BOARD LCD Type",
                 "type": "choice"
@@ -8946,7 +8959,7 @@
                 ],
                 "depends_on": "BOARD_TYPE_WAVESHARE_ESP32_S3_TOUCH_LCD_1_85C",
                 "help": "hardware version",
-                "id": "xiaozhi-assistant-esp32s3_touch_lcd_1_85c-version-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-886",
+                "id": "xiaozhi-assistant-esp32s3_touch_lcd_1_85c-version-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-896",
                 "name": "DISPLAY_ESP32S3_TOUCH_LCD_1_85C",
                 "title": "ESP32S3_TOUCH_LCD_1_85C version",
                 "type": "choice"
@@ -8986,7 +8999,7 @@
                 ],
                 "depends_on": null,
                 "help": "Select display style for Xiaozhi device",
-                "id": "xiaozhi-assistant-select-display-style-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-899",
+                "id": "xiaozhi-assistant-select-display-style-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-909",
                 "name": "DISPLAY_STYLE",
                 "title": "Select display style",
                 "type": "choice"
@@ -9046,7 +9059,7 @@
                 ],
                 "depends_on": null,
                 "help": "Choose the type of wake word implementation to use",
-                "id": "xiaozhi-assistant-wake-word-implementation-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-929",
+                "id": "xiaozhi-assistant-wake-word-implementation-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-939",
                 "name": "WAKE_WORD_TYPE",
                 "title": "Wake Word Implementation Type",
                 "type": "choice"
@@ -9169,7 +9182,7 @@
                     }
                 ],
                 "depends_on": null,
-                "id": "xiaozhi-assistant-wifi-configuration-method-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-1036",
+                "id": "xiaozhi-assistant-wifi-configuration-method-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-1046",
                 "title": "WiFi Configuration Method",
                 "type": "menu"
             },
@@ -9303,7 +9316,7 @@
                                 ],
                                 "depends_on": "XIAOZHI_ENABLE_ROTATE_CAMERA_IMAGE && !IDF_TARGET_ESP32",
                                 "help": "Camera image rotation angle.",
-                                "id": "xiaozhi-assistant-camera-configuration-enable-camera-image-rotation-camera-image-rotation-angle-clockwise--E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-1154",
+                                "id": "xiaozhi-assistant-camera-configuration-enable-camera-image-rotation-camera-image-rotation-angle-clockwise--E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-1164",
                                 "name": "XIAOZHI_CAMERA_IMAGE_ROTATION_ANGLE",
                                 "title": "Camera Image Rotation Angle (clockwise)",
                                 "type": "choice"
@@ -9320,7 +9333,7 @@
                     }
                 ],
                 "depends_on": "!IDF_TARGET_ESP32",
-                "id": "xiaozhi-assistant-camera-configuration-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-1067",
+                "id": "xiaozhi-assistant-camera-configuration-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-1077",
                 "title": "Camera Configuration",
                 "type": "menu"
             },
@@ -9351,7 +9364,7 @@
                         ],
                         "depends_on": "BOARD_TYPE_TAIJI_PI_S3",
                         "help": "I2S \u7c7b\u578b\u9009\u62e9",
-                        "id": "xiaozhi-assistant-taijipai_s3_config-taiji-pi-s3-i2s-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-1170",
+                        "id": "xiaozhi-assistant-taijipai_s3_config-taiji-pi-s3-i2s-type-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-1180",
                         "name": "I2S_TYPE_TAIJIPI_S3",
                         "title": "taiji-pi-S3 I2S Type",
                         "type": "choice"
@@ -9368,7 +9381,7 @@
                     }
                 ],
                 "depends_on": "BOARD_TYPE_TAIJI_PI_S3",
-                "id": "xiaozhi-assistant-taijipai_s3_config-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-1168",
+                "id": "xiaozhi-assistant-taijipai_s3_config-E:-learn-AI_Project-cap1-xiaozhi-esp32-main-Kconfig.projbuild-1178",
                 "title": "TAIJIPAI_S3_CONFIG",
                 "type": "menu"
             }

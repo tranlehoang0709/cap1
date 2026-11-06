@@ -66,24 +66,35 @@ if not errorlevel 1 (
 echo Starting AIVA-IoT services in separate windows...
 rem Clear ERRORLEVEL left by successful negative findstr checks above.
 ver >nul
-start "AIVA AI Server LAN" /D "%~dp0AI_SERVER" cmd /k "call run_lan.cmd"
-if errorlevel 1 goto :start_failed
+
+rem Start Backend first so integrated authorize/config/quota calls have a target.
+netstat -ano | findstr /R /C:":3000 .*LISTENING" >nul
+if errorlevel 1 start "AIVA Backend" /D "%~dp0BE" "%ComSpec%" /k npm.cmd run start:dev
+
+rem Give NestJS a moment to bind before starting the media services.
+timeout /t 3 /nobreak >nul
+
+netstat -ano | findstr /R /C:":8000 .*LISTENING" >nul
+if errorlevel 1 (
+  start "AIVA AI Server LAN" /D "%~dp0AI_SERVER" "%ComSpec%" /k call run_lan.cmd
+) else (
+  echo AI Server is already listening on port 8000; keeping the existing process.
+)
 ver >nul
 netstat -ano | findstr /R /C:":8081 .*LISTENING" >nul
 if errorlevel 1 (
-  start "AIVA Robot Gateway" /D "%~dp0AI_SERVER" cmd /k ".venv\Scripts\python.exe scripts\run_robot_gateway.py"
-  if errorlevel 1 goto :start_failed
+  start "AIVA Robot Gateway" /D "%~dp0AI_SERVER" "%ComSpec%" /k .venv\Scripts\python.exe scripts\run_robot_gateway.py
 ) else (
   echo Robot Gateway is already listening on 127.0.0.1:8081; keeping the existing process.
 )
 ver >nul
-start "AIVA Backend" /D "%~dp0BE" cmd /k "npm.cmd run start:dev"
-if errorlevel 1 goto :start_failed
-ver >nul
-start "AIVA Frontend" /D "%~dp0frontend" cmd /k ".venv\Scripts\python.exe -m streamlit run app.py"
-if errorlevel 1 goto :start_failed
+netstat -ano | findstr /R /C:":8501 .*LISTENING" >nul
+if errorlevel 1 start "AIVA Frontend" /D "%~dp0frontend" "%ComSpec%" /k .venv\Scripts\python.exe -m streamlit run app.py --server.port 8501
 
-echo Started AI Server LAN at port 8000, Robot Gateway at 127.0.0.1:8081, Backend at port 3000, and Streamlit at port 8501.
+echo Started or reused AI Server LAN at port 8000, Robot Gateway at 127.0.0.1:8081, Backend at port 3000, and Streamlit at port 8501.
+timeout /t 2 /nobreak >nul
+echo Current listeners:
+netstat -ano | findstr /R /C:":3000 .*LISTENING" /C:":8000 .*LISTENING" /C:":8081 .*LISTENING" /C:":8501 .*LISTENING"
 echo Backend requires MySQL and the aiva_iot database migration to be ready.
 echo WIFI_INTERNET requires Tailscale Funnel to forward the public hostname to 127.0.0.1:8081.
 echo Firmware is built separately after loading ESP-IDF 6.0.3:

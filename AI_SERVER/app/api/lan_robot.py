@@ -132,7 +132,11 @@ async def robot(ws: WebSocket):
                 if session.config != initial_config:
                     raise ValueError('Configuration changed; reconnect required')
                 turn_id = uuid4().hex
-                await llm.prepare(turn_id, context())
+                # Do not reserve monthly quota merely because the firmware
+                # opened its microphone. QuotaLLMAdapter performs admission
+                # after STT, immediately before the first LLM provider call.
+                # This also lets a disconnect/empty-audio turn end without an
+                # orphaned token reservation.
                 session.start_turn(turn_id)
                 await ws.send_json({"type": "status", "state": "listening",
                     "session_id": session_id, "turn_id": turn_id})
@@ -161,7 +165,8 @@ async def robot(ws: WebSocket):
     except BackendError as error:
         log_event(logger, logging.WARNING, "robot.turn.backend_denied",
                   f"Backend denied robot WebSocket operation: {error.code.value} status={error.status}",
-                  backend_code=error.code.value, http_status=error.status)
+                  backend_code=error.code.value, http_status=error.status,
+                  reason=error.reason or "unspecified")
         await ws.close(1013 if error.status is None or error.status >= 500 or error.status == 429 else 1008)
     except (ValueError, ValidationError, TimeoutError, CodecError) as error:
         log_event(logger, logging.WARNING, "robot.turn.protocol_failed",

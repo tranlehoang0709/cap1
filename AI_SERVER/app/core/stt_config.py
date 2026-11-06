@@ -11,7 +11,7 @@ class GeminiSTTSettings(BaseSettings):
         env_file_encoding="utf-8", env_ignore_empty=True, extra="ignore", hide_input_in_errors=True)
 
     api_key: SecretStr | None = Field(default=None, repr=False, validation_alias="GEMINI_API_KEY")
-    model: str = Field(default="gemini-3.5-flash-lite", min_length=1, max_length=128,
+    model: str = Field(default="gemini-3.5-transcribe", min_length=1, max_length=128,
                        validation_alias="GEMINI_STT_MODEL")
     timeout_seconds: float = Field(default=30, gt=0, le=120, allow_inf_nan=False,
                                    validation_alias="GEMINI_STT_TIMEOUT_SECONDS")

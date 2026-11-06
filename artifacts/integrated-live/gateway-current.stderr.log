@@ -1,0 +1,78 @@
+INFO:     Started server process [8080]
+INFO:     Waiting for application startup.
+{"timestamp":"2026-11-06T11:06:03.790852+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8081 (Press CTRL+C to quit)
+INFO:     127.0.0.1:58037 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+{"timestamp":"2026-11-06T11:07:29.597529+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"4633b656aeb95e46"}
+{"timestamp":"2026-11-06T11:07:36.245070+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"PROCESSING","turn_ref":"4633b656aeb95e46"}
+{"timestamp":"2026-11-06T11:07:46.306139+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"SPEAKING","turn_ref":"4633b656aeb95e46"}
+{"timestamp":"2026-11-06T11:07:57.200709+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"4633b656aeb95e46"}
+{"timestamp":"2026-11-06T11:07:57.201018+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"4633b656aeb95e46","latency_ms":9497.360800000024,"stage":"stt_ms"}
+{"timestamp":"2026-11-06T11:07:57.201214+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"4633b656aeb95e46","latency_ms":3217.4440000000004,"stage":"llm_first_token_ms"}
+{"timestamp":"2026-11-06T11:07:57.201397+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"4633b656aeb95e46","latency_ms":3778.441299999997,"stage":"tts_first_audio_ms"}
+{"timestamp":"2026-11-06T11:07:57.201575+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"4633b656aeb95e46","latency_ms":27603.567499999997,"stage":"total_ms"}
+{"timestamp":"2026-11-06T11:08:16.510744+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"7a69ad3ece75b7c1"}
+{"timestamp":"2026-11-06T11:08:24.609373+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"PROCESSING","turn_ref":"7a69ad3ece75b7c1"}
+{"timestamp":"2026-11-06T11:08:34.931913+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"SPEAKING","turn_ref":"7a69ad3ece75b7c1"}
+{"timestamp":"2026-11-06T11:08:41.664578+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"7a69ad3ece75b7c1"}
+{"timestamp":"2026-11-06T11:08:41.664928+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"7a69ad3ece75b7c1","latency_ms":12093.721300000027,"stage":"stt_ms"}
+{"timestamp":"2026-11-06T11:08:41.665534+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"7a69ad3ece75b7c1","latency_ms":1767.6917000000003,"stage":"llm_first_token_ms"}
+{"timestamp":"2026-11-06T11:08:41.665716+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"7a69ad3ece75b7c1","latency_ms":4476.594299999988,"stage":"tts_first_audio_ms"}
+{"timestamp":"2026-11-06T11:08:41.665896+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"7a69ad3ece75b7c1","latency_ms":25154.213500000027,"stage":"total_ms"}
+{"timestamp":"2026-11-06T11:08:44.932833+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"474410748984acc6"}
+{"timestamp":"2026-11-06T11:08:55.431722+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"PROCESSING","turn_ref":"474410748984acc6"}
+{"timestamp":"2026-11-06T11:09:04.567246+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"SPEAKING","turn_ref":"474410748984acc6"}
+{"timestamp":"2026-11-06T11:09:13.679640+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"474410748984acc6"}
+{"timestamp":"2026-11-06T11:09:13.680104+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"474410748984acc6","latency_ms":13911.312099999976,"stage":"stt_ms"}
+{"timestamp":"2026-11-06T11:09:13.680311+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"474410748984acc6","latency_ms":1833.3010999999715,"stage":"llm_first_token_ms"}
+{"timestamp":"2026-11-06T11:09:13.680497+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"474410748984acc6","latency_ms":3681.8632000000093,"stage":"tts_first_audio_ms"}
+{"timestamp":"2026-11-06T11:09:13.680673+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"474410748984acc6","latency_ms":28747.30629999999,"stage":"total_ms"}
+{"timestamp":"2026-11-06T11:09:16.257387+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"f84d86afdb7db3b7"}
+{"timestamp":"2026-11-06T11:09:22.632853+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"PROCESSING","turn_ref":"f84d86afdb7db3b7"}
+{"timestamp":"2026-11-06T11:09:30.644216+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"SPEAKING","turn_ref":"f84d86afdb7db3b7"}
+{"timestamp":"2026-11-06T11:09:39.714622+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"f84d86afdb7db3b7"}
+{"timestamp":"2026-11-06T11:09:39.715136+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"f84d86afdb7db3b7","latency_ms":8548.227300000008,"stage":"stt_ms"}
+{"timestamp":"2026-11-06T11:09:39.715418+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"f84d86afdb7db3b7","latency_ms":1841.6126999999847,"stage":"llm_first_token_ms"}
+{"timestamp":"2026-11-06T11:09:39.715683+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"f84d86afdb7db3b7","latency_ms":3785.6476000000043,"stage":"tts_first_audio_ms"}
+{"timestamp":"2026-11-06T11:09:39.715926+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"LISTENING","turn_ref":"f84d86afdb7db3b7","latency_ms":23457.76269999999,"stage":"total_ms"}
+{"timestamp":"2026-11-06T11:10:03.082871+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"f3f96ea139b51d36"}
+{"timestamp":"2026-11-06T11:10:16.040943+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"ERROR","turn_ref":"f3f96ea139b51d36"}
+{"timestamp":"2026-11-06T11:10:16.041661+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"CLOSED","turn_ref":"f3f96ea139b51d36"}
+INFO:     127.0.0.1:63268 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+{"timestamp":"2026-11-06T11:10:42.050802+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"8eaf4729a9c3bd85"}
+{"timestamp":"2026-11-06T11:10:55.047415+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"ERROR","turn_ref":"8eaf4729a9c3bd85"}
+{"timestamp":"2026-11-06T11:10:55.048339+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"CLOSED","turn_ref":"8eaf4729a9c3bd85"}
+INFO:     127.0.0.1:50297 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+{"timestamp":"2026-11-06T11:11:36.698889+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: backend_network_error status=None"}
+{"timestamp":"2026-11-06T11:39:57.355135+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: backend_http_denied status=409"}
+INFO:     127.0.0.1:62786 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+{"timestamp":"2026-11-06T11:40:09.744125+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: backend_http_denied status=409"}
+INFO:     127.0.0.1:62788 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+{"timestamp":"2026-11-06T11:40:16.113319+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: backend_http_denied status=409"}
+INFO:     127.0.0.1:64032 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+{"timestamp":"2026-11-06T11:41:03.768738+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: backend_http_denied status=409"}
+INFO:     127.0.0.1:64041 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+{"timestamp":"2026-11-06T11:42:12.072855+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: backend_http_denied status=409"}
+INFO:     127.0.0.1:53903 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+{"timestamp":"2026-11-06T11:43:20.021557+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: backend_http_denied status=409"}
+INFO:     127.0.0.1:65186 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+INFO:     127.0.0.1:59567 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+{"timestamp":"2026-11-06T11:43:47.337121+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"9fd91c2969df27dc"}
+{"timestamp":"2026-11-06T11:43:56.586089+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"PROCESSING","turn_ref":"9fd91c2969df27dc"}
+{"timestamp":"2026-11-06T11:45:17.353053+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"ERROR","turn_ref":"9fd91c2969df27dc"}
+{"timestamp":"2026-11-06T11:45:17.353684+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"ERROR","turn_ref":"9fd91c2969df27dc","latency_ms":14944.748400000208,"stage":"stt_ms"}
+{"timestamp":"2026-11-06T11:45:17.353936+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"ERROR","turn_ref":"9fd91c2969df27dc","latency_ms":2992.161899999701,"stage":"llm_first_token_ms"}
+{"timestamp":"2026-11-06T11:45:17.354191+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"ERROR","turn_ref":"9fd91c2969df27dc","latency_ms":null,"stage":"tts_first_audio_ms"}
+{"timestamp":"2026-11-06T11:45:17.354402+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","state":"ERROR","turn_ref":"9fd91c2969df27dc","latency_ms":90016.58769999995,"stage":"total_ms"}
+{"timestamp":"2026-11-06T11:45:17.354583+00:00","level":"WARNING","event":"orchestrator.error","message":"Pipeline failed","state":"ERROR","turn_ref":"9fd91c2969df27dc","reason":"timeout"}

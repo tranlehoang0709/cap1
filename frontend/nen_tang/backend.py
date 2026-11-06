@@ -19,9 +19,8 @@ def base_url():
     return os.environ.get("AIVA_BACKEND_URL", "http://127.0.0.1:3000").rstrip("/")
 
 
-def _request(path, method="GET", body=None, *, auth=True, _retried=False, extra_headers=None):
+def _request(path, method="GET", body=None, *, auth=True, _retried=False):
     headers = {"Accept": "application/json"}
-    headers.update(extra_headers or {})
     token = st.session_state.get("access_token") if auth else None
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -47,16 +46,18 @@ def _request(path, method="GET", body=None, *, auth=True, _retried=False, extra_
             message = detail.get("code") if isinstance(detail, dict) else None
         if not isinstance(message, str):
             message = detail.get("reason") if isinstance(detail, dict) else None
-        if error.code == 401 and auth and not _retried and path not in ("/auth/login", "/auth/refresh"):
+        if error.code == 401 and auth and method == "GET" and not _retried and path not in ("/auth/login", "/auth/refresh"):
             refresh_token = st.session_state.get("refresh_token")
             if refresh_token:
                 try:
                     pair = _request("/auth/refresh", "POST", {"refresh_token": refresh_token}, auth=False)
-                    st.session_state["access_token"] = pair["access_token"]
-                    st.session_state["refresh_token"] = pair["refresh_token"]
-                    return _request(path, method, body, auth=True, _retried=True, extra_headers=extra_headers)
+                    st.session_state.access_token = pair["access_token"]
+                    st.session_state.refresh_token = pair["refresh_token"]
+                    return _request(path, method, body, auth=True, _retried=True)
                 except (BackendError, KeyError, TypeError):
                     clear_auth()
+        if error.code == 401 and auth:
+            clear_auth()
         raise BackendError(error.code, message or f"Backend trả mã HTTP {error.code}.") from None
     except (URLError, TimeoutError, OSError):
         raise BackendError(0, f"Không kết nối được Backend tại {base_url()}.") from None
@@ -64,15 +65,12 @@ def _request(path, method="GET", body=None, *, auth=True, _retried=False, extra_
         raise BackendError(0, "Backend trả về dữ liệu không đọc được.") from None
 
 
-def api(path, method="GET", body=None, *, auth=True, query=None, headers=None):
+def api(path, method="GET", body=None, *, auth=True, query=None):
     if query:
         path = f"{path}?{urlencode(query)}"
-    return _request(path, method, body, auth=auth, extra_headers=headers)
+    return _request(path, method, body, auth=auth)
 
 
 def clear_auth():
-    for key in list(st.session_state):
-        if key.startswith("robot_flow_"):
-            st.session_state.pop(key, None)
     for key in ("access_token", "refresh_token", "account"):
         st.session_state.pop(key, None)

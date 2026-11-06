@@ -13,7 +13,9 @@ import io
 import struct
 import sys
 import wave
+import logging
 
+from app.core.logging import get_logger, log_event
 from app.models.audio import AudioError, ErrorCode, TranscriptionResult
 from app.services.audio_context import AudioContext
 from app.services.audio_input import AudioInput
@@ -120,11 +122,21 @@ class GeminiSTTAdapter:
             client = self._client_factory(self._api_key, self.timeout_seconds)
             from google.genai import types
             content = types.Part.from_bytes(data=provider_audio, mime_type=mime_type)
-            config = types.GenerateContentConfig(candidate_count=1,
-                automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True))
-            prompt = "Transcribe speech in this audio verbatim. The spoken language is Vietnamese. Return only the transcript, preserving the original language; do not translate, summarize, or add commentary."
+            if self.model == "gemini-3.5-transcribe":
+                # The dedicated transcription model has its own request
+                # contract. Mixing a text instruction into its contents is a
+                # provider-side INVALID_ARGUMENT; send only the bounded audio.
+                config = types.GenerateContentConfig(candidate_count=1,
+                    audio_transcription_config=types.AudioTranscriptionConfig(
+                        language_codes=["vi-VN"]))
+                contents = [content]
+            else:
+                config = types.GenerateContentConfig(candidate_count=1,
+                    automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True))
+                prompt = "Transcribe speech in this audio verbatim. The spoken language is Vietnamese. Return only the transcript, preserving the original language; do not translate, summarize, or add commentary."
+                contents = [prompt, content]
             response = await context.run(lambda: client.aio.models.generate_content(
-                model=self.model, contents=[prompt, content], config=config))
+                model=self.model, contents=contents, config=config))
             text = getattr(response, "text", None)
             if not isinstance(text, str) or not text.strip():
                 raise AudioError(ErrorCode.INVALID_TRANSCRIPT)
@@ -136,6 +148,12 @@ class GeminiSTTAdapter:
         except Exception as error:
             status = getattr(error, "status_code", None) or getattr(error, "code", None)
             name = str(getattr(status, "name", status)).upper()
+            # Provider bodies can contain sensitive request details.  Record only
+            # the exception class and normalized status needed for operations.
+            log_event(get_logger("gemini_stt"), logging.WARNING,
+                "stt.provider_error", "Gemini STT request failed",
+                provider="GEMINI", model=self.model,
+                error_type=type(error).__name__, status=name or "UNKNOWN")
             if name in ("429", "RESOURCE_EXHAUSTED"):
                 raise AudioError(ErrorCode.RATE_LIMIT) from None
             if name in ("503", "UNAVAILABLE", "SERVICE_UNAVAILABLE"):

@@ -1,0 +1,15 @@
+.pytest_cache/
+**/.pytest_cache/
+**/.pytest-*/
+**/.pytest_*/
+__pycache__/
+**/__pycache__/
+*.pyc
+AI_SERVER/.venv/
+AI_SERVER/.venv-win/
+frontend/.venv/
+BE/node_modules/
+AI_SERVER/.env
+BE/.env
+artifacts/
+xiaozhi-esp32/build-dual/

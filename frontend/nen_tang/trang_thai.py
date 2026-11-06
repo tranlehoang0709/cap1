@@ -1,4 +1,5 @@
 """Dữ liệu mô phỏng trong phiên; không lưu bền vững hoặc truyền ra ngoài."""
+import os
 from datetime import datetime
 from uuid import uuid4
 
@@ -18,7 +19,13 @@ def now():
     return datetime.now(timezone(timedelta(hours=7))).strftime("%Y-%m-%d %H:%M:%S")
 
 
+def _require_explicit_demo():
+    if os.environ.get("AIVA_DATA_MODE", "API").upper() != "DEMO":
+        raise RuntimeError("Demo state is disabled in API mode; authenticate through Backend.")
+
+
 def init_demo():
+    _require_explicit_demo()
     if "demo" in st.session_state:
         st.session_state.setdefault("api", AivaApi())
         return
@@ -53,6 +60,7 @@ def init_demo():
 
 
 def data():
+    _require_explicit_demo()
     return st.session_state.demo
 
 

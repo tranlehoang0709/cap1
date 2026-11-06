@@ -16,7 +16,7 @@ class WifiSetupContract(unittest.TestCase):
                         if isinstance(node, ast.FunctionDef) and node.name == "user_devices")
         calls = [node for node in ast.walk(function) if isinstance(node, ast.Call)]
         backend_paths = [node.args[0].value for node in calls
-                         if isinstance(node.func, ast.Name) and node.func.id in ("call", "all_records")
+                         if isinstance(node.func, ast.Name) and node.func.id == "call"
                          and node.args and isinstance(node.args[0], ast.Constant)
                          and isinstance(node.args[0].value, str)]
         self.assertIn("/devices", backend_paths)

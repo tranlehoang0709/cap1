@@ -15,6 +15,10 @@ def render():
 
 
 def render_forms():
+    from tich_hop.giao_dien import api_mode, login_forms
+    if api_mode():
+        login_forms()
+        return
     st.title("Chào mừng đến AIVA-IoT")
     st.caption("Quản lý robot Xiaozhi và trợ lý AI · Bản mô phỏng giao diện")
     with st.expander("Tài khoản trải nghiệm"):
