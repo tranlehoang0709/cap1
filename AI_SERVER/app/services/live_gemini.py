@@ -7,7 +7,8 @@ from app.services.audio_context import AudioContext
 from app.services.backend_execution import QuotaLLMAdapter
 
 
-def quota_gemini(state, session, *, input_bound_bytes, defer_turn_completion=False):
+def quota_gemini(state, session, *, input_bound_bytes, defer_turn_completion=False,
+                 expected_system_prompt=None):
     config = session.config
     if (not session.valid or config is None or config.provider.code != 'GEMINI'
             or config.credential is None or not config.credential.get_secret_value().strip()
@@ -23,5 +24,6 @@ def quota_gemini(state, session, *, input_bound_bytes, defer_turn_completion=Fal
         max_total_tokens=budget,
         execution_slots=state.live_execution_slots,
         defer_turn_completion=defer_turn_completion,
+        expected_system_prompt=expected_system_prompt,
         report_context_factory=lambda: AudioContext(deadline=time.monotonic() + state.backend_settings.timeout_seconds))
     return wrapped, limits

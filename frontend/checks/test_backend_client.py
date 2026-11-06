@@ -8,7 +8,10 @@ from unittest.mock import patch
 from urllib.error import HTTPError, URLError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-sys.modules.setdefault('streamlit', types.SimpleNamespace(session_state={}))
+try:
+    import streamlit
+except ModuleNotFoundError:
+    sys.modules.setdefault('streamlit', types.SimpleNamespace(session_state={}))
 from nen_tang import backend
 
 
@@ -41,6 +44,21 @@ class ClientContractTests(unittest.TestCase):
             with self.assertRaises(backend.BackendError) as caught:
                 backend.api('/conversations')
         self.assertEqual(caught.exception.status, 0)
+
+    def test_idempotency_header_survives_token_refresh(self):
+        backend.st.session_state['refresh_token'] = 'test-refresh'
+        expired = HTTPError('http://localhost', 401, '', {}, io.BytesIO(b'{}'))
+        refresh = unittest.mock.MagicMock()
+        refresh.__enter__.return_value.read.return_value = b'{"access_token":"new-test-token","refresh_token":"new-refresh"}'
+        success = unittest.mock.MagicMock()
+        success.__enter__.return_value.read.return_value = b'{"status":"RESET_PENDING"}'
+        with patch.object(backend, 'urlopen', side_effect=[expired, refresh, success]) as request:
+            backend.api('/admin/devices/9/revoke', 'POST', {'reason': 'test'},
+                        headers={'Idempotency-Key': 'test-key-123456789'})
+        first, _, retry = [c.args[0] for c in request.call_args_list]
+        self.assertEqual(first.get_header('Idempotency-key'), retry.get_header('Idempotency-key'))
+        self.assertEqual(first.data, retry.data)
+        self.assertEqual(retry.get_header('Authorization'), 'Bearer new-test-token')
 
     def test_pipeline_503_does_not_fabricate_reply(self):
         error = HTTPError('http://localhost', 503, '', {}, io.BytesIO(b'{"code":"AI_PIPELINE_UNAVAILABLE"}'))

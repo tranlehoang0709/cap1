@@ -1,5 +1,6 @@
 """Authenticated LAN control plane. Media remains closed until contract readiness."""
 import asyncio
+import logging
 import time
 from uuid import uuid4
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -15,11 +16,13 @@ from app.services.orchestrator import Control, SessionState
 from app.models.audio import AudioFrame
 from app.protocol.audio_framing import FramingConfig, validate_audio_frame
 from app.services.opus_codec import CodecError
+from app.core.logging import get_logger, log_event
 
 router = APIRouter()
 AUDIO_PARAMS = {"format": "opus", "sample_rate": 16000, "channels": 1, "frame_duration": 60}
 HELLO_TIMEOUT_SECONDS = 5
 IDLE_TIMEOUT_SECONDS = 45
+logger = get_logger("lan_robot")
 
 
 @router.websocket("/ws/robot")
@@ -156,10 +159,19 @@ async def robot(ws: WebSocket):
     except WebSocketDisconnect:
         pass
     except BackendError as error:
+        log_event(logger, logging.WARNING, "robot.turn.backend_denied",
+                  f"Backend denied robot WebSocket operation: {error.code.value} status={error.status}",
+                  backend_code=error.code.value, http_status=error.status)
         await ws.close(1013 if error.status is None or error.status >= 500 or error.status == 429 else 1008)
-    except (ValueError, ValidationError, TimeoutError, CodecError):
+    except (ValueError, ValidationError, TimeoutError, CodecError) as error:
+        log_event(logger, logging.WARNING, "robot.turn.protocol_failed",
+                  "Robot WebSocket protocol operation failed",
+                  error_type=type(error).__name__)
         await ws.close(1008)
-    except Exception:
+    except Exception as error:
+        log_event(logger, logging.ERROR, "robot.turn.internal_failed",
+                  "Robot WebSocket operation failed",
+                  error_type=type(error).__name__)
         await ws.close(1011)
     finally:
         import anyio

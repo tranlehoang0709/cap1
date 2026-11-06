@@ -2,7 +2,7 @@
 setlocal EnableExtensions
 cd /d "%~dp0"
 
-rem Start the three local application services. Firmware is built separately with ESP-IDF.
+rem Start the four local application services. Firmware is built separately with ESP-IDF.
 if not exist "AI_SERVER\.venv\Scripts\python.exe" goto :missing_dependencies
 if not exist "frontend\.venv\Scripts\python.exe" goto :missing_dependencies
 if not exist "BE\node_modules\.package-lock.json" goto :missing_dependencies
@@ -66,8 +66,16 @@ if not errorlevel 1 (
 echo Starting AIVA-IoT services in separate windows...
 rem Clear ERRORLEVEL left by successful negative findstr checks above.
 ver >nul
-start "AIVA AI Server" /D "%~dp0AI_SERVER" cmd /k ".venv\Scripts\python.exe scripts\run_dev.py"
+start "AIVA AI Server LAN" /D "%~dp0AI_SERVER" cmd /k "call run_lan.cmd"
 if errorlevel 1 goto :start_failed
+ver >nul
+netstat -ano | findstr /R /C:":8081 .*LISTENING" >nul
+if errorlevel 1 (
+  start "AIVA Robot Gateway" /D "%~dp0AI_SERVER" cmd /k ".venv\Scripts\python.exe scripts\run_robot_gateway.py"
+  if errorlevel 1 goto :start_failed
+) else (
+  echo Robot Gateway is already listening on 127.0.0.1:8081; keeping the existing process.
+)
 ver >nul
 start "AIVA Backend" /D "%~dp0BE" cmd /k "npm.cmd run start:dev"
 if errorlevel 1 goto :start_failed
@@ -75,10 +83,10 @@ ver >nul
 start "AIVA Frontend" /D "%~dp0frontend" cmd /k ".venv\Scripts\python.exe -m streamlit run app.py"
 if errorlevel 1 goto :start_failed
 
-echo Started AI Server at the configured port (default 8000), Backend at port 3000, and Streamlit at port 8501.
+echo Started AI Server LAN at port 8000, Robot Gateway at 127.0.0.1:8081, Backend at port 3000, and Streamlit at port 8501.
 echo Backend requires MySQL and the aiva_iot database migration to be ready.
-echo Frontend currently uses demo data and does not call the backend.
-echo Firmware is built separately after loading ESP-IDF 6.0.2:
+echo WIFI_INTERNET requires Tailscale Funnel to forward the public hostname to 127.0.0.1:8081.
+echo Firmware is built separately after loading ESP-IDF 6.0.3:
 echo   cd /d "%~dp0xiaozhi-esp32"
 echo   py scripts\build.py
 pause

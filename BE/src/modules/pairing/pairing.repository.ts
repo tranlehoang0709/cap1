@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { Pool, PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { MYSQL_POOL } from '../../database/database.constants';
 import { UsersRepository } from '../users/users.repository';
@@ -71,17 +71,19 @@ export class PairingTransaction {
   }
 
   async findCodeByHash(hash: string): Promise<PairingCode | null> {
-    return (await this.rows<PairingCode>(`SELECT CAST(id AS CHAR) AS id,
+    const code = (await this.rows<PairingCode>(`SELECT CAST(id AS CHAR) AS id,
       CAST(device_id AS CHAR) AS deviceId, created_at AS createdAt,
       (expires_at > UTC_TIMESTAMP() AND consumed_at IS NULL AND revoked_at IS NULL) AS usable
       FROM device_pairing_codes WHERE code_hash = ? LIMIT 1`, [hash]))[0] ?? null;
+    return code ? {...code,usable:Number(code.usable)} : null;
   }
 
   async lockCode(id: string): Promise<PairingCode | null> {
-    return (await this.rows<PairingCode>(`SELECT CAST(id AS CHAR) AS id,
+    const code = (await this.rows<PairingCode>(`SELECT CAST(id AS CHAR) AS id,
       CAST(device_id AS CHAR) AS deviceId, created_at AS createdAt,
       (expires_at > UTC_TIMESTAMP() AND consumed_at IS NULL AND revoked_at IS NULL) AS usable
       FROM device_pairing_codes WHERE id = ? FOR UPDATE`, [id]))[0] ?? null;
+    return code ? {...code,usable:Number(code.usable)} : null;
   }
 
   async findRequest(id: string, lock = false): Promise<PairingRequest | null> {
@@ -141,6 +143,15 @@ export class PairingTransaction {
   }
 
   async setLifecycle(deviceId: string, status: 'available' | 'pending_approval' | 'assigned'): Promise<void> {
+    if (status === 'available') {
+      // Rejection is the only pairing path back to available. It must not
+      // bypass recovery for inconsistent/legacy pending requests.
+      const [clock] = await this.rows<{now:Date}>('SELECT UTC_TIMESTAMP() AS now');
+      if (await this.getActiveAssignment(deviceId) || await this.hasAnyPending(deviceId)
+        || !await this.resetAllowsPairing(deviceId, clock.now)) {
+        throw new ConflictException('Confirmed reset and no active owner or pending request are required');
+      }
+    }
     await this.connection.execute('UPDATE devices SET lifecycle_status = ?, updated_at = UTC_TIMESTAMP() WHERE id = ?', [status,deviceId]);
   }
 
@@ -166,6 +177,23 @@ export class PairingTransaction {
       SET consumed_at = UTC_TIMESTAMP() WHERE id = ? AND consumed_at IS NULL
       AND revoked_at IS NULL AND expires_at > UTC_TIMESTAMP()`, [id]);
     if (result.affectedRows !== 1) throw Object.assign(new Error('Code changed concurrently'), {code:'PAIRING_CONFLICT'});
+  }
+
+  async reserveCodeForApproval(codeId: string, requestId: string): Promise<void> {
+    const codes = await this.rows<{consumedAt:Date|null;revokedAt:Date|null;usable:number}>(
+      `SELECT consumed_at AS consumedAt, revoked_at AS revokedAt,
+       (expires_at > UTC_TIMESTAMP()) AS usable FROM device_pairing_codes WHERE id=? FOR UPDATE`, [codeId]);
+    const requests = await this.rows<{id:string}>(`SELECT CAST(id AS CHAR) AS id FROM device_pairing_requests
+      WHERE pairing_code_id=? AND status IN ('pending','approved') FOR UPDATE`, [codeId]);
+    const code=codes[0];
+    if (!code || code.revokedAt || requests.length!==1 || requests[0].id!==requestId) {
+      throw Object.assign(new Error('Code reservation is ambiguous or revoked'), {code:'PAIRING_CONFLICT'});
+    }
+    // Expiry applies to submission; admin may review a reserved request later.
+    if (!code.consumedAt) {
+      if (!Number(code.usable)) throw Object.assign(new Error('Legacy code expired'), {code:'PAIRING_CONFLICT'});
+      await this.consumeCode(codeId);
+    }
   }
 
   async writePairingAudit(adminId: string, request: PairingRequest, status: 'approved' | 'rejected', note: string | null): Promise<void> {

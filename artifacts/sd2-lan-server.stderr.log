@@ -1,0 +1,23 @@
+INFO:     Started server process [7976]
+INFO:     Waiting for application startup.
+{"timestamp":"2026-11-04T07:43:12.734757+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+INFO:     Application startup complete.
+INFO:     Uvicorn running on https://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     192.168.0.106:60166 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     192.168.0.106:51767 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     192.168.0.106:57399 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+INFO:     192.168.0.106:57401 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+INFO:     192.168.0.106:57403 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+INFO:     192.168.0.106:57405 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+INFO:     192.168.0.106:57407 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+INFO:     192.168.0.106:57409 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+INFO:     192.168.0.106:57411 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)

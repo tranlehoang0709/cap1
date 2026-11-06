@@ -22,6 +22,7 @@ const tx={
   getActiveAssignment:jest.fn(),resetAllowsPairing:jest.fn(),hasPendingRequest:jest.fn(),
   createRequest:jest.fn(),setLifecycle:jest.fn(),findRequest:jest.fn(),consumeCode:jest.fn(),
   createAssignment:jest.fn(),reviewRequest:jest.fn(),writePairingAudit:jest.fn(),writePairingRequestAudit:jest.fn(),hasAnyPending:jest.fn(),
+  reserveCodeForApproval:jest.fn(),
 };
 @Module({controllers:[UserPairingController,AdminPairingController],providers:[PairingService,AdminDeviceGuard,UserPairingGuard,
   {provide:ConfigService,useValue:config},{provide:UsersService,useValue:users},{provide:PairingRepository,useValue:repository}]})
@@ -120,7 +121,14 @@ describe('Pairing HTTP authentication, validation and contracts',()=>{
     expect((await call(adminPath+'/10/approve','1','POST',{})).status).toBe(404);
     tx.findRequest.mockResolvedValue({id:'10',deviceId:'42',status:'approved'});
     expect((await call(adminPath+'/10/approve','1','POST',{})).status).toBe(409);
-    tx.hasPendingRequest.mockResolvedValue(true);
+    tx.hasAnyPending.mockResolvedValue(true);
     expect((await call(userPath,'7','POST',{pairingCode:'ABC123'})).status).toBe(409);
+  });
+  it.each(['reset_pending','available'])('blocks submission and approval over HTTP while reset is unconfirmed (%s)',async lifecycleStatus=>{
+    tx.findDeviceById.mockResolvedValue({id:'42',lifecycleStatus});
+    tx.resetAllowsPairing.mockResolvedValue(false);
+    expect((await call(userPath,'7','POST',{pairingCode:'ABC123'})).status).toBe(409);
+    expect((await call(adminPath+'/10/approve','1','POST',{})).status).toBe(409);
+    expect(tx.consumeCode).not.toHaveBeenCalled();expect(tx.createAssignment).not.toHaveBeenCalled();
   });
 });

@@ -213,10 +213,7 @@ def test_real_tcp_two_clients(tmp_path):
     env={k:v for k,v in os.environ.items() if not k.upper().startswith('AI_SERVER_')}
     env.update(AI_SERVER_HOST='127.0.0.1',AI_SERVER_PORT=str(port),AI_SERVER_RELOAD='false',AI_SERVER_ROBOT_ENABLED='true',AI_SERVER_ROBOT_TOKEN=TOKEN,AI_SERVER_ROBOT_ENERGY_THRESHOLD='100',
                AI_SERVER_BACKEND_MODE='development-mock', AI_SERVER_ROBOT_AI_MODE='mock',
-<<<<<<< HEAD
-=======
                AI_SERVER_TLS_CERTFILE='', AI_SERVER_TLS_KEYFILE='',
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
                AI_SERVER_ROBOT_ALLOWED_NETWORKS='["127.0.0.0/8"]')
     with (tmp_path/'tcp.log').open('w+') as log:
         process=subprocess.Popen([sys.executable,str(root/'scripts/run_dev.py')],env=env,stdout=log,stderr=log,cwd=root)

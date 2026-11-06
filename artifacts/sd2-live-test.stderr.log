@@ -1,0 +1,27 @@
+INFO:     Started server process [24120]
+INFO:     Waiting for application startup.
+{"timestamp":"2026-11-04T08:05:39.923579+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+INFO:     Application startup complete.
+INFO:     Uvicorn running on https://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     192.168.0.106:59802 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     192.168.0.106:56375 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+{"timestamp":"2026-11-04T08:11:35.883146+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"48a667e495a908bb","state":"LISTENING"}
+{"timestamp":"2026-11-04T08:11:45.043233+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"48a667e495a908bb","state":"PROCESSING"}
+{"timestamp":"2026-11-04T08:11:45.044061+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"48a667e495a908bb","state":"ERROR"}
+{"timestamp":"2026-11-04T08:11:45.044322+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","latency_ms":null,"turn_ref":"48a667e495a908bb","state":"ERROR","stage":"stt_ms"}
+{"timestamp":"2026-11-04T08:11:45.044508+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","latency_ms":null,"turn_ref":"48a667e495a908bb","state":"ERROR","stage":"llm_first_token_ms"}
+{"timestamp":"2026-11-04T08:11:45.044693+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","latency_ms":null,"turn_ref":"48a667e495a908bb","state":"ERROR","stage":"tts_first_audio_ms"}
+{"timestamp":"2026-11-04T08:11:45.044868+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","latency_ms":9161.277600000176,"turn_ref":"48a667e495a908bb","state":"ERROR","stage":"total_ms"}
+{"timestamp":"2026-11-04T08:11:45.045054+00:00","level":"WARNING","event":"orchestrator.error","message":"Pipeline failed","turn_ref":"48a667e495a908bb","state":"ERROR","reason":"empty_audio"}
+INFO:     192.168.0.106:56377 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     192.168.0.106:59197 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+INFO:     192.168.0.106:59198 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+INFO:     192.168.0.106:59200 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+INFO:     192.168.0.106:59202 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)

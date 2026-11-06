@@ -256,6 +256,7 @@ CREATE TABLE `conversations` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT NOT NULL,
   `device_id` BIGINT NULL,
+  `assignment_history_id` BIGINT NULL,
   `channel` VARCHAR(20) NOT NULL,
   `title` VARCHAR(255) NULL,
   `status` VARCHAR(20) NOT NULL DEFAULT 'active',
@@ -427,6 +428,7 @@ ALTER TABLE `api_credentials` ADD CONSTRAINT `fk_api_credentials_provider_id` FO
 ALTER TABLE `api_credentials` ADD CONSTRAINT `fk_api_credentials_owner_user_id` FOREIGN KEY (`owner_user_id`) REFERENCES `users` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE `quota_policies` ADD CONSTRAINT `fk_quota_policies_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE `quota_policies` ADD CONSTRAINT `fk_quota_policies_provider_id` FOREIGN KEY (`provider_id`) REFERENCES `ai_providers` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE `conversations` ADD CONSTRAINT `fk_conversations_assignment_history_id` FOREIGN KEY (`assignment_history_id`) REFERENCES `device_assignment_history` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE `conversations` ADD CONSTRAINT `fk_conversations_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE `conversations` ADD CONSTRAINT `fk_conversations_device_id` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE `ai_sessions` ADD CONSTRAINT `fk_ai_sessions_conversation_id` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;

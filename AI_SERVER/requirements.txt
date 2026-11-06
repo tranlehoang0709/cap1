@@ -6,3 +6,5 @@ openai==3.42.1
 google-genai==2.27.0
 httpx==0.28.1
 anyio==4.16.0
+opuslib-next-bundled==0.1.1; platform_system == "Windows"
+pyserial==3.5

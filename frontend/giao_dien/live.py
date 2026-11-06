@@ -1,5 +1,6 @@
 """AIVA-IoT Streamlit client backed by the live Backend API."""
 import json
+import uuid
 from urllib.parse import quote
 
 import pandas as pd
@@ -11,6 +12,14 @@ from nen_tang.backend import BackendError, api, clear_auth
 
 
 def api_error(error):
+    if error.status == 401:
+        st.error("Phiên đăng nhập không hợp lệ. Hãy đăng nhập lại.")
+    elif error.status == 403:
+        st.error("Tài khoản không có quyền thực hiện thao tác này.")
+    elif error.status == 409:
+        st.error("Trạng thái đã thay đổi hoặc thao tác xung đột. Hãy làm mới dữ liệu Backend.")
+    elif error.status >= 500:
+        st.error("Backend đang gặp lỗi. Hãy tải lại trạng thái trước khi thử lại.")
     st.error(error.message)
     if error.status == 0:
         st.caption("Kiểm tra Backend, MySQL và biến AIVA_BACKEND_URL nếu bạn dùng địa chỉ khác.")
@@ -18,10 +27,80 @@ def api_error(error):
 
 def call(path, method="GET", body=None, query=None):
     try:
-        return api(path, method, body, query=query)
+        with st.spinner("Đang tải dữ liệu Backend…" if method == "GET" else "Đang gửi yêu cầu…"):
+            return api(path, method, body, query=query)
     except BackendError as error:
         api_error(error)
         return None
+
+
+STATUS_LABELS = {"pending": "Chờ duyệt", "approved": "Đã duyệt", "rejected": "Từ chối",
+                 "available": "Sẵn sàng ghép", "assigned": "Đã có chủ", "reset_pending": "Chờ reset",
+                 "pending_approval": "Chờ duyệt", "sent": "Đã gửi lệnh reset",
+                 "acknowledged": "Đã xác nhận reset", "failed": "Reset thất bại"}
+
+
+def status_label(value):
+    return STATUS_LABELS.get(str(value).lower(), str(value))
+
+
+def reset_label(value):
+    return "Chờ reset" if str(value).lower() == "pending" else status_label(value)
+
+
+def status_table(value):
+    table([{key: status_label(val) if key in ("status", "lifecycle_status") else val
+            for key, val in record.items()} for record in rows(value)])
+
+
+def all_records(path):
+    """Fetch all pages, fail closed rather than overlooking a pending request."""
+    records, page = [], 1
+    while True:
+        result = call(path, query={"page": page, "limit": 100})
+        if result is None:
+            return None
+        records.extend(rows(result))
+        if page >= result.get("total_pages", 1):
+            return records
+        page += 1
+
+
+def write_api(action, path, method, body, headers=None):
+    """Never automatically retry a write after an uncertain transport outcome."""
+    if st.session_state.get("robot_flow_busy") or st.session_state.get("robot_flow_uncertain"):
+        st.warning("Hãy làm mới trạng thái trước khi thử lại thao tác chưa rõ kết quả.")
+        return None
+    st.session_state.robot_flow_busy = True
+    try:
+        with st.spinner("Đang gửi yêu cầu tới Backend…"):
+            return api(path, method, body, headers=headers)
+    except BackendError as error:
+        api_error(error)
+        st.session_state.robot_flow_error = (error.status, error.message)
+        if error.status == 0 or error.status >= 500:
+            st.session_state.robot_flow_uncertain = action
+            st.warning("Kết quả thao tác chưa xác định. Làm mới trạng thái trước khi thử lại; không suy ra thao tác đã thất bại.")
+        return None
+    finally:
+        st.session_state.robot_flow_busy = False
+
+
+def flash(message):
+    st.session_state.robot_flow_flash = message
+    st.rerun()
+
+
+def refresh_control(ready, label="Làm mới danh sách"):
+    if st.session_state.get("robot_flow_uncertain"):
+        st.warning("Có thao tác ghi chưa rõ kết quả. Đối chiếu dữ liệu Backend trước khi gửi lại.")
+    if st.button(label):
+        if ready:
+            if not str(st.session_state.get("robot_flow_uncertain", "")).startswith("revoke_"):
+                st.session_state.pop("robot_flow_uncertain", None)
+            st.rerun()
+        else:
+            st.error("Chưa tải được đầy đủ trạng thái Backend; chưa thể thử lại.")
 
 
 def rows(value):
@@ -43,7 +122,15 @@ def table(value, *, hide_index=True):
 
 
 def field(value, key, default=""):
-    return value.get(key, default) if isinstance(value, dict) else default
+    result = value.get(key, default) if isinstance(value, dict) else default
+    return default if result is None else result
+
+
+def optional_text(value):
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    return value or None
 
 
 def login_screen():
@@ -109,9 +196,13 @@ def dashboard_admin():
 
 
 def user_devices():
-    devices = call("/devices", query={"page": 1, "limit": 100})
+    devices = all_records("/devices")
+    requests = all_records("/devices/pairing-requests/mine")
+    refresh_control(devices is not None and requests is not None)
     if devices is not None:
         st.subheader("Robot đã ghép")
+        if not rows(devices):
+            st.info("Bạn chưa có robot đã ghép.")
         for device in rows(devices):
             ident = str(device.get("id", ""))
             with st.expander(f"{device.get('display_name') or device.get('device_uid') or 'Thiết bị'} · ID {ident}"):
@@ -160,60 +251,74 @@ def user_devices():
                     name = st.text_input("Tên hiển thị", value=device.get("display_name") or "")
                     save = st.form_submit_button("Lưu tên")
                 if save:
-                    result = call(f"/devices/{ident}", "PATCH", {"display_name": name.strip()})
+                    result = write_api(f"rename_{ident}", f"/devices/{ident}", "PATCH", {"display_name": name.strip()})
                     if result is not None:
                         st.success("Đã cập nhật tên thiết bị.")
                         st.rerun()
-                if st.button("Hủy liên kết thiết bị", key=f"unlink_{ident}"):
-                    result = call(f"/devices/{ident}/assignment", "DELETE")
-                    if result is not None:
-                        st.success("Đã gửi yêu cầu hủy liên kết.")
-                        st.rerun()
+                st.caption("Để bàn giao robot, liên hệ Admin thực hiện gỡ người dùng và reset.")
     st.subheader("Ghép nối thiết bị")
     st.caption("Nhập pairing code do hệ thống cấp; không có mã demo trong giao diện.")
-    with st.form("pair_device"):
+    generation = st.session_state.get("robot_flow_pair_generation", 0)
+    with st.form(f"pair_device_{generation}"):
         pairing_code = st.text_input("Pairing code", type="password")
         send = st.form_submit_button("Gửi yêu cầu ghép nối")
     if send:
-        result = call("/devices/pairing-requests", "POST", {"pairing_code": pairing_code.strip()})
+        result = write_api("pair", "/devices/pairing-requests", "POST", {"pairing_code": pairing_code.strip()})
         if result is not None:
-            st.success("Backend đã nhận yêu cầu ghép nối.")
-            st.json(result)
-    requests = call("/devices/pairing-requests/mine", query={"page": 1, "limit": 100})
+            st.session_state.robot_flow_pair_generation = generation + 1
+            flash("Chờ Admin duyệt" if result.get("status") == "pending" else status_label(result.get("status")))
+        requests = all_records("/devices/pairing-requests/mine")
     if requests is not None:
         st.subheader("Yêu cầu của bạn")
-        table(requests)
+        status_table(requests)
 
 
 def assistant_settings():
+    devices = all_records("/devices")
+    st.caption("Cấu hình áp dụng theo tài khoản, dùng chung cho các robot của bạn.")
+    if devices is None:
+        st.warning("Chưa xác minh được robot đã gán; tạm khóa chỉnh cấu hình.")
+        return
+    if not rows(devices):
+        st.info("Cần ít nhất một robot được Backend xác nhận đã gán để chỉnh cấu hình trợ lý.")
+        return
     profile = call("/ai/profile")
     providers = call("/ai/providers")
-    if profile is None:
+    refresh_control(profile is not None and providers is not None, "Tải lại cấu hình")
+    if profile is None or providers is None:
         return
     provider_rows = rows(providers)
     st.subheader("Cấu hình trợ lý lưu trong Backend")
+    options = {f"{p.get('name')} ({p.get('code')})": str(p.get("id")) for p in provider_rows if p.get("is_enabled")}
+    labels = list(options)
+    current = str(field(profile, "preferred_provider_id"))
+    selected = st.selectbox("Provider ưu tiên", ["Không chọn"] + labels,
+                            index=next((i + 1 for i, label in enumerate(labels) if options[label] == current), 0))
+    provider_id = options.get(selected)
+    models_result = call(f"/ai/providers/{quote(provider_id, safe='')}/models") if provider_id else []
+    models = [m for m in rows(models_result) if str(m.get("provider_id")) == provider_id
+              and m.get("is_enabled") and str(m.get("capability", "")).upper() == "LLM"]
+    model_options = {f"{m.get('model_code')} · ID {m['id']}": str(m['id']) for m in models}
+    model_labels = list(model_options)
+    if provider_id and not models:
+        st.warning("Chưa có model LLM khả dụng hoặc chưa tải được danh sách model của provider.")
+    saved_model = str(field(profile, "preferred_llm_model_id")) if provider_id == current else ""
+    model_label = st.selectbox("Model LLM", ["Không chọn"] + model_labels,
+                               index=next((i + 1 for i, label in enumerate(model_labels) if model_options[label] == saved_model), 0),
+                               key=f"robot_flow_model_{provider_id}")
     with st.form("assistant_profile"):
         name = st.text_input("Tên trợ lý", value=field(profile, "assistant_name"))
         language = st.text_input("Mã ngôn ngữ", value=field(profile, "language_code", "vi"))
         voice = st.text_input("Mã giọng nói", value=field(profile, "voice_code"))
         prompt = st.text_area("System prompt", value=field(profile, "system_prompt"), height=180)
-        options = {f"{p.get('name')} ({p.get('code')})": str(p.get("id")) for p in provider_rows if p.get("is_enabled")}
-        labels = list(options)
-        current = str(field(profile, "preferred_provider_id"))
-        default_index = next((i for i, label in enumerate(labels) if options[label] == current), 0)
-        selected = st.selectbox("Provider ưu tiên", ["Không chọn"] + labels, index=default_index + 1 if labels and current in options.values() else 0)
-        save = st.form_submit_button("Lưu cấu hình")
+        save = st.form_submit_button("Lưu cấu hình", disabled=bool(provider_id and (models_result is None or not model_options.get(model_label))))
     if save:
-        preferred_provider = options.get(selected) if selected != "Không chọn" else None
-        if preferred_provider is None and current in options.values():
-            preferred_provider = current
-        preferred_model = field(profile, "preferred_llm_model_id") if preferred_provider == current else None
-        body = {"assistant_name": name.strip() or None, "system_prompt": prompt or None, "language_code": language.strip() or None,
-                "voice_code": voice.strip() or None, "preferred_provider_id": preferred_provider,
-                "preferred_llm_model_id": preferred_model}
-        result = call("/ai/profile", "PATCH", body)
+        body = {"assistant_name": optional_text(name), "system_prompt": optional_text(prompt),
+                "language_code": optional_text(language), "voice_code": optional_text(voice), "preferred_provider_id": provider_id,
+                "preferred_llm_model_id": model_options.get(model_label)}
+        result = write_api("profile", "/ai/profile", "PATCH", body)
         if result is not None:
-            st.success("Đã lưu cấu hình trợ lý.")
+            flash("Đã lưu cấu hình trợ lý theo tài khoản.")
 
 
 def personal_keys():
@@ -221,7 +326,8 @@ def personal_keys():
     keys = call("/api-keys")
     if keys is not None:
         table(keys)
-    options = {f"{p.get('name')} ({p.get('code')})": str(p.get("id")) for p in providers if p.get("is_enabled")}
+    options = {f"{p.get('name')} ({p.get('code')})": str(p.get("id")) for p in providers
+               if p.get("is_enabled") and p.get("code") in ("OPENAI", "GEMINI")}
     if options:
         with st.form("add_personal_key", clear_on_submit=True):
             provider = st.selectbox("Provider", list(options))
@@ -235,6 +341,18 @@ def personal_keys():
                 st.rerun()
     if keys is not None:
         for key in rows(keys):
+            if key.get("is_active", True):
+                with st.expander(f"Thay thế khóa {key.get('label', key.get('id'))}"):
+                    with st.form(f"replace_key_{key.get('id')}", clear_on_submit=True):
+                        replacement_label = st.text_input("Nhãn mới", value=str(key.get("label") or ""))
+                        replacement_secret = st.text_input("API key mới", type="password")
+                        replace = st.form_submit_button("Thay thế khóa")
+                    if replace:
+                        result = write_api("replace_api_key", f"/api-keys/{key.get('id')}", "PATCH",
+                                           {"label": replacement_label.strip(), "secret": replacement_secret})
+                        if result is not None:
+                            st.success("Đã thay thế khóa. Backend không trả secret về giao diện.")
+                            st.rerun()
             if st.button(f"Thu hồi khóa {key.get('label', key.get('id'))}", key=f"revoke_key_{key.get('id')}"):
                 result = call(f"/api-keys/{key.get('id')}", "DELETE")
                 if result is not None:
@@ -243,11 +361,18 @@ def personal_keys():
 
 
 def history_page():
-    result = call("/conversations", query={"page": 1, "limit": 100})
+    page = st.number_input("Trang lịch sử", min_value=1, value=1, step=1)
+    result = call("/conversations", query={"page": int(page), "limit": 100})
     if result is None:
         return
     conversations = rows(result)
-    table(result)
+    st.caption("Lịch sử của tài khoản đang đăng nhập, vẫn xem được sau khi trả robot. Bộ lọc robot chỉ áp dụng trên trang đã tải (tối đa 100 hội thoại).")
+    if any("device_id" in c for c in conversations):
+        robot_ids = sorted({str(c["device_id"]) for c in conversations if c.get("device_id") is not None})
+        chosen_robot = st.selectbox("Lọc theo robot", ["Tất cả", "Không gắn robot"] + robot_ids)
+        if chosen_robot != "Tất cả":
+            conversations = [c for c in conversations if (c.get("device_id") is None if chosen_robot == "Không gắn robot" else str(c.get("device_id")) == chosen_robot)]
+    table(conversations)
     if conversations:
         choices = {f"{c.get('title') or 'Không tiêu đề'} · {c.get('started_at', '')} · ID {c.get('id')}": c for c in conversations}
         selected = st.selectbox("Mở hội thoại", list(choices))
@@ -342,49 +467,125 @@ def users_admin():
 
 
 def devices_admin():
-    devices = call("/devices/admin/all", query={"page": 1, "limit": 100})
+    devices = all_records("/devices/admin/all")
+    requests = all_records("/devices/admin/pairing-requests")
+    refresh_control(devices is not None and requests is not None)
     if devices is not None:
         st.subheader("Thiết bị đã đăng ký")
-        table(devices)
+        status_table(devices)
         for device in rows(devices):
             ident = str(device.get("id", ""))
             with st.expander(f"Thiết bị {device.get('device_uid', ident)}"):
                 st.json(device)
+                lifecycle = device.get("lifecycle_status")
+                st.write(f"Trạng thái: {status_label(lifecycle)}")
+                pending = requests is None or any(str(r.get("device_id")) == ident and r.get("status") == "pending" for r in requests)
+                allowed = lifecycle == "available" and not pending
+                if not allowed:
+                    st.session_state.pop(f"robot_flow_code_{ident}", None)
+                    st.info("Chưa thể xuất mã: " + ("chưa xác minh được yêu cầu ghép nối" if requests is None else
+                            "robot có yêu cầu Chờ duyệt" if pending else status_label(lifecycle)))
                 ttl = st.number_input("Pairing code hết hạn (phút)", 1, 60, 10, key=f"ttl_{ident}")
-                if st.button("Tạo pairing code", key=f"paircode_{ident}"):
-                    code = call(f"/devices/admin/{ident}/pairing-codes", "POST", {"ttl_minutes": int(ttl)})
+                if st.button("Xuất mã ghép nối", key=f"paircode_{ident}", disabled=not allowed):
+                    st.session_state.pop(f"robot_flow_code_{ident}", None)
+                    code = write_api(f"code_{ident}", f"/devices/admin/{ident}/pairing-codes", "POST", {"ttl_minutes": int(ttl)})
                     if code is not None:
-                        st.warning("Mã chỉ hiển thị theo phản hồi một lần từ Backend. Hãy chuyển mã an toàn cho người dùng.")
-                        st.code(json.dumps(code, ensure_ascii=False))
-    with st.form("register_device"):
+                        st.session_state[f"robot_flow_code_{ident}"] = dict(code, _device_updated_at=device.get("updated_at"))
+                        flash("Đã xuất mã ghép nối.")
+                    st.rerun()
+                code = st.session_state.get(f"robot_flow_code_{ident}")
+                if code and code.get("_device_updated_at") != device.get("updated_at"):
+                    st.session_state.pop(f"robot_flow_code_{ident}", None)
+                    code = None
+                if code and allowed:
+                    st.code(code.get("pairing_code", ""), language=None)
+                    st.write(f"Hết hạn (thời điểm Backend trả về): {code.get('expires_at', '—')}")
+                    st.caption("Sao chép mã bằng nút trên khối mã. Mã lưu tạm trong phiên đăng nhập; xuất mã mới sẽ thay mã cũ.")
+                if lifecycle == "available":
+                    st.session_state.pop(f"robot_flow_revoke_{ident}", None)
+                if lifecycle == "assigned":
+                    revoke_robot(device)
+                if lifecycle == "reset_pending" or st.session_state.get(f"robot_flow_revoke_{ident}"):
+                    ready = reset_status(ident)
+                    if st.button("Làm mới trạng thái reset", key=f"reset_state_{ident}"):
+                        if ready and devices is not None and requests is not None:
+                            st.session_state.pop("robot_flow_uncertain", None)
+                        st.rerun()
+    generation = st.session_state.get("robot_flow_register_generation", 0)
+    with st.form(f"register_device_{generation}"):
         st.subheader("Đăng ký thiết bị vật lý")
-        device_uid = st.text_input("Device UID")
-        display_name = st.text_input("Tên thiết bị")
-        hardware = st.text_input("Hardware model")
+        device_uid = st.text_input("Device UID", max_chars=128)
+        display_name = st.text_input("Tên thiết bị", max_chars=120)
+        hardware = st.text_input("Hardware model", max_chars=100)
         submit = st.form_submit_button("Đăng ký thiết bị")
     if submit:
-        result = call("/devices/admin", "POST", {"device_uid": device_uid.strip(), "display_name": display_name.strip() or None, "hardware_model": hardware.strip() or None})
+        result = write_api("register", "/devices/admin", "POST", {"device_uid": device_uid.strip(), "display_name": display_name.strip() or None, "hardware_model": hardware.strip() or None}) if device_uid.strip() else None
+        if not device_uid.strip():
+            st.error("Device UID không được để trống.")
         if result is not None:
-            st.success("Đã đăng ký thiết bị.")
-            st.json(result)
-    requests = call("/devices/admin/pairing-requests", query={"page": 1, "limit": 100})
+            st.session_state.robot_flow_register_generation = generation + 1
+            flash("Đã đăng ký thiết bị. " + status_label(result.get("lifecycle_status")))
     if requests is not None:
         st.subheader("Yêu cầu ghép nối")
-        table(requests)
+        status_table(requests)
         for request in rows(requests):
             rid = str(request.get("id", ""))
-            st.caption(f"Yêu cầu {rid} · trạng thái {request.get('status', '—')}")
+            st.caption(f"Yêu cầu {rid} · robot ID {request.get('device_id')} · User ID {request.get('user_id')} · {status_label(request.get('status', '—'))}")
             if request.get("status") == "pending":
-                note = st.text_input("Ghi chú xử lý", key=f"note_{rid}")
+                note = st.text_input("Ghi chú xử lý", max_chars=500, key=f"note_{rid}")
                 left, right = st.columns(2)
                 if left.button("Duyệt", key=f"approve_{rid}"):
-                    if call(f"/devices/admin/pairing-requests/{rid}/approve", "POST", {"note": note}) is not None:
-                        st.success("Đã duyệt yêu cầu.")
-                        st.rerun()
+                    result = write_api(f"review_{rid}", f"/devices/admin/pairing-requests/{rid}/approve", "POST", {"note": note})
+                    if result is not None:
+                        flash(status_label(result.get("status")))
+                    st.rerun()
                 if right.button("Từ chối", key=f"reject_{rid}"):
-                    if call(f"/devices/admin/pairing-requests/{rid}/reject", "POST", {"note": note}) is not None:
-                        st.success("Đã từ chối yêu cầu.")
-                        st.rerun()
+                    result = write_api(f"review_{rid}", f"/devices/admin/pairing-requests/{rid}/reject", "POST", {"note": note})
+                    if result is not None:
+                        flash(status_label(result.get("status")))
+                    st.rerun()
+
+
+def reset_status(ident):
+    try:
+        result = api(f"/admin/devices/{ident}/reset-status")
+    except BackendError as error:
+        if error.status == 404:
+            st.info("Backend chưa có reset job cho robot này.")
+            return True
+        api_error(error)
+        return False
+    st.write(f"Reset: {reset_label(result.get('status'))}")
+    st.json(result)
+    return True
+
+
+def revoke_robot(device):
+    ident = str(device["id"])
+    state_key = f"robot_flow_revoke_{ident}"
+    operation = st.session_state.get(state_key)
+    st.markdown("#### Gỡ người dùng và reset")
+    st.write(f"Robot: {device.get('display_name') or device.get('device_uid')} · UID {device.get('device_uid')} · ID {ident}")
+    if operation:
+        st.caption("Thử lại giữ nguyên lý do và idempotency key của thao tác đang xử lý.")
+        st.write(f"Lý do đã gửi: {operation['reason']}")
+    with st.form(f"revoke_{ident}"):
+        reason = st.text_area("Lý do gỡ", max_chars=500, value=operation['reason'] if operation else "", disabled=bool(operation))
+        confirm = st.checkbox(f"Xác nhận gỡ người dùng và reset robot ID {ident}")
+        submit = st.form_submit_button("Gỡ người dùng và reset")
+    if submit:
+        if not confirm or not reason.strip():
+            st.error("Cần nhập lý do và xác nhận đúng robot.")
+            return
+        if operation is None:
+            operation = {"reason": reason.strip(), "key": uuid.uuid4().hex}
+            st.session_state[state_key] = operation
+        result = write_api(f"revoke_{ident}", f"/admin/devices/{ident}/revoke", "POST",
+                           {"reason": operation['reason']}, headers={"Idempotency-Key": operation['key']})
+        if result is not None:
+            flash(f"Backend xác nhận gỡ robot ID {ident}: {status_label(result.get('status'))}. Reset: {reset_label(result.get('resetStatus'))}.")
+    if operation:
+        st.caption("Dùng Làm mới trạng thái reset bên dưới trước khi thử lại nếu kết quả gửi chưa xác định.")
 
 
 def ai_admin():
@@ -464,6 +665,12 @@ def system_settings():
 
 
 def render_page(page, account):
+    message = st.session_state.pop("robot_flow_flash", None)
+    if message:
+        st.success(message)
+    error = st.session_state.pop("robot_flow_error", None)
+    if error:
+        api_error(BackendError(*error))
     renderers = {
         "Tổng quan": lambda: dashboard_admin() if account.get("role") == "ADMIN" else dashboard_user(account),
         "AI Chat": chat_page,

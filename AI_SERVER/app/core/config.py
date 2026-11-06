@@ -32,15 +32,10 @@ class Settings(BaseSettings):
     reload: bool = True
     ws_max_message_bytes: int = Field(default=4096, ge=1, le=4096)
     opus_library: Path | None = Field(default=None, repr=False)
-<<<<<<< HEAD
-
-    @field_validator("opus_library", mode="before")
-=======
     tls_certfile: Path | None = Field(default=None, repr=False)
     tls_keyfile: Path | None = Field(default=None, repr=False)
 
     @field_validator("opus_library", "tls_certfile", "tls_keyfile", mode="before")
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
     @classmethod
     def optional_opus_library(cls, value):
         return None if isinstance(value, str) and not value.strip() else value

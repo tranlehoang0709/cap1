@@ -1,0 +1,42 @@
+Command: cmake -G Ninja -B E:\learn\AI_Project\cap1\xiaozhi-esp32\build-clean -DPYTHON_DEPS_CHECKED=1 -DPYTHON=C:\Users\troc\.espressif\python_env\idf6.0_py3.14_env\Scripts\python.exe -DESP_PLATFORM=1 -DCCACHE_ENABLE=True E:\learn\AI_Project\cap1\xiaozhi-esp32
+fatal: detected dubious ownership in repository at 'E:/esp/v6.0.3/esp-idf'
+'E:/esp/v6.0.3/esp-idf' is owned by:
+	DESKTOP-M27LEUA/troc (S-1-5-21-2026872530-491710732-420323439-1001)
+but the current user is:
+	DESKTOP-M27LEUA/CodexSandboxOffline (S-1-5-21-2026872530-491710732-420323439-1003)
+To add an exception for this directory, call:
+
+	git config --global --add safe.directory E:/esp/v6.0.3/esp-idf
+CMake Error at C:/Users/troc/.espressif/tools/cmake/4.0.3/share/cmake-4.0/Modules/CMakeTestCCompiler.cmake:67 (message):
+  The C compiler
+
+    "C:/Users/troc/.espressif/tools/xtensa-esp-elf/esp-15.2.0_20251204/xtensa-esp-elf/bin/xtensa-esp32s3-elf-gcc.exe"
+
+  is not able to compile a simple test program.
+
+  It fails with the following output:
+
+    Change Dir: 'E:/learn/AI_Project/cap1/xiaozhi-esp32/build-clean/CMakeFiles/CMakeScratch/TryCompile-izgbwx'
+    
+    Run Build Command(s): C:/Users/troc/.espressif/tools/ninja/1.12.1/ninja.exe -v cmTC_b86c7
+    [1/2] C:\Users\troc\.espressif\tools\xtensa-esp-elf\esp-15.2.0_20251204\xtensa-esp-elf\bin\xtensa-esp32s3-elf-gcc.exe   @"E:/learn/AI_Project/cap1/xiaozhi-esp32/build-clean/toolchain/cflags" -o CMakeFiles\cmTC_b86c7.dir\testCCompiler.c.obj -c E:\learn\AI_Project\cap1\xiaozhi-esp32\build-clean\CMakeFiles\CMakeScratch\TryCompile-izgbwx\testCCompiler.c
+    FAILED: CMakeFiles/cmTC_b86c7.dir/testCCompiler.c.obj 
+    C:\Users\troc\.espressif\tools\xtensa-esp-elf\esp-15.2.0_20251204\xtensa-esp-elf\bin\xtensa-esp32s3-elf-gcc.exe   @"E:/learn/AI_Project/cap1/xiaozhi-esp32/build-clean/toolchain/cflags" -o CMakeFiles\cmTC_b86c7.dir\testCCompiler.c.obj -c E:\learn\AI_Project\cap1\xiaozhi-esp32\build-clean\CMakeFiles\CMakeScratch\TryCompile-izgbwx\testCCompiler.c
+    
+    thread 'main' panicked at main.rs:54:9:
+    assertion `left != right` failed: Failed to get path name. Error code: 5
+      left: 0
+     right: 0
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+    ninja: build stopped: subcommand failed.
+    
+    
+
+
+
+  CMake will not be able to correctly generate this project.
+Call Stack (most recent call first):
+  E:/esp/v6.0.3/esp-idf/tools/cmake/project.cmake:622 (__project)
+  CMakeLists.txt:13 (project)
+
+

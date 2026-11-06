@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/CMakeFiles/bootloader
+E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/CMakeFiles/bootloader.rule
+E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/CMakeFiles/bootloader-complete.rule
+E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule

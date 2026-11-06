@@ -4,6 +4,7 @@ import { MYSQL_POOL } from '../../database/database.constants';
 import { UsersRepository } from '../users/users.repository';
 import { OwnershipTransaction } from '../devices/ownership.repository';
 import { Owner, Profile, Scope } from './ai.dto';
+import { requireApprovedRobot } from '../devices/assignment-access';
 
 @Injectable()
 export class AiProvidersRepository {
@@ -25,10 +26,11 @@ export interface Credential { id: string; providerId: string; label: string; sec
 export class AITransaction {
   readonly users: UsersRepository;
   readonly ownership: OwnershipTransaction;
-  constructor(pool: Pool, private readonly connection: PoolConnection) {
+  constructor(private readonly pool: Pool, private readonly connection: PoolConnection) {
     this.users = new UsersRepository(pool, connection);
     this.ownership = new OwnershipTransaction(pool, connection);
   }
+  requireApprovedRobot(userId: string) { return requireApprovedRobot(this.pool, this.connection, userId); }
   async rows<T>(sql: string, values: unknown[] = []): Promise<T[]> {
     const [rows] = await this.connection.execute<RowDataPacket[]>(sql, values as never[]); return rows as T[];
   }

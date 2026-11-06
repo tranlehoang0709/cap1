@@ -1,14 +1,19 @@
 # SD2: AIVA-IoT ESP32-S3 ST7789 240x240
 
-<<<<<<< HEAD
-=======
 The opt-in `aiva-iot-s3-st7789-lan` variant adds authenticated OTA bootstrap,
 device proof, heartbeat and LAN control reconnection. See
 [`D2-S2-14`](../../../../../AI_SERVER/docs/d2-s2-14-lan.md) for first-flash,
 Wi-Fi provisioning and current integration/hardware blockers. It is not an
 accepted standalone voice build.
 
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
+The `aiva-iot-s3-st7789-funnel` variant uses the ESP-IDF full public CA bundle
+for `desktop-m27leua.tail022082.ts.net`. TLS connects with the parsed hostname,
+and compilation fails if certificate verification is disabled. Provision the
+gateway with `ws wss://desktop-m27leua.tail022082.ts.net/ws/robot - 1`; this
+also saves `https://desktop-m27leua.tail022082.ts.net/xiaozhi/ota/` for the OTA
+bootstrap. The existing `wifi` USB command re-enters Wi-Fi provisioning without
+erasing NVS.
+
 Project naming: SD1 is `custom/xiaozhi-s3-tft`; SD2 is this board.
 Each board has its own firmware identity and pin configuration.
 
@@ -58,8 +63,6 @@ The build must select `CONFIG_BOARD_TYPE_AIVA_IOT_S3_ST7789=y` and USB Serial/JT
 console. Defaults supply 16 MB flash and OPI PSRAM. Wake word is disabled by the
 command above; no AI token is required for this flash/boot gate.
 
-<<<<<<< HEAD
-=======
 For the LAN voice variant, select the Vietnamese display locale explicitly.
 Wake-word recognition remains the English `hello` model configured by the
 variant; the recognition language and display locale are independent:
@@ -69,7 +72,12 @@ python scripts\build.py custom/aiva-iot-s3-st7789 --name aiva-iot-s3-st7789-lan 
 idf.py -p COM3 -b 115200 flash monitor
 ```
 
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
+For the public Funnel hostname, build the dedicated trust variant:
+
+```bat
+python scripts\build.py custom/aiva-iot-s3-st7789 --name aiva-iot-s3-st7789-funnel --language vi-VN
+```
+
 ## Verification
 
 ```bat
@@ -99,3 +107,21 @@ Use the guide at `AI_SERVER/docs/sd2-gemini-lan.md` in the workspace root.
 The API key stays on the server. Native TX/DMA proof remains experimental.
 The real trial produced audible Gemini output but was interrupted by provider
 rate_limited; full-turn/repeated-conversation acceptance is still pending.
+
+### LAN and WIFI_INTERNET profiles
+
+The `aiva-iot-s3-st7789-funnel` build keeps the historical LAN profile intact and
+adds an explicit `WIFI_INTERNET` profile. A missing mode key always means `LAN`;
+the firmware never migrates endpoints or falls back between modes.
+
+- `mode lan` selects LAN NVS (`wifi/ota_url`, `websocket/*`).
+- `mode wifi_internet` selects the independent Funnel profile (`aiva_iota/*`,
+  `aiva_iws/*`) with the compiled HTTPS/WSS hostname.
+- `wifi` enters the existing SoftAP Wi-Fi provisioning flow. It does not ask for
+  an AI server address and does not change the selected connection profile.
+- `status` reports the selected profile. Reboot after changing it.
+
+Both profiles use the same provisioned per-device UID/credential and fail closed
+when it is absent. Changing mode never erases either profile or Wi-Fi NVS.
+The Funnel build combines ESP-IDF's full public CA bundle with the existing AIVA
+LAN root, so hostname verification remains enabled for both profiles.

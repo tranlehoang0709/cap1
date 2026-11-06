@@ -6,10 +6,12 @@ import { tmpdir } from 'node:os';
 import { join,resolve,sep } from 'node:path';
 import { RecoveryService } from '../src/modules/device-recovery/recovery.service';
 import { RecoveryStore,BackupContent } from '../src/modules/device-recovery/recovery-store';
-import { RecoveryRepository,RecoveryTransaction } from '../src/modules/device-recovery/recovery.repository';
+import { RecoveryRepository,RecoveryTransaction,ResetJob } from '../src/modules/device-recovery/recovery.repository';
 import { SecretEncryptionService } from '../src/modules/api-keys/secret-encryption.service';
 import { ackInput,revokeInput } from '../src/modules/device-recovery/recovery.dto';
 import { PairingTransaction } from '../src/modules/pairing/pairing.repository';
+import { DevicesRepository } from '../src/modules/devices/devices.repository';
+import { DevicesService } from '../src/modules/devices/devices.service';
 
 const admin={userId:'1',role:'ADMIN' as const};const user={userId:'7',role:'USER' as const};
 const start=new Date('2026-10-30T01:00:00Z');const sevenDays=7*86400000;
@@ -87,6 +89,24 @@ describe('RecoveryService transactional state model',()=>{
     service=new RecoveryService(repository,store,config);
   });
   const revoke=()=>service.revokeDeviceAssignment(admin,'42',{reason:'Owner requested'},'revoke_request_0001');
+  function issuer(){
+    // Real DevicesService + SQL readiness gate reading the same recovery state;
+    // only the database connection/backup storage are test doubles.
+    const execute=jest.fn(async(sql:string)=>{
+      if(sql.includes('UTC_TIMESTAMP() AS now'))return [[{now:state.now}]];
+      if(sql.includes('FROM device_assignments'))return [state.assignment?[state.assignment]:[]];
+      if(sql.includes('FROM device_pairing_requests'))return [state.pendingRequests?[{id:'9'}]:[]];
+      if(sql.includes("status <> 'completed'"))return [state.operation&&state.operation.status!=='completed'?[{id:'10'}]:[]];
+      if(sql.includes('FROM device_unlink_operations'))return [state.operation?[{id:state.operation.id,historyId:'20',revokedAt:state.operation.revokedAt}]:[]];
+      if(sql.includes('FROM device_assignment_history'))return [[state.history[0]]];
+      if(sql.includes('FROM device_reset_jobs'))return [state.job?[{unlinkId:state.job.operationId,status:state.job.status,acknowledgedAt:state.job.acknowledgedAt}]:[]];
+      if(/^\s*(UPDATE|INSERT)\b/.test(sql))return [{affectedRows:1}];
+      throw new Error('Unexpected issuer SQL');
+    });
+    const repo=new DevicesRepository({} as never,{execute} as never);
+    jest.spyOn(repo,'findById').mockImplementation(async()=>({id:'42',lifecycle_status:state.device.lifecycleStatus} as never));
+    return {devices:new DevicesService(repo,{} as never),execute};
+  }
   async function completeReset(){await revoke();const claim=await service.requestDeviceReset({deviceId:'42'}) as any;
     await service.processResetAcknowledgment('40',{deviceId:'42',attempt:claim.attempt,challenge:claim.challenge,result:'success',sessionsInvalidated:true,firmwareResetConfirmed:true});return claim;}
   it('backs up before removing assignment; seven-day expiry and no other User/device changes',async()=>{
@@ -96,6 +116,47 @@ describe('RecoveryService transactional state model',()=>{
     expect(state.assignment).toBeNull();expect(state.credentialsActive).toBe(false);expect(state.codesActive).toBe(false);
     expect(state.user).toEqual(userBefore);expect(state.otherRobot).toEqual(otherBefore);expect(state.device.lifecycleStatus).toBe('reset_pending');
     expect(JSON.stringify(result)).not.toMatch(/uri|keyRef|checksum|challenge/);
+    expect(tx.revoke).toHaveBeenCalledWith(expect.objectContaining({deviceId:'42',userId:'7',pairingRequestId:'9'}),'20','10','1','Owner requested',start);
+  });
+  it('repeated same-key revoke of one of two robots creates exactly one job and keeps the other assignment',async()=>{
+    const other=structuredClone(state.otherRobot);
+    const results=await Promise.all([revoke(),revoke(),revoke()]);
+    expect(new Set(results.map(r=>r.operationId)).size).toBe(1);
+    expect(tx.createOperation).toHaveBeenCalledTimes(1);expect(tx.revoke).toHaveBeenCalledTimes(1);
+    expect(state.job.deviceId).toBe('42');expect(state.assignment).toBeNull();
+    expect(state.otherRobot).toEqual(other);
+  });
+  it('code stays blocked after wrong/failed ACK; only a successful matching retry permits a new code',async()=>{
+    const {devices,execute}=issuer();
+    await expect(devices.createPairingCode('1','42',10)).rejects.toMatchObject({code:'DEVICE_NOT_AVAILABLE'});
+    await revoke();
+    await expect(devices.createPairingCode('1','42',10)).rejects.toMatchObject({code:'DEVICE_NOT_AVAILABLE'});
+    const claim=await service.requestDeviceReset({deviceId:'42'}) as any;
+    const ack={deviceId:'42',attempt:claim.attempt,challenge:claim.challenge,result:'success',sessionsInvalidated:true,firmwareResetConfirmed:true};
+    for(const [jobId,body,status] of [
+      ['39',ack,409],['40',{...ack,attempt:claim.attempt+1},409],
+      ['40',{...ack,challenge:'x'.repeat(43)},403],['40',{...ack,deviceId:'99'},404],
+    ] as const){
+      if(jobId==='39')tx.job.mockResolvedValueOnce({...state.job,id:'39'});
+      await expect(service.processResetAcknowledgment(jobId,body)).rejects.toMatchObject({status});
+      expect(state.device.lifecycleStatus).toBe('reset_pending');
+      await expect(devices.createPairingCode('1','42',10)).rejects.toMatchObject({code:'DEVICE_NOT_AVAILABLE'});
+    }
+    await service.processResetAcknowledgment('40',{deviceId:'42',attempt:claim.attempt,challenge:claim.challenge,result:'failed',failureCode:'RESET_FAILED'});
+    await expect(devices.createPairingCode('1','42',10)).rejects.toMatchObject({code:'DEVICE_NOT_AVAILABLE'});
+    // Even a corrupted lifecycle cannot bypass the persisted operation/job gate.
+    state.device.lifecycleStatus='available';
+    await expect(devices.createPairingCode('1','42',10)).rejects.toMatchObject({status:409});
+    state.device.lifecycleStatus='reset_pending';
+    state.now=new Date(start.getTime()+31000);
+    const retry=await service.requestDeviceReset({deviceId:'42'}) as any;
+    await service.processResetAcknowledgment('40',{...ack,attempt:retry.attempt,challenge:retry.challenge});
+    expect(state.device.lifecycleStatus).toBe('available');
+    const code=await devices.createPairingCode('1','42',10);
+    expect(code.pairing_code).toHaveLength(32);
+    expect(code.expires_at.getTime()).toBeGreaterThan(Date.now());
+    expect(execute.mock.calls.filter(([sql])=>sql.includes('INSERT INTO device_pairing_codes'))).toHaveLength(1);
+    expect(state.credentialsActive).toBe(false);
   });
   it('backup/storage failure prevents revocation and rolls back the operation',async()=>{
     store.createRecoveryBackup.mockRejectedValue(new Error('disk failed'));
@@ -227,11 +288,27 @@ describe('Recovery transaction SQL and DTO safeguards',()=>{
     expect(sql).toContain('DELETE FROM device_assignments WHERE device_id=? AND user_id=? AND pairing_request_id=?');
     expect(sql).toContain('UPDATE device_credentials');expect(sql).toContain('INSERT INTO device_reset_jobs');
     expect(sql).not.toMatch(/UPDATE users|DELETE FROM users|UPDATE ai_profiles|connection_status/);
+    expect(sql).not.toMatch(/\b(?:UPDATE|DELETE FROM) (?:conversations|messages)\b/);
+    const [deleteSql,deleteValues]=c.execute.mock.calls.find(([query]:[string])=>query.startsWith('DELETE FROM device_assignments'));
+    expect(deleteValues).toEqual(['42','7','9']);
+    expect(deleteSql).toContain('device_id=? AND user_id=? AND pairing_request_id=?');
   });
   it('uses seven-day database expiry and full BIGINT IDs',async()=>{
     c.execute.mockResolvedValueOnce([{}]).mockResolvedValueOnce([[{id:'9007199254740993'}]]);
     expect(await tx.insertBackup('10',{uri:'recovery-file:test.enc',checksum:'hash',keyRef:'test'},start)).toBe('9007199254740993');
     expect(c.execute.mock.calls[0][0]).toContain('DATE_ADD(?,INTERVAL 7 DAY)');
+  });
+  it.each([false,true])('only successful ACK changes lifecycle, scoped to the reset robot (success=%s)',async success=>{
+    c.execute.mockResolvedValue([{affectedRows:1}]);
+    const job={id:'40',deviceId:'42',operationId:'10'} as ResetJob;
+    await tx.acknowledge(job,success,success?null:'RESET_FAILED',start);
+    const lifecycle=c.execute.mock.calls.filter(([sql]:[string])=>sql.startsWith('UPDATE devices'));
+    expect(lifecycle).toHaveLength(success?1:0);
+    if(success){
+      expect(lifecycle[0][0]).toContain("WHERE id=? AND lifecycle_status='reset_pending'");
+      expect(lifecycle[0][1]).toEqual([start,'42']);
+    }
+    expect(c.execute.mock.calls[0][1]).toEqual([success?'acknowledged':'failed',success?start:null,success?null:'RESET_FAILED','40']);
   });
   it('rollback on work/commit failure and always release',async()=>{
     await repo.transaction(async()=>true);expect(c.commit).toHaveBeenCalled();

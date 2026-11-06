@@ -1,0 +1,5 @@
+"-specs=E:/learn/AI_Project/cap1/xiaozhi-esp32/build-dual-noccache/bootloader/specs/picolibc.specs"
+-mlongcalls
+-fno-builtin-memcpy
+-fno-builtin-memset
+-fno-builtin-bzero

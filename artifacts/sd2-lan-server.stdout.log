@@ -1,0 +1,14 @@
+OTA: https://192.168.0.104:8000/xiaozhi/ota/
+WebSocket: wss://192.168.0.104:8000/ws/robot
+TLS: enabled (TLS 1.2 minimum; certificate verification is required by clients).
+Standalone local Gemini mode: device UID/credential allowlist + private network ACL; 12 turns/minute per local credential. No Backend user/quota claim.
+INFO:     192.168.0.106:60165 - "POST /xiaozhi/ota/ HTTP/1.1" 200 OK
+INFO:     192.168.0.106:51766 - "POST /xiaozhi/ota/ HTTP/1.1" 200 OK
+INFO:     192.168.0.106:57398 - "POST /xiaozhi/ota/ HTTP/1.1" 200 OK
+INFO:     192.168.0.106:57400 - "POST /xiaozhi/ota/ HTTP/1.1" 200 OK
+INFO:     192.168.0.106:57402 - "POST /xiaozhi/ota/ HTTP/1.1" 200 OK
+INFO:     192.168.0.106:57404 - "POST /xiaozhi/ota/ HTTP/1.1" 200 OK
+INFO:     192.168.0.106:57406 - "POST /xiaozhi/ota/ HTTP/1.1" 200 OK
+INFO:     192.168.0.104:55185 - "GET /health HTTP/1.1" 200 OK
+INFO:     192.168.0.106:57408 - "POST /xiaozhi/ota/ HTTP/1.1" 200 OK
+INFO:     192.168.0.106:57410 - "POST /xiaozhi/ota/ HTTP/1.1" 200 OK

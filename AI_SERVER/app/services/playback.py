@@ -87,6 +87,7 @@ class PlaybackScheduler:
         self._attempted: set[str] = set()
         self.queue: AudioQueue | None = None
         self.scope: PlaybackScope | None = None
+        self.coalesce_segments = False
 
     async def play(self, adapter: TTSAdapter, output: AudioOutput,
                    texts: AsyncIterator[TextChunk | LLMResult], *, key: ConversationKey,
@@ -167,25 +168,35 @@ class PlaybackScheduler:
             total_chars += len(text.text)
             if index >= self.limits.max_segments or total_chars > self.limits.max_text_chars:
                 raise TTSError(TTSErrorCode.LIMIT)
-            stream = adapter.synthesize(TTSRequest(scope, index, text.text, config), context)
-            sequence = 0
-            try:
-                async for audio in stream:
-                    context.check()  # Drop late provider output from a cancelled turn.
-                    if (not isinstance(audio, TTSAudioChunk) or audio.sequence != sequence
-                        or audio.audio_format != config.audio_format):
-                        raise TTSError(TTSErrorCode.INVALID_AUDIO)
-                    await queue.put(ScheduledAudio(scope, index, audio))
-                    sequence += 1
-                if sequence == 0:
-                    raise TTSError(TTSErrorCode.INVALID_AUDIO)
-            finally:
-                await stream.aclose()
+            if not self.coalesce_segments:
+                await self._synthesize_segment(adapter, scope, queue, config, context, index, text.text)
             received.append(text.text)
             index += 1
         if not final:
             raise TTSError(TTSErrorCode.INCOMPLETE_INPUT)
+        # Gemini TTS has a much tighter request-rate budget than text
+        # generation. One provider request per sentence exhausts that budget
+        # and can cut playback after the first sentence of a later turn.
+        # Coalesce the already bounded, TTS-safe answer into one request.
+        if self.coalesce_segments:
+            await self._synthesize_segment(adapter, scope, queue, config, context, 0, "".join(received))
         queue.finish()
+
+    async def _synthesize_segment(self, adapter, scope, queue, config, context, index, text):
+        stream = adapter.synthesize(TTSRequest(scope, index, text, config), context)
+        sequence = 0
+        try:
+            async for audio in stream:
+                context.check()  # Drop late provider output from a cancelled turn.
+                if (not isinstance(audio, TTSAudioChunk) or audio.sequence != sequence
+                    or audio.audio_format != config.audio_format):
+                    raise TTSError(TTSErrorCode.INVALID_AUDIO)
+                await queue.put(ScheduledAudio(scope, index, audio))
+                sequence += 1
+            if sequence == 0:
+                raise TTSError(TTSErrorCode.INVALID_AUDIO)
+        finally:
+            await stream.aclose()
 
     async def _consume(self, output, scope, queue, config, turn):
         context = turn.audio.context

@@ -64,9 +64,10 @@ export class PairingService {
         throw new BadRequestException('Invalid or unavailable pairing code');
       }
       await this.checkDeviceEligibility(tx, device, code);
-      if (await tx.hasPendingRequest(device.id, actor.userId)) {
-        throw new ConflictException('A pending request already exists for this User and device');
+      if (await tx.hasAnyPending(device.id)) {
+        throw new ConflictException('A pending request already exists for this device');
       }
+      await tx.consumeCode(code.id);
       const id = await tx.createRequest(device.id, actor.userId, code.id);
       await tx.setLifecycle(device.id, 'pending_approval');
       await tx.writePairingRequestAudit(actor.userId,id,device.id);
@@ -96,12 +97,13 @@ export class PairingService {
       }
       await this.authorizeTransaction(tx, actor, request.userId);
       const code = await tx.lockCode(request.pairingCodeId);
-      if (!code || code.deviceId !== device.id || !code.usable) {
-        throw new ConflictException('Pairing code expired, revoked or consumed');
+      if (!code || code.deviceId !== device.id) {
+        throw new ConflictException('Pairing code does not match request');
       }
       await this.checkDeviceEligibility(tx, device, code);
-      // Consume with a final expiry predicate in the same transaction before assigning.
-      await tx.consumeCode(code.id);
+      // New requests reserve the code at submission. Older pending requests are
+      // accepted only when they are the sole request for a still usable code.
+      await tx.reserveCodeForApproval(code.id, request.id);
       await tx.createAssignment(request, actor.userId);
       await tx.reviewRequest(request.id, 'approved', actor.userId, note);
       await tx.setLifecycle(device.id, 'assigned');

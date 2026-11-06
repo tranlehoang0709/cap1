@@ -35,4 +35,7 @@ export class InternalDevicesController {
   @Post('authorize')
   @HttpCode(200)
   authorize(@Body() body:unknown){return this.ownership.authorizeDeviceConnection(body);}
+  @Post('heartbeat')
+  @HttpCode(200)
+  heartbeat(@Body() body:unknown){return this.ownership.recordDeviceHeartbeat(body);}
 }

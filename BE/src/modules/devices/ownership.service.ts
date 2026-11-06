@@ -6,6 +6,7 @@ import { CurrentUser } from '../auth/access-role.guard';
 import { deviceId } from './dto/device-query.dto';
 import { authorizationInput, renameInput } from './dto/ownership.dto';
 import { OwnershipRepository, OwnershipTransaction } from './ownership.repository';
+import { heartbeatInput } from '../monitoring/dto/heartbeat.dto';
 
 @Injectable()
 export class OwnershipService {
@@ -60,6 +61,29 @@ export class OwnershipService {
     const {deviceUid,credential}=authorizationInput(body);
     return this.database(()=>this.repository.withTransaction(async tx=>{
       return this.validateAuthorizedDevice(tx,deviceUid,credential);
+    }),true);
+  }
+  async recordDeviceHeartbeat(body:unknown) {
+    if (this.config.get<string>('DEVICE_AUTH_CONTRACT_APPROVED')!=='true') {
+      throw new ForbiddenException({allowed:false,reason:'CONTRACT_NOT_APPROVED'});
+    }
+    const input=heartbeatInput(body);
+    const timeoutValue=this.config.get<string>('HEARTBEAT_TIMEOUT_SECONDS');
+    if(!timeoutValue||!/^[1-9][0-9]*$/.test(timeoutValue)||Number(timeoutValue)>2147483) {
+      throw new ConflictException('INVALID_HEARTBEAT_TIMEOUT');
+    }
+    return this.database(()=>this.repository.withTransaction(async tx=>{
+      const authorization=await this.validateAuthorizedDevice(tx,input.deviceUid,input.credential,404);
+      const now=await tx.now();
+      if(input.observedAt>now)throw new ConflictException('HEARTBEAT_FROM_FUTURE');
+      const previous=await tx.presence(authorization.deviceId);
+      const stale=now.getTime()-input.observedAt.getTime()>=Number(timeoutValue)*1000;
+      if(stale || previous && input.observedAt<=previous) {
+        return {accepted:false as const,deviceId:authorization.deviceId,
+          lastSeenAt:previous?.toISOString()??null,reason:'STALE_OR_DUPLICATE' as const};
+      }
+      await tx.recordHeartbeat(authorization.deviceId,input.observedAt,input.telemetry);
+      return {accepted:true as const,deviceId:authorization.deviceId,lastSeenAt:input.observedAt.toISOString()};
     }),true);
   }
   /** Reuse on the caller's transaction so authorization and heartbeat cannot race revoke. */

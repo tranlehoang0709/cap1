@@ -90,6 +90,12 @@ describe('QuotasService with durable transaction state model (not MySQL engine p
     expect(results.filter(r=>r.status==='fulfilled')).toHaveLength(2);expect(state.records).toHaveLength(2);
     expect(results.filter(r=>r.status==='rejected').every((r:any)=>r.reason.status===429)).toBe(true);
   });
+  it('enforces exactly 12 requests per rolling minute without discarding token reservations',async()=>{
+    state.policies[0]={...initial,requestsPerMinute:12,requestsPerDay:100,tokensPerMonth:'1000'};
+    for(let n=1;n<=12;n++)await expect(service.authorizeAIRequest(request(n))).resolves.toMatchObject({allowed:true});
+    await expect(service.authorizeAIRequest(request(13))).rejects.toMatchObject({status:429});
+    expect(state.records).toHaveLength(12);expect((await tx.totals()).reservedTokens).toBe('120');
+  });
   it('identical concurrent request IDs create one row and replay state without execution permission',async()=>{
     const results=await Promise.all([service.authorizeAIRequest(request()),service.authorizeAIRequest(request())]);
     expect(results.filter((r:any)=>r.allowed)).toHaveLength(1);expect(results[1]).toMatchObject({allowed:false,replayed:true,executionAllowed:false,state:'ADMITTED'});

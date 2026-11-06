@@ -1,0 +1,110 @@
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [NestFactory] Starting Nest application...
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] ConversationsModule dependencies initialized +15ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] WebChatModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] AiProfilesModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] ApiKeysModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] ConfigHostModule dependencies initialized +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] ThrottlerModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] JwtModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] ConfigModule dependencies initialized +3ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] ConfigModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] DatabaseModule dependencies initialized +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] AiModule dependencies initialized +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] FirmwareOtaModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] LogsModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] SystemSettingsModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] UsersModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] AppModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] AuthModule dependencies initialized +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] AiProvidersModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] DevicesModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] MonitoringModule dependencies initialized +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [InstanceLoader] QuotasModule dependencies initialized +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] HealthController {/health}: +25ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/health, GET} route +2ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] AuthController {/auth}: +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/auth/register, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/auth/login, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/auth/refresh, POST} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/auth/logout, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/auth/me, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/auth/password, PATCH} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] AdminUsersController {/users}: +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/users, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] UsersController {/users}: +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/users/me, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/users/me, PATCH} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/users/me/privacy, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/users/me/privacy, PATCH} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/users, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/users/:id, GET} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/users/:id/role, PATCH} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/users/:id/status, PATCH} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/users/:id, DELETE} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] DevicesController {/devices}: +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices/:id, PATCH} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices/:id/assignment, DELETE} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices/pairing-requests, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices/pairing-requests/mine, GET} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices/admin, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices/admin/all, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices/admin/:id/pairing-codes, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices/admin/:id/credential, POST} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices/admin/pairing-requests, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices/admin/pairing-requests/:id/approve, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices/admin/pairing-requests/:id/reject, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices/device/me, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/devices/device/heartbeat, POST} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] InternalDevicesController {/internal/devices}: +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/internal/devices/authorize, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] InternalAIConfigController {/internal/ai}: +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/internal/ai/resolve-config, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/internal/ai/turns/start, POST} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/internal/ai/turns/complete, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] AiController {/}: +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/ai/providers, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/ai/providers/:id, PATCH} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/ai/profile, GET} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/ai/profile, PATCH} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/api-keys, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/api-keys, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/api-keys/:id, DELETE} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/web-chat/messages, POST} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/conversations, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/conversations/:id, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/conversations/:id, DELETE} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/quotas, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/quotas, GET} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/quotas, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] InternalQuotasController {/internal/ai}: +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/internal/ai/authorize-request, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/internal/ai/usage, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] AdminQuotasController {/admin/ai}: +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/ai/quotas/users/:userId/providers/:providerId, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/ai/quotas/users/:userId/providers/:providerId, PUT} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/ai/usage, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] UserUsageController {/user/ai/usage}: +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/user/ai/usage, GET} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] FirmwareOtaController {/}: +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/firmware, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/firmware, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/firmware/:id/release, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/firmware/device/check, GET} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/firmware/device/updates/:id/status, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] LogsController {/admin}: +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/logs, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/audit-logs, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] MonitoringController {/admin}: +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/dashboard, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/monitoring/instances, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] HeartbeatController {/internal/devices}: +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/internal/devices/heartbeat, POST} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] AdminMonitoringController {/admin/devices}: +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/devices/:id/monitoring, GET} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] UserMonitoringController {/user/devices}: +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/user/devices/:id/monitoring, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RoutesResolver] SystemSettingsController {/admin/system-settings}: +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/system-settings, GET} route +0ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [RouterExplorer] Mapped {/admin/system-settings/:key, PUT} route +1ms
+[Nest] 18864  - 11/04/2026, 7:56:41 AM     LOG [NestApplication] Nest application successfully started +21ms

@@ -1,0 +1,398 @@
+Command: C:\Users\troc\.espressif\python_env\idf6.0_py3.14_env\Scripts\python.exe E:\esp\v6.0.3\esp-idf\tools/idf_monitor.py -p COM3 -b 115200 --toolchain-prefix xtensa-esp32s3-elf- --target esp32s3 --revision 0 E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\xiaozhi.elf E:\learn\AI_Project\cap1\xiaozhi-esp32\build-dual-final\bootloader\bootloader.elf --force-color -m 'C:\Users\troc\.espressif\python_env\idf6.0_py3.14_env\Scripts\python.exe' 'E:\esp\v6.0.3\esp-idf\tools\idf.py' '-p' 'COM3' '-B' 'build-dual-final'
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x15 (USB_UART_CHIP_RESET),boot:0xb (SPI_FAST_FLASH_BOOT)
+Saved PC:0x4038279e
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x59c
+load:0x403c8700,len:0xc90
+load:0x403cb700,len:0x2ee4
+entry 0x403c88f4
+[0;32mI (33) octal_psram: vendor id    : 0x0d (AP)[0m
+[0;32mI (33) octal_psram: dev id       : 0x02 (generation 3)[0m
+[0;32mI (34) octal_psram: density      : 0x03 (64 Mbit)[0m
+[0;32mI (34) octal_psram: good-die     : 0x01 (Pass)[0m
+[0;32mI (34) octal_psram: Latency      : 0x01 (Fixed)[0m
+[0;32mI (34) octal_psram: VCC          : 0x01 (3V)[0m
+[0;32mI (34) octal_psram: SRF          : 0x01 (Fast Refresh)[0m
+[0;32mI (35) octal_psram: BurstType    : 0x01 (Hybrid Wrap)[0m
+[0;32mI (35) octal_psram: BurstLen     : 0x01 (32 Byte)[0m
+[0;32mI (35) octal_psram: Readlatency  : 0x02 (10 cycles@Fixed)[0m
+[0;32mI (35) octal_psram: DriveStrength: 0x00 (1/1)[0m
+[0;32mI (35) MSPI Timing: Enter psram timing tuning[0m
+[0;32mI (36) esp_psram: Found 8MB PSRAM device[0m
+[0;32mI (36) esp_psram: Speed: 80MHz[0m
+[0;32mI (37) cpu_start: Multicore app[0m
+[0;32mI (45) cpu_start: Pro cpu start user code[0m
+[0;32mI (46) cpu_start: cpu freq: 240000000 Hz[0m
+[0;32mI (46) app_init: Application information:[0m
+[0;32mI (46) app_init: Project name:     xiaozhi[0m
+[0;32mI (46) app_init: App version:      2.4.2[0m
+[0;32mI (46) app_init: Compile time:     Nov  6 2026 16:18:25[0m
+[0;32mI (46) app_init: ELF file SHA256:  68f631ddf...[0m
+[0;32mI (46) app_init: ESP-IDF:          v6.0.3[0m
+[0;32mI (46) efuse_init: Min chip rev:     v0.0[0m
+[0;32mI (47) efuse_init: Max chip rev:     v0.99 [0m
+[0;32mI (47) efuse_init: Chip rev:         v0.2[0m
+[0;32mI (47) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (47) heap_init: At 3FCA9EB0 len 0003F860 (254 KiB): RAM[0m
+[0;32mI (47) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM[0m
+[0;32mI (47) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM[0m
+[0;32mI (48) heap_init: At 600FE000 len 00001FD8 (7 KiB): RTCRAM[0m
+[0;32mI (48) esp_psram: Adding pool of 8192K of PSRAM memory to heap allocator[0m
+[0;32mI (48) spi_flash: detected chip: generic[0m
+[0;32mI (49) spi_flash: flash io: qio[0m
+[0;32mI (49) sleep_gpio: Configure to isolate all GPIO pins in sleep state[0m
+[0;32mI (50) sleep_gpio: Enable automatic switching of GPIO sleep configuration[0m
+[0;32mI (50) main_task: Started on CPU0[0m
+[0;32mI (50) esp_psram: Reserving pool of 96K of internal memory for DMA/internal allocations[0m
+[0;32mI (50) main_task: Calling app_main()[0m
+[0;32mI (100) Board: UUID=933c01b8-d7fc-4c78-b729-a5d675d96bbf SKU=aiva-iot-s3-st7789[0m
+[0;32mI (220) Display: Power management not supported[0m
+[0;32mI (340) LcdDisplay: Turning display on[0m
+[0;32mI (340) LcdDisplay: Initialize LVGL library[0m
+[0;32mI (340) LcdDisplay: Use 2MB of PSRAM for image cache[0m
+[0;32mI (340) LcdDisplay: Initialize LVGL port[0m
+[0;32mI (340) LcdDisplay: Adding LCD display[0m
+[0;32mI (340) LVGL: Starting LVGL task[0m
+[0;32mI (350) AivaIotS3Board: AIVA_USB_READY commands: proof, wifi, ws, mode, record, stop, status, reboot[0m
+[0;32mI (350) Backlight: Set brightness to 75[0m
+[0;32mI (350) StateMachine: State: unknown -> starting[0m
+[0;32mI (450) NoAudioCodec: Simplex channels created[0m
+[0;32mI (450) AudioCodec: Audio codec started[0m
+[0;32mI (450) MCP: Add tool: self.get_device_status[0m
+[0;32mI (450) MCP: Add tool: self.audio_speaker.set_volume[0m
+[0;32mI (450) MCP: Add tool: self.screen.set_brightness[0m
+[0;32mI (450) MCP: Add tool: self.screen.set_theme[0m
+[0;32mI (450) MCP: Add tool: self.get_system_info [user][0m
+[0;32mI (450) MCP: Add tool: self.reboot [user][0m
+[0;32mI (450) MCP: Add tool: self.upgrade_firmware [user][0m
+[0;32mI (450) MCP: Add tool: self.screen.get_info [user][0m
+[0;32mI (450) MCP: Add tool: self.screen.snapshot [user][0m
+[0;32mI (450) MCP: Add tool: self.screen.preview_image [user][0m
+[0;32mI (450) MCP: Add tool: self.assets.set_download_url [user][0m
+[0;32mI (450) WifiManager: Initializing...[0m
+[0;32mI (460) pp: pp rom version: e7ae62f[0m
+[0;32mI (460) net80211: net80211 rom version: e7ae62f[0m
+[0;32mI (470) wifi:wifi driver task: 3fcdf168, prio:23, stack:6656, core=0[0m
+[0;32mI (470) wifi:wifi firmware version: da143fa[0m
+[0;32mI (470) wifi:wifi certification version: v7.0[0m
+[0;32mI (470) wifi:config NVS flash: disabled[0m
+[0;32mI (470) wifi:config nano formatting: disabled[0m
+[0;32mI (470) wifi:Init data frame dynamic rx buffer num: 6[0m
+[0;32mI (470) wifi:Init dynamic rx mgmt buffer num: 5[0m
+[0;32mI (470) wifi:Init management short buffer num: 32[0m
+[0;32mI (470) wifi:Init dynamic tx buffer num: 32[0m
+[0;32mI (470) wifi:Init static tx FG buffer num: 2[0m
+[0;32mI (470) wifi:Init static rx buffer size: 1600[0m
+[0;32mI (470) wifi:Init static rx buffer num: 3[0m
+[0;32mI (470) wifi:Init dynamic rx buffer num: 6[0m
+[0;32mI (470) wifi_init: rx ba win: 3[0m
+[0;32mI (470) wifi_init: accept mbox: 6[0m
+[0;32mI (470) wifi_init: tcpip mbox: 16[0m
+[0;32mI (470) wifi_init: udp mbox: 6[0m
+[0;32mI (470) wifi_init: tcp mbox: 6[0m
+[0;32mI (470) wifi_init: tcp tx win: 5760[0m
+[0;32mI (470) wifi_init: tcp rx win: 5760[0m
+[0;32mI (470) wifi_init: tcp mss: 1440[0m
+[0;32mI (470) WifiManager: Initialized[0m
+[0;32mI (470) WifiBoard: Starting WiFi connection attempt[0m
+[0;32mI (470) WifiManager: Starting station[0m
+[0;32mI (470) WifiStation: Station DHCP hostname: Xiaozhi-1508[0m
+[0;32mI (470) phy_init: phy_version 712,87e8c20e,Apr 13 2026,18:51:10[0m
+[0;32mI (510) wifi:mode : sta (44:bd:8d:f2:15:08)[0m
+[0;32mI (510) wifi:enable tsf[0m
+[0;32mI (510) WifiBoard: WiFi scanning[0m
+[0;32mI (2920) WifiStation: Found AP: TP-LINK_5930, BSSID: 84:16:f9:2e:59:30, RSSI: -28, Channel: 7, Authmode: 3[0m
+[0;32mI (2920) WifiBoard: WiFi connecting to TP-LINK_5930[0m
+[0;33mW (2930) wifi:Password length matches WPA2 standards, authmode threshold changes from OPEN to WPA2[0m
+[0;32mI (5390) wifi:new:<7,2>, old:<1,0>, ap:<255,255>, sta:<7,2>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (5390) wifi:state: init -> auth (0xb0)[0m
+[0;32mI (5390) wifi:state: auth -> assoc (0x0)[0m
+[0;32mI (5400) wifi:state: assoc -> run (0x10)[0m
+[0;32mI (5420) wifi:connected with TP-LINK_5930, aid = 5, channel 7, 40D, bssid = 84:16:f9:2e:59:30[0m
+[0;32mI (5420) wifi:security: WPA2-PSK, phy: bgn, rssi: -26, cipher(pairwise:0x3, group:0x3), pmf:0[0m
+[0;32mI (5420) wifi:pm start, type: 1[0m
+
+[0;32mI (5420) wifi:dp: 1, bi: 102400, li: 10, scale listen interval from 1024000 us to 1024000 us[0m
+[0;32mI (5420) wifi:set rx beacon pti, rx_bcn_pti: 0, bcn_timeout: 25000, mt_pti: 0, mt_time: 10000[0m
+[0;32mI (5430) wifi:<ba-add>idx:0 (ifx:0, 84:16:f9:2e:59:30), tid:0, ssn:0, winSize:64[0m
+[0;32mI (5460) wifi:AP's beacon interval = 102400 us, DTIM period = 1[0m
+[0;32mI (6440) esp_netif_handlers: sta ip: 192.168.0.104, mask: 255.255.255.0, gw: 192.168.0.1[0m
+[0;32mI (6440) WifiStation: Got IP: 192.168.0.104[0m
+[0;32mI (6440) WifiBoard: Connected to WiFi: TP-LINK_5930[0m
+[0;32mI (6470) Application: Network connected[0m
+[0;32mI (6470) StateMachine: State: starting -> activating[0m
+[0;32mI (6470) Assets: The storage free size is 21888 KB[0m
+[0;32mI (6470) Assets: The partition size is 8192 KB[0m
+[0;32mI (6670) Assets: The checksum calculation time is 204 ms[0m
+[0;32mI (6680) MODEL_LOADER: Successfully load srmodels[0m
+[0;32mI (6680) Assets: Refreshing display theme...[0m
+[0;33mW (6690) EmojiCollection: Emoji not found: robot_2[0m
+[0;32mI (6690) Ota: Current version: 2.4.2[0m
+[0;32mI (16450) SystemInfo: free sram: 148267 minimal sram: 49832[0m
+[1;31mE (16700) esp-tls: [sock=54] select() timeout[0m
+[1;31mE (16700) esp-tls: Failed to open new connection[0m
+[1;31mE (16700) EspSsl: Failed to connect to 192.168.0.106:8000, code=0x8006[0m
+[1;31mE (16700) HttpClient: TCP connection failed, code=0x8006[0m
+[1;31mE (16700) Ota: Failed to open HTTP connection, code=0x8006[0m
+[0;33mW (16700) Application: Alert [cloud_off] Lỗi: Kiểm tra phiên bản mới thất bại, sẽ thử lại sau 10 giây: code=32774, url=https://192.168.0.106:8000/xiaozhi/ota/[0m
+[0;33mW (16700) EmojiCollection: Emoji not found: cloud_off[0m
+[0;32mI (16700) AudioCodec: Set output enable to true[0m
+[0;32mI (16700) AudioService: Resampling audio from 16000 to 24000[0m
+[0;33mW (16700) Application: Check new version failed, retry in 10 seconds (1/10)[0m
+[0;32mI (26450) SystemInfo: free sram: 153067 minimal sram: 49832[0m
+[0;32mI (26700) Ota: Current version: 2.4.2[0m
+[0;32mI (32700) AudioCodec: Set output enable to false[0m
+[0;32mI (36450) SystemInfo: free sram: 147543 minimal sram: 48276[0m
+[1;31mE (36710) esp-tls: [sock=54] select() timeout[0m
+[1;31mE (36710) esp-tls: Failed to open new connection[0m
+[1;31mE (36710) EspSsl: Failed to connect to 192.168.0.106:8000, code=0x8006[0m
+[1;31mE (36710) HttpClient: TCP connection failed, code=0x8006[0m
+[1;31mE (36710) Ota: Failed to open HTTP connection, code=0x8006[0m
+[0;33mW (36710) Application: Alert [cloud_off] Lỗi: Kiểm tra phiên bản mới thất bại, sẽ thử lại sau 20 giây: code=32774, url=https://192.168.0.106:8000/xiaozhi/ota/[0m
+[0;33mW (36710) EmojiCollection: Emoji not found: cloud_off[0m
+[0;32mI (36710) AudioCodec: Set output enable to true[0m
+[0;33mW (36710) Application: Check new version failed, retry in 20 seconds (2/10)[0m
+[0;32mI (43510) AivaIotS3Board: AIVA_STATUS state=9 ws_configured=1 mode=lan[0m
+[0;32mI (46450) SystemInfo: free sram: 153067 minimal sram: 48276[0m
+[0;32mI (51020) AivaIotS3Board: AIVA_MODE saved=wifi_internet; reboot required[0m
+[0;32mI (52710) AudioCodec: Set output enable to false[0m
+[0;32mI (56360) wifi:state: run -> init (0x0)[0m
+[0;32mI (56360) wifi:pm stop, total sleep time: 45660005 us / 50936802 us[0m
+
+[0;32mI (56360) wifi:<ba-del>idx:0, tid:0[0m
+[0;32mI (56360) wifi:new:<7,0>, old:<7,2>, ap:<255,255>, sta:<7,2>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (56360) WifiStation: WiFi disconnected, reason: 8[0m
+[0;33mW (56370) WifiBoard: WiFi disconnected[0m
+[0;32mI (56370) WifiStation: Reconnecting TP-LINK_5930 (attempt 1 / 5)[0m
+[0;32mI (56390) wifi:flush txq[0m
+[0;32mI (56390) wifi:stop sw txq[0m
+[0;32mI (56390) wifi:lmac stop hw txq[0m
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0xb (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40385642
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x59c
+load:0x403c8700,len:0xc90
+load:0x403cb700,len:0x2ee4
+entry 0x403c88f4
+[0;32mI (33) octal_psram: vendor id    : 0x0d (AP)[0m
+[0;32mI (33) octal_psram: dev id       : 0x02 (generation 3)[0m
+[0;32mI (33) octal_psram: density      : 0x03 (64 Mbit)[0m
+[0;32mI (33) octal_psram: good-die     : 0x01 (Pass)[0m
+[0;32mI (33) octal_psram: Latency      : 0x01 (Fixed)[0m
+[0;32mI (34) octal_psram: VCC          : 0x01 (3V)[0m
+[0;32mI (34) octal_psram: SRF          : 0x01 (Fast Refresh)[0m
+[0;32mI (34) octal_psram: BurstType    : 0x01 (Hybrid Wrap)[0m
+[0;32mI (34) octal_psram: BurstLen     : 0x01 (32 Byte)[0m
+[0;32mI (35) octal_psram: Readlatency  : 0x02 (10 cycles@Fixed)[0m
+[0;32mI (35) octal_psram: DriveStrength: 0x00 (1/1)[0m
+[0;32mI (35) MSPI Timing: Enter psram timing tuning[0m
+[0;32mI (36) esp_psram: Found 8MB PSRAM device[0m
+[0;32mI (36) esp_psram: Speed: 80MHz[0m
+[0;32mI (36) cpu_start: Multicore app[0m
+[0;32mI (45) cpu_start: Pro cpu start user code[0m
+[0;32mI (45) cpu_start: cpu freq: 240000000 Hz[0m
+[0;32mI (45) app_init: Application information:[0m
+[0;32mI (45) app_init: Project name:     xiaozhi[0m
+[0;32mI (45) app_init: App version:      2.4.2[0m
+[0;32mI (46) app_init: Compile time:     Nov  6 2026 16:18:25[0m
+[0;32mI (46) app_init: ELF file SHA256:  68f631ddf...[0m
+[0;32mI (46) app_init: ESP-IDF:          v6.0.3[0m
+[0;32mI (46) efuse_init: Min chip rev:     v0.0[0m
+[0;32mI (46) efuse_init: Max chip rev:     v0.99 [0m
+[0;32mI (46) efuse_init: Chip rev:         v0.2[0m
+[0;32mI (46) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (47) heap_init: At 3FCA9EB0 len 0003F860 (254 KiB): RAM[0m
+[0;32mI (47) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM[0m
+[0;32mI (47) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM[0m
+[0;32mI (47) heap_init: At 600FE000 len 00001FD8 (7 KiB): RTCRAM[0m
+[0;32mI (47) esp_psram: Adding pool of 8192K of PSRAM memory to heap allocator[0m
+[0;32mI (48) spi_flash: detected chip: generic[0m
+[0;32mI (48) spi_flash: flash io: qio[0m
+[0;32mI (49) sleep_gpio: Configure to isolate all GPIO pins in sleep state[0m
+[0;32mI (49) sleep_gpio: Enable automatic switching of GPIO sleep configuration[0m
+[0;32mI (50) main_task: Started on CPU0[0m
+[0;32mI (50) esp_psram: Reserving pool of 96K of internal memory for DMA/internal allocations[0m
+[0;32mI (50) main_task: Calling app_main()[0m
+[0;32mI (100) Board: UUID=933c01b8-d7fc-4c78-b729-a5d675d96bbf SKU=aiva-iot-s3-st7789[0m
+[0;32mI (220) Display: Power management not supported[0m
+[0;32mI (340) LcdDisplay: Turning display on[0m
+[0;32mI (340) LcdDisplay: Initialize LVGL library[0m
+[0;32mI (340) LcdDisplay: Use 2MB of PSRAM for image cache[0m
+[0;32mI (340) LcdDisplay: Initialize LVGL port[0m
+[0;32mI (340) LcdDisplay: Adding LCD display[0m
+[0;32mI (340) LVGL: Starting LVGL task[0m
+[0;32mI (350) AivaIotS3Board: AIVA_USB_READY commands: proof, wifi, ws, mode, record, stop, status, reboot[0m
+[0;32mI (350) Backlight: Set brightness to 75[0m
+[0;32mI (350) StateMachine: State: unknown -> starting[0m
+[0;32mI (450) NoAudioCodec: Simplex channels created[0m
+[0;32mI (450) AudioCodec: Audio codec started[0m
+[0;32mI (450) MCP: Add tool: self.get_device_status[0m
+[0;32mI (450) MCP: Add tool: self.audio_speaker.set_volume[0m
+[0;32mI (450) MCP: Add tool: self.screen.set_brightness[0m
+[0;32mI (450) MCP: Add tool: self.screen.set_theme[0m
+[0;32mI (450) MCP: Add tool: self.get_system_info [user][0m
+[0;32mI (450) MCP: Add tool: self.reboot [user][0m
+[0;32mI (450) MCP: Add tool: self.upgrade_firmware [user][0m
+[0;32mI (450) MCP: Add tool: self.screen.get_info [user][0m
+[0;32mI (450) MCP: Add tool: self.screen.snapshot [user][0m
+[0;32mI (450) MCP: Add tool: self.screen.preview_image [user][0m
+[0;32mI (450) MCP: Add tool: self.assets.set_download_url [user][0m
+[0;32mI (450) WifiManager: Initializing...[0m
+[0;32mI (460) pp: pp rom version: e7ae62f[0m
+[0;32mI (460) net80211: net80211 rom version: e7ae62f[0m
+[0;32mI (470) wifi:wifi driver task: 3fcdf218, prio:23, stack:6656, core=0[0m
+[0;32mI (470) wifi:wifi firmware version: da143fa[0m
+[0;32mI (470) wifi:wifi certification version: v7.0[0m
+[0;32mI (470) wifi:config NVS flash: disabled[0m
+[0;32mI (470) wifi:config nano formatting: disabled[0m
+[0;32mI (470) wifi:Init data frame dynamic rx buffer num: 6[0m
+[0;32mI (470) wifi:Init dynamic rx mgmt buffer num: 5[0m
+[0;32mI (470) wifi:Init management short buffer num: 32[0m
+[0;32mI (470) wifi:Init dynamic tx buffer num: 32[0m
+[0;32mI (470) wifi:Init static tx FG buffer num: 2[0m
+[0;32mI (470) wifi:Init static rx buffer size: 1600[0m
+[0;32mI (470) wifi:Init static rx buffer num: 3[0m
+[0;32mI (470) wifi:Init dynamic rx buffer num: 6[0m
+[0;32mI (470) wifi_init: rx ba win: 3[0m
+[0;32mI (470) wifi_init: accept mbox: 6[0m
+[0;32mI (470) wifi_init: tcpip mbox: 16[0m
+[0;32mI (470) wifi_init: udp mbox: 6[0m
+[0;32mI (470) wifi_init: tcp mbox: 6[0m
+[0;32mI (470) wifi_init: tcp tx win: 5760[0m
+[0;32mI (470) wifi_init: tcp rx win: 5760[0m
+[0;32mI (470) wifi_init: tcp mss: 1440[0m
+[0;32mI (470) WifiManager: Initialized[0m
+[0;32mI (470) WifiBoard: Starting WiFi connection attempt[0m
+[0;32mI (470) WifiManager: Starting station[0m
+[0;32mI (470) WifiStation: Station DHCP hostname: Xiaozhi-1508[0m
+[0;32mI (470) phy_init: phy_version 712,87e8c20e,Apr 13 2026,18:51:10[0m
+[0;32mI (510) wifi:mode : sta (44:bd:8d:f2:15:08)[0m
+[0;32mI (510) wifi:enable tsf[0m
+[0;32mI (510) WifiBoard: WiFi scanning[0m
+[0;32mI (2920) WifiStation: Found AP: TP-LINK_5930, BSSID: 84:16:f9:2e:59:30, RSSI: -28, Channel: 7, Authmode: 3[0m
+[0;32mI (2920) WifiBoard: WiFi connecting to TP-LINK_5930[0m
+[0;33mW (2930) wifi:Password length matches WPA2 standards, authmode threshold changes from OPEN to WPA2[0m
+[0;32mI (5390) wifi:new:<7,2>, old:<1,0>, ap:<255,255>, sta:<7,2>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (5390) wifi:state: init -> auth (0xb0)[0m
+[0;32mI (5390) wifi:state: auth -> assoc (0x0)[0m
+[0;32mI (5400) wifi:state: assoc -> run (0x10)[0m
+[0;32mI (5410) wifi:connected with TP-LINK_5930, aid = 5, channel 7, 40D, bssid = 84:16:f9:2e:59:30[0m
+[0;32mI (5410) wifi:security: WPA2-PSK, phy: bgn, rssi: -28, cipher(pairwise:0x3, group:0x3), pmf:0[0m
+[0;32mI (5410) wifi:pm start, type: 1[0m
+
+[0;32mI (5410) wifi:dp: 1, bi: 102400, li: 10, scale listen interval from 1024000 us to 1024000 us[0m
+[0;32mI (5410) wifi:set rx beacon pti, rx_bcn_pti: 0, bcn_timeout: 25000, mt_pti: 0, mt_time: 10000[0m
+[0;32mI (5420) wifi:<ba-add>idx:0 (ifx:0, 84:16:f9:2e:59:30), tid:0, ssn:0, winSize:64[0m
+[0;32mI (5460) wifi:AP's beacon interval = 102400 us, DTIM period = 1[0m
+[0;32mI (6430) esp_netif_handlers: sta ip: 192.168.0.104, mask: 255.255.255.0, gw: 192.168.0.1[0m
+[0;32mI (6430) WifiStation: Got IP: 192.168.0.104[0m
+[0;32mI (6430) WifiBoard: Connected to WiFi: TP-LINK_5930[0m
+[0;32mI (6460) Application: Network connected[0m
+[0;32mI (6460) StateMachine: State: starting -> activating[0m
+[0;32mI (6460) Assets: The storage free size is 21888 KB[0m
+[0;32mI (6460) Assets: The partition size is 8192 KB[0m
+[0;32mI (6660) Assets: The checksum calculation time is 204 ms[0m
+[0;32mI (6670) MODEL_LOADER: Successfully load srmodels[0m
+[0;32mI (6670) Assets: Refreshing display theme...[0m
+[0;33mW (6680) EmojiCollection: Emoji not found: robot_2[0m
+[0;32mI (6680) Ota: Current version: 2.4.2[0m
+[0;32mI (6890) wifi:<ba-add>idx:1 (ifx:0, 84:16:f9:2e:59:30), tid:5, ssn:0, winSize:64[0m
+[1;31mE (10690) Ota: Failed to check version, status code: 503[0m
+[0;33mW (10690) Application: Alert [cloud_off] Lỗi: Kiểm tra phiên bản mới thất bại, sẽ thử lại sau 10 giây: code=503, url=https://desktop-m27leua.tail022082.ts.net/xiaozhi/ota/[0m
+[0;33mW (10700) EmojiCollection: Emoji not found: cloud_off[0m
+[0;32mI (10700) AudioCodec: Set output enable to true[0m
+[0;32mI (10700) AudioService: Resampling audio from 16000 to 24000[0m
+[0;33mW (10700) Application: Check new version failed, retry in 10 seconds (1/10)[0m
+[0;32mI (16450) SystemInfo: free sram: 152355 minimal sram: 41340[0m
+[0;32mI (20700) Ota: Current version: 2.4.2[0m
+[1;31mE (24390) Ota: Failed to check version, status code: 503[0m
+[0;33mW (24400) Application: Alert [cloud_off] Lỗi: Kiểm tra phiên bản mới thất bại, sẽ thử lại sau 20 giây: code=503, url=https://desktop-m27leua.tail022082.ts.net/xiaozhi/ota/[0m
+[0;33mW (24400) EmojiCollection: Emoji not found: cloud_off[0m
+[0;33mW (24400) Application: Check new version failed, retry in 20 seconds (2/10)[0m
+[0;32mI (25510) wifi:new:<7,0>, old:<7,2>, ap:<255,255>, sta:<7,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (26470) SystemInfo: free sram: 152363 minimal sram: 41340[0m
+[0;32mI (26540) wifi:new:<7,2>, old:<7,0>, ap:<255,255>, sta:<7,2>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (27460) wifi:new:<7,0>, old:<7,2>, ap:<255,255>, sta:<7,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (28480) wifi:new:<7,2>, old:<7,0>, ap:<255,255>, sta:<7,2>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (30530) wifi:new:<7,0>, old:<7,2>, ap:<255,255>, sta:<7,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (31450) wifi:new:<7,2>, old:<7,0>, ap:<255,255>, sta:<7,2>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (35440) wifi:new:<7,0>, old:<7,2>, ap:<255,255>, sta:<7,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (36470) wifi:new:<7,2>, old:<7,0>, ap:<255,255>, sta:<7,2>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (36470) SystemInfo: free sram: 152327 minimal sram: 41340[0m
+[0;32mI (40460) wifi:[ADDBA]RX DELBA, reason:39, delete tid:0, initiator:0(recipient)[0m
+[0;32mI (40700) AudioCodec: Set output enable to false[0m
+[0;32mI (44400) Ota: Current version: 2.4.2[0m
+[0;32mI (46450) SystemInfo: free sram: 143867 minimal sram: 41340[0m
+[0;32mI (47510) wifi:new:<7,0>, old:<7,2>, ap:<255,255>, sta:<7,0>, prof:1, snd_ch_cfg:0x0[0m
+[1;31mE (47930) Ota: Failed to check version, status code: 503[0m
+[0;33mW (47930) Application: Alert [cloud_off] Lỗi: Kiểm tra phiên bản mới thất bại, sẽ thử lại sau 40 giây: code=503, url=https://desktop-m27leua.tail022082.ts.net/xiaozhi/ota/[0m
+[0;33mW (47950) EmojiCollection: Emoji not found: cloud_off[0m
+[0;32mI (47950) AudioCodec: Set output enable to true[0m
+[0;33mW (47950) Application: Check new version failed, retry in 40 seconds (3/10)[0m
+[0;32mI (49470) wifi:new:<7,2>, old:<7,0>, ap:<255,255>, sta:<7,2>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (50480) wifi:new:<7,0>, old:<7,2>, ap:<255,255>, sta:<7,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (53460) wifi:new:<7,2>, old:<7,0>, ap:<255,255>, sta:<7,2>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (55500) wifi:new:<7,0>, old:<7,2>, ap:<255,255>, sta:<7,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (56450) SystemInfo: free sram: 152363 minimal sram: 41340[0m
+[0;32mI (56520) wifi:new:<7,2>, old:<7,0>, ap:<255,255>, sta:<7,2>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (60510) wifi:new:<7,0>, old:<7,2>, ap:<255,255>, sta:<7,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (62460) wifi:new:<7,2>, old:<7,0>, ap:<255,255>, sta:<7,2>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (63950) AudioCodec: Set output enable to false[0m
+[0;32mI (66450) SystemInfo: free sram: 152367 minimal sram: 41340[0m
+[0;32mI (70440) wifi:[ADDBA]RX DELBA, reason:39, delete tid:0, initiator:0(recipient)[0m
+[0;32mI (76450) SystemInfo: free sram: 152491 minimal sram: 41340[0m
+[0;32mI (86450) SystemInfo: free sram: 152491 minimal sram: 41340[0m
+[0;32mI (87960) Ota: Current version: 2.4.2[0m
+[1;31mE (91830) Ota: Failed to check version, status code: 503[0m
+[0;33mW (91830) Application: Alert [cloud_off] Lỗi: Kiểm tra phiên bản mới thất bại, sẽ thử lại sau 80 giây: code=503, url=https://desktop-m27leua.tail022082.ts.net/xiaozhi/ota/[0m
+[0;33mW (91840) EmojiCollection: Emoji not found: cloud_off[0m
+[0;32mI (91840) AudioCodec: Set output enable to true[0m
+[0;33mW (91840) Application: Check new version failed, retry in 80 seconds (4/10)[0m
+[0;32mI (94910) AivaIotS3Board: AIVA_STATUS state=9 ws_configured=1 mode=wifi_internet[0m
+[0;32mI (96470) SystemInfo: free sram: 152367 minimal sram: 41340[0m
+[0;32mI (100530) wifi:[ADDBA]RX DELBA, reason:39, delete tid:0, initiator:0(recipient)[0m
+[0;32mI (100760) AivaIotS3Board: AIVA_MODE saved=lan; reboot required[0m
+[0;32mI (100820) wifi:state: run -> init (0x0)[0m
+[0;32mI (100820) wifi:pm stop, total sleep time: 84448706 us / 95406230 us[0m
+
+[0;32mI (100820) wifi:<ba-del>idx:0, tid:0[0m
+[0;32mI (100820) wifi:<ba-del>idx:1, tid:5[0m
+[0;32mI (100820) wifi:new:<7,0>, old:<7,2>, ap:<255,255>, sta:<7,2>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (100820) WifiStation: WiFi disconnected, reason: 8[0m
+[0;33mW (100840) WifiBoard: WiFi disconnected[0m
+[0;32mI (100840) WifiStation: Reconnecting TP-LINK_5930 (attempt 1 / 5)[0m
+[0;32mI (100860) wifi:flush txq[0m
+[0;32mI (100860) wifi:stop sw txq[0m
+[0;32mI (100860) wifi:lmac stop hw txq[0m
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0xc (RTC_SW_CPU_RST),boot:0xb (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40385642
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x59c
+load:0x403c8700,len:0xc90
+load:0x403cb700,len:0x2ee4
+entry 0x403c88f4
+[0;32mI (26502) SystemInfo: free sram: 152851 minimal sram: 48164[0m
+[0;32mI (26742) Ota: Current version: 2.4.2[0m
+[0;32mI (32742) AudioCodec: Set output enable to false[0m
+[0;32mI (32992) AivaIotS3Board: AIVA_STATUS state=9 ws_configured=1 mode=lan[0m
+[0;32mI (36542) SystemInfo: free sram: 147331 minimal sram: 47464[0m
+[1;31mE (36752) esp-tls: [sock=54] select() timeout[0m
+[1;31mE (36752) esp-tls: Failed to open new connection[0m
+[1;31mE (36752) EspSsl: Failed to connect to 192.168.0.106:8000, code=0x8006[0m
+[1;31mE (36752) HttpClient: TCP connection failed, code=0x8006[0m
+[1;31mE (36752) Ota: Failed to open HTTP connection, code=0x8006[0m
+[0;33mW (36752) Application: Alert [cloud_off] Lỗi: Kiểm tra phiên bản mới thất bại, sẽ thử lại sau 20 giây: code=32774, url=https://192.168.0.106:8000/xiaozhi/ota/[0m
+[0;33mW (36752) EmojiCollection: Emoji not found: cloud_off[0m
+[0;32mI (36752) AudioCodec: Set output enable to true[0m
+[0;33mW (36752) Application: Check new version failed, retry in 20 seconds (2/10)[0m
+[0;32mI (46512) SystemInfo: free sram: 152851 minimal sram: 47464[0m
+[0;32mI (52752) AudioCodec: Set output enable to false[0m

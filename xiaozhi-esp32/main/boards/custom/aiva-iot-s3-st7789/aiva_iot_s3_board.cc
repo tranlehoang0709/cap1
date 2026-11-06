@@ -18,6 +18,7 @@
 #include <cstdio>
 #include <sstream>
 #include "settings.h"
+#include "aiva_connection_mode.h"
 #endif
 
 #if defined(LCD_TYPE_ILI9341_SERIAL)
@@ -141,24 +142,53 @@ private:
     static void HandleUsbCommand(const std::string& command) {
         auto& app = Application::GetInstance();
         if (command == "status") {
+#if CONFIG_AIVA_DUAL_CONNECTION_MODE
+            const auto mode = aiva::connection::GetMode();
+            Settings settings(aiva::connection::WebsocketNamespace(mode), false);
+#else
             Settings settings("websocket", false);
-<<<<<<< HEAD
-            ESP_LOGI(TAG, "AIVA_STATUS state=%d ws_configured=%d",
-                     static_cast<int>(app.GetDeviceState()),
-                     !settings.GetString("url").empty() && !settings.GetString("token").empty());
-=======
+#endif
 #if CONFIG_AIVA_LAN_BOOTSTRAP
             Settings device("device", false);
-            const bool configured = !settings.GetString("url").empty() &&
+            const bool configured =
+#if CONFIG_AIVA_DUAL_CONNECTION_MODE
+                                    !aiva::connection::GetWebsocketUrl().empty() &&
+#else
+                                    !settings.GetString("url").empty() &&
+#endif
                                     !device.GetString("uid").empty() &&
                                     !device.GetString("credential").empty();
 #else
             const bool configured = !settings.GetString("url").empty() &&
                                     !settings.GetString("token").empty();
 #endif
-            ESP_LOGI(TAG, "AIVA_STATUS state=%d ws_configured=%d",
+            ESP_LOGI(TAG, "AIVA_STATUS state=%d ws_configured=%d mode=%s",
                      static_cast<int>(app.GetDeviceState()),
-                     configured);
+                     configured,
+#if CONFIG_AIVA_DUAL_CONNECTION_MODE
+                     aiva::connection::ModeName(mode));
+#else
+                     "lan");
+#endif
+        } else if (command.rfind("mode ", 0) == 0) {
+#if CONFIG_AIVA_DUAL_CONNECTION_MODE
+            const auto state = app.GetDeviceState();
+            if (state != kDeviceStateIdle && state != kDeviceStateActivating &&
+                state != kDeviceStateWifiConfiguring) {
+                ESP_LOGW(TAG, "AIVA_MODE rejected: device is busy");
+                return;
+            }
+            std::istringstream input(command);
+            std::string verb, value, extra;
+            input >> verb >> value;
+            if (input >> extra || !aiva::connection::SetMode(value)) {
+                ESP_LOGW(TAG, "AIVA_MODE invalid; expected lan or wifi_internet");
+                return;
+            }
+            ESP_LOGI(TAG, "AIVA_MODE saved=%s; reboot required", value.c_str());
+#else
+            ESP_LOGW(TAG, "AIVA_MODE unavailable in this firmware variant");
+#endif
         } else if (command.rfind("proof ", 0) == 0) {
             // One-time physical provisioning only; never print the credential.
             if (app.GetDeviceState() != kDeviceStateIdle &&
@@ -187,7 +217,6 @@ private:
         } else if (command == "wifi") {
             app.Schedule(
                 []() { static_cast<WifiBoard&>(Board::GetInstance()).EnterWifiConfigMode(); });
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
         } else if (command == "record") {
             app.Schedule([]() {
                 auto& current = Application::GetInstance();
@@ -209,23 +238,14 @@ private:
         } else if (command == "reboot") {
             esp_restart();
         } else if (command.rfind("ws ", 0) == 0) {
-<<<<<<< HEAD
-            if (app.GetDeviceState() != kDeviceStateIdle) {
-                ESP_LOGW(TAG, "AIVA_WS rejected: configure while idle");
-=======
             const auto state = app.GetDeviceState();
             if (state != kDeviceStateIdle && state != kDeviceStateActivating) {
                 ESP_LOGW(TAG, "AIVA_WS rejected: device is busy");
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
                 return;
             }
             std::istringstream input(command);
             std::string verb, url, token, version, extra;
             input >> verb >> url >> token >> version;
-<<<<<<< HEAD
-            bool valid_url = url.rfind("ws://", 0) == 0 || url.rfind("wss://", 0) == 0;
-            if (!valid_url || url.size() > 256 || token.size() < 32 || token.size() > 128 ||
-=======
 #if CONFIG_AIVA_LAN_BOOTSTRAP
             const auto path_start = url.find('/', 6);
             const bool valid_url = url.rfind("wss://", 0) == 0 &&
@@ -239,18 +259,12 @@ private:
             const bool valid_token = token.size() >= 32 && token.size() <= 128;
 #endif
             if (!valid_url || url.size() > 256 || !valid_token ||
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
                 (version != "1" && version != "2" && version != "3") || input >> extra) {
                 ESP_LOGW(TAG, "AIVA_WS invalid configuration (values hidden)");
                 return;
             }
             Settings settings("websocket", true);
             settings.SetString("url", url);
-<<<<<<< HEAD
-            settings.SetString("token", token);
-            settings.SetInt("version", version[0] - '0');
-            ESP_LOGI(TAG, "AIVA_WS saved; reboot before changing an existing connection");
-=======
 #if CONFIG_AIVA_LAN_BOOTSTRAP
             settings.SetString("token", "");
             // Reuse the configured WSS authority for the authenticated OTA bootstrap URL.
@@ -262,7 +276,6 @@ private:
 #endif
             settings.SetInt("version", version[0] - '0');
             ESP_LOGI(TAG, "AIVA_WS saved; reboot to apply connection settings");
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
         } else if (!command.empty()) {
             ESP_LOGW(TAG, "AIVA_USB unknown command (input hidden)");
         }
@@ -295,11 +308,8 @@ private:
                 }
             },
             "sd2_usb_dev", 4096, nullptr, 3, nullptr);
-<<<<<<< HEAD
-        ESP_LOGI(TAG, "AIVA_USB_READY commands: ws, record, stop, status, reboot");
-=======
-        ESP_LOGI(TAG, "AIVA_USB_READY commands: proof, wifi, ws, record, stop, status, reboot");
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
+        ESP_LOGI(TAG,
+                 "AIVA_USB_READY commands: proof, wifi, ws, mode, record, stop, status, reboot");
     }
 #endif
 
@@ -323,14 +333,7 @@ public:
         static NoAudioCodecSimplex audio_codec(AUDIO_INPUT_SAMPLE_RATE, AUDIO_OUTPUT_SAMPLE_RATE,
                                                AUDIO_I2S_SPK_GPIO_BCLK, AUDIO_I2S_SPK_GPIO_LRCK,
                                                AUDIO_I2S_SPK_GPIO_DOUT, AUDIO_I2S_MIC_GPIO_SCK,
-<<<<<<< HEAD
                                                AUDIO_I2S_MIC_GPIO_WS, AUDIO_I2S_MIC_GPIO_DIN);
-=======
-                                               AUDIO_I2S_MIC_GPIO_WS, AUDIO_I2S_MIC_GPIO_DIN,
-                                               // The sampled mic bus has eight zero padding bits at LSB.
-                                               // Shift by 16 to map its 24-bit left-aligned samples to PCM16.
-                                               16);
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
 #else
         static NoAudioCodecDuplex audio_codec(AUDIO_INPUT_SAMPLE_RATE, AUDIO_OUTPUT_SAMPLE_RATE,
                                               AUDIO_I2S_GPIO_BCLK, AUDIO_I2S_GPIO_WS,

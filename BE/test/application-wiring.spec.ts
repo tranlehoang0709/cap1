@@ -43,20 +43,32 @@ describe('Full AppModule HTTP wiring with explicitly mocked MySQL (not DB E2E)',
     const response=await get('/user/devices/pairing-requests');expect(response.status).toBe(200);
     expect(await response.json()).toEqual({items:[],pagination:{page:1,limit:20,total:0}});
   });
-  it.each([['/admin/devices','1'],['/admin/pairing-requests','1'],['/user/devices','7'],
-    ['/user/dashboard/access','7'],['/ai/providers','7'],['/user/ai/profile','7'],
-    ['/user/ai/credentials','7'],['/admin/ai/credentials','1']])('wires %s to real guard/controller/service/repository',async(path,userId)=>{
+  it.each([['/devices/admin/all','1'],['/admin/pairing-requests','1'],['/user/devices','7'],
+    ['/user/dashboard/access','7'],['/ai/providers','7'],
+    ['/api-keys','7'],['/admin/api-keys/system','1']])('wires %s to real guard/controller/service/repository',async(path,userId)=>{
     expect((await get(path,userId)).status).toBe(200);
   });
-  it.each(['/admin/devices/42/monitoring','/admin/devices/42/recovery','/admin/devices/42/reset-status'])('finds %s and returns business 404, not a missing route',async path=>{
+  it.each(['/ai/profile','/user/ai/profile'])('denies profile without approved robot through the full app: %s',async path=>{
+    expect((await get(path,'7')).status).toBe(403);
+  });
+  it.each(['/admin/devices/42/recovery','/admin/devices/42/reset-status'])('finds %s and returns business 404, not a missing route',async path=>{
     const response=await get(path,'1');expect(response.status).toBe(404);expect(await response.json()).toMatchObject({message:'Device not found'});
   });
-  it.each(['/internal/devices/authorize','/internal/devices/heartbeat','/internal/ai/resolve-config','/internal/device-reset-jobs/claim','/internal/ai/authorize-request'])('keeps internal contract gated %s',async path=>{
+  it.each(['/internal/devices/authorize','/internal/ai/resolve-config','/internal/device-reset-jobs/claim','/internal/ai/authorize-request'])('keeps internal contract gated %s',async path=>{
     const source=path.includes('resolve-config')?'c'.repeat(43):path.includes('authorize-request')?'q'.repeat(43):serviceToken;
     const response=await fetch(base+path,{method:'POST',headers:{authorization:`Bearer ${source}`}});
     expect(response.status).toBe(403);
   });
-  it('User cannot bypass Admin role through the full application graph',async()=>{expect((await get('/admin/devices','7')).status).toBe(403);});
+  it('User cannot bypass Admin role through the full application graph',async()=>{expect((await get('/devices/admin/all','7')).status).toBe(403);});
+  it.each(['7','1'])('direct DELETE assignment is forbidden for identity %s without mutating any assignment',async userId=>{
+    const response=await fetch(base+'/devices/42/assignment',{
+      method:'DELETE',headers:{authorization:`Bearer ${token(userId)}`},
+    });
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({error:'ADMIN_RECOVERY_REQUIRED'});
+    expect(mockPool.getConnection).not.toHaveBeenCalled();
+    expect(execute.mock.calls.some(([sql])=>/^\s*(DELETE|UPDATE|INSERT)\b/i.test(sql))).toBe(false);
+  });
   it('quota routes fail closed without the separately applied schema, before opening a data transaction',async()=>{
     for(const [path,userId]of [['/admin/ai/quotas/users/7/providers/2','1'],['/user/ai/usage','7']]){
       const response=await get(path,userId);expect(response.status).toBe(409);expect(await response.json()).toMatchObject({message:'QUOTA_SCHEMA_NOT_READY'});

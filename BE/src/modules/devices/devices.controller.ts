@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiForbiddenResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DeviceAuth } from '../../common/decorators/device-auth.decorator';
 import { DevicePrincipal } from '../../common/decorators/device-principal.decorator';
@@ -24,7 +24,8 @@ export class DevicesController {
   @Patch(':id') @ApiOperation({ summary: 'Rename caller-owned device' })
   rename(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() dto: RenameDeviceDto) { return this.devices.rename(user.id, id, dto.display_name); }
 
-  @Delete(':id/assignment') @HttpCode(HttpStatus.OK) @ApiOperation({ summary: 'Unlink caller-owned device and revoke device credentials' })
+  @Delete(':id/assignment') @HttpCode(HttpStatus.OK) @ApiOperation({ summary: 'Direct unlink is disabled; use Admin recovery' })
+  @ApiForbiddenResponse({description:'ADMIN_RECOVERY_REQUIRED: use POST /admin/devices/{id}/revoke; direct unlink never mutates ownership.'})
   unlink(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) { return this.devices.unlink(user.id, id); }
 
   @Post('pairing-requests') @ApiOperation({ summary: 'Create a pairing request from one-time pairing code' })
@@ -34,7 +35,7 @@ export class DevicesController {
   async pairingRequests(@CurrentUser() user: AuthenticatedUser, @Query() query: PageQueryDto) { return this.page(await this.devices.listRequests(user.id, query.page, query.limit), query); }
 
   @Post('admin') @Roles('ADMIN') @ApiOperation({ summary: 'Register a physical device (Admin)' })
-  register(@Body() dto: RegisterDeviceDto) { return this.devices.register(dto.device_uid, dto.display_name, dto.hardware_model); }
+  register(@CurrentUser() admin: AuthenticatedUser, @Body() dto: RegisterDeviceDto) { return this.devices.register(dto.device_uid, dto.display_name, dto.hardware_model, admin.id); }
 
   @Get('admin/all') @Roles('ADMIN') @ApiOperation({ summary: 'List all devices (Admin)' })
   async listAll(@Query() query: PageQueryDto) { return this.page(await this.devices.list(null, query.page, query.limit), query); }

@@ -28,8 +28,6 @@ config AIVA_I2S_TX_DRAIN_PROOF
           Requires ESP-IDF 6.0.2 or 6.0.3 and hardware/ISR validation before enabling.
         Unsupported drivers/SDKs fail closed; no delay or estimated duration ACK.
 
-<<<<<<< HEAD
-=======
 config AIVA_LAN_BOOTSTRAP
     bool "AIVA authenticated LAN OTA bootstrap and control connection"
     depends on AIVA_DEV_VOICE && BOARD_TYPE_AIVA_IOT_S3_ST7789
@@ -40,7 +38,16 @@ config AIVA_LAN_BOOTSTRAP
         from MAC or use the development token as a Backend credential.
         This does not enable media when the server auth/quota pipeline is blocked.
 
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
+config AIVA_DUAL_CONNECTION_MODE
+    bool "Independent LAN and WIFI_INTERNET connection profiles"
+    depends on AIVA_LAN_BOOTSTRAP && AIVA_SD2_USB_DEV_CONSOLE
+    default n
+    help
+        Preserve the historical LAN wifi/websocket NVS namespaces and add an
+        independent WIFI_INTERNET profile using the public Funnel hostname.
+        Missing mode state defaults to LAN. There is no automatic migration or
+        fallback between profiles.
+
 config AIVA_SD2_USB_DEV_CONSOLE
     bool "SD2 USB commands for private voice diagnostics"
     depends on AIVA_DEV_VOICE && BOARD_TYPE_AIVA_IOT_S3_ST7789 && ESP_CONSOLE_USB_SERIAL_JTAG

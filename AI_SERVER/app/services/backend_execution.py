@@ -67,15 +67,17 @@ class QuotaLLMAdapter:
     """
     def __init__(self, delegate, session, reporter: UsageReporter, *, mock_only: bool,
                  max_total_tokens: str | None, report_context_factory, execution_slots=None,
-                 defer_turn_completion: bool = False):
+                 defer_turn_completion: bool = False, expected_system_prompt: str | None = None):
         self.delegate, self.session, self.reporter = delegate, session, reporter
         self.mock_only, self.budget, self.report_context_factory = mock_only, max_total_tokens, report_context_factory
         if max_total_tokens is not None:
             dto.bigint(max_total_tokens)
         self._attempted = set()
+        self._provider_started = set()
         self._prepared = {}
         self._pending_completions = {}
         self.defer_turn_completion = defer_turn_completion
+        self.expected_system_prompt = expected_system_prompt
         self.execution_slots = execution_slots
 
     def _validate_mode(self):
@@ -124,7 +126,7 @@ class QuotaLLMAdapter:
         provider stream starts, usage may be ambiguous and must remain pending
         unless Gemini supplies actual usage.
         """
-        if turn_id in self._attempted:
+        if turn_id in self._provider_started:
             return False
         prepared = self._prepared.pop(turn_id, None)
         if prepared is None:
@@ -154,7 +156,10 @@ class QuotaLLMAdapter:
         session, config = self.session, self.session.config
         self._validate_mode()
         if (not session.valid or config is None or request.key != session.key
-            or request.config.model != config.model.modelCode or request.system_prompt != config.profile.systemPrompt):
+            or request.config.model != config.model.modelCode
+            or request.system_prompt != (self.expected_system_prompt
+                                          if self.expected_system_prompt is not None
+                                          else config.profile.systemPrompt)):
             raise BackendError(BackendCode.BINDING)
         if request.turn_id in self._attempted:
             raise BackendError(BackendCode.DUPLICATE)
@@ -181,6 +186,7 @@ class QuotaLLMAdapter:
                     raise BackendError(BackendCode.LIMIT)
             stream = self.delegate.stream(request, context)
             async for event in stream:
+                self._provider_started.add(request.turn_id)
                 context.check()
                 if isinstance(event, ProviderDone):
                     usage = event.usage

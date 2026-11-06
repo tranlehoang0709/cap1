@@ -44,7 +44,7 @@ describe('Full AppModule internal integration (mock repositories)',()=>{
       findDeviceIdByUid:jest.fn(async(uid:string)=>uid==='robot-a'?'42':uid==='robot-b'?'43':uid==='robot-c'?'44':null),
       validateDeviceCredential:jest.fn(async(_:string,hash:string)=>!revoked&&!expired&&hash===(await import('node:crypto')).createHash('sha256').update(credential).digest('hex')),
       verifyDeviceOwnership:jest.fn(async(user:string,device:string)=>!revoked&&((user==='7'&&['42','44'].includes(device))||(user==='8'&&device==='43'))?{id:device}:null)};
-    ai={users,ownership,profile:jest.fn(async(user:string)=>profile(user)),scope:jest.fn(async()=>'USER'),
+    ai={requireApprovedRobot:jest.fn(async()=>{}),users,ownership,profile:jest.fn(async(user:string)=>profile(user)),scope:jest.fn(async()=>'USER'),
       provider:jest.fn(async(id:string)=>({id,code:'LOCAL',name:`Local-${id}`,isEnabled:1})),
       model:jest.fn(async(id:string)=>({id,providerId:id==='3'?'2':'4',modelCode:`local-${id}`,capability:'llm',isEnabled:1}))};
     tx={ai,now:jest.fn(async()=>now),request:jest.fn(async(id:string)=>clone(records.find(r=>r.requestId===id)??null)),

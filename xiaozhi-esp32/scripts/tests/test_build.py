@@ -26,13 +26,10 @@ class VersionTests(unittest.TestCase):
         self.assertIn('CONFIG_AIVA_DEV_VOICE=y', voice)
         self.assertIn('CONFIG_AIVA_SD2_USB_DEV_CONSOLE=y', voice)
         self.assertIn('CONFIG_AIVA_I2S_TX_DRAIN_PROOF=y', voice)
-<<<<<<< HEAD
-=======
         lan = entries['aiva-iot-s3-st7789-lan']
         self.assertIn('CONFIG_USE_CUSTOM_WAKE_WORD=y', lan)
         self.assertIn('CONFIG_CUSTOM_WAKE_WORD="hello"', lan)
         self.assertIn('CONFIG_SR_MN_EN_MULTINET5_SINGLE_RECOGNITION_QUANT8=y', lan)
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)
         variants = build._collect_variants(idf_version=(6, 0, 2))
         variant = next(v for v in variants if v['name'] == 'aiva-iot-s3-st7789-dev-voice')
         self.assertEqual(variant['board'], 'custom/aiva-iot-s3-st7789')

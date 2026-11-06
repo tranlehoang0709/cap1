@@ -1,7 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Pool, PoolConnection, RowDataPacket } from 'mysql2/promise';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import { Pool, PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { MYSQL_POOL } from '../../database/database.constants';
 import { PairingTransaction } from '../pairing/pairing.repository';
+import { HeartbeatEvent } from '../monitoring/dto/heartbeat.dto';
 
 const ownedFrom=`FROM device_assignments a
   INNER JOIN devices d ON d.id=a.device_id
@@ -71,10 +72,37 @@ export class OwnershipTransaction {
     await this.connection.execute(`UPDATE devices d INNER JOIN device_assignments a ON a.device_id=d.id
       SET d.display_name=?,d.updated_at=UTC_TIMESTAMP() WHERE d.id=? AND a.user_id=?`,[name,deviceId,userId]);
   }
+  async activeHistoryId(userId:string,deviceId:string):Promise<string|null> {
+    const [rows]=await this.connection.execute<RowDataPacket[]>(`SELECT CAST(h.id AS CHAR) AS id
+      FROM device_assignment_history h JOIN device_assignments a ON a.device_id=h.device_id
+      AND a.user_id=h.user_id AND a.pairing_request_id=h.pairing_request_id AND a.assigned_at=h.assigned_at
+      WHERE h.device_id=? AND h.user_id=? AND h.unlinked_at IS NULL ORDER BY h.id DESC FOR UPDATE`,[deviceId,userId]);
+    return rows.length===1 ? rows[0].id : null;
+  }
   async validateDeviceCredential(deviceId:string,hash:string):Promise<boolean> {
     const [rows]=await this.connection.execute<RowDataPacket[]>(`SELECT id FROM device_credentials
       WHERE credential_hash=? AND device_id=? AND status='active' AND revoked_at IS NULL
       AND (expires_at IS NULL OR expires_at>UTC_TIMESTAMP()) LIMIT 1 FOR UPDATE`,[hash,deviceId]);
     return rows.length>0;
+  }
+  async now():Promise<Date>{
+    const [rows]=await this.connection.query<RowDataPacket[]>('SELECT UTC_TIMESTAMP() AS now');
+    return rows[0].now as Date;
+  }
+  async presence(deviceId:string):Promise<Date|null>{
+    const [rows]=await this.connection.execute<RowDataPacket[]>(
+      'SELECT last_seen_at AS lastSeenAt FROM devices WHERE id=? FOR UPDATE',[deviceId]);
+    return (rows[0]?.lastSeenAt as Date|null|undefined)??null;
+  }
+  async recordHeartbeat(deviceId:string,observedAt:Date,telemetry:HeartbeatEvent['telemetry']):Promise<void>{
+    const [updated]=await this.connection.execute<ResultSetHeader>(
+      `UPDATE devices SET connection_status='online',last_seen_at=?,updated_at=UTC_TIMESTAMP()
+       WHERE id=? AND (last_seen_at IS NULL OR last_seen_at<?)`,[observedAt,deviceId,observedAt]);
+    if(updated.affectedRows!==1)throw new ConflictException('HEARTBEAT_CONFLICT');
+    if(!telemetry)return;
+    await this.connection.execute(`INSERT INTO device_telemetry
+      (device_id,event_type,wifi_rssi,free_heap_bytes,battery_percent,payload,recorded_at)
+      VALUES (?,'heartbeat',?,?,?,?,?,?)`,[deviceId,telemetry.wifiRssi,telemetry.freeHeapBytes,
+        telemetry.batteryPercent,telemetry.payload?JSON.stringify(telemetry.payload):null,observedAt]);
   }
 }

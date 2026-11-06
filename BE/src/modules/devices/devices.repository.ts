@@ -1,6 +1,9 @@
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import { Pool, PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { MYSQL_POOL } from '../../database/database.constants';
+import { PairingTransaction } from '../pairing/pairing.repository';
+import { OwnershipTransaction } from './ownership.repository';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { DeviceRecord, PairingRequestRecord } from './devices.types';
 
 @Injectable()
@@ -11,16 +14,17 @@ export class DevicesRepository {
   async transaction<T>(work: (repository: DevicesRepository) => Promise<T>): Promise<T> {
     if (this.connection) return work(this);
     const connection = await this.pool.getConnection();
-    try { await connection.beginTransaction(); const result = await work(new DevicesRepository(this.pool, connection)); await connection.commit(); return result; }
+    try { await connection.query('SET TRANSACTION ISOLATION LEVEL READ COMMITTED'); await connection.beginTransaction(); const result = await work(new DevicesRepository(this.pool, connection)); await connection.commit(); return result; }
     catch (error) { await connection.rollback(); throw error; } finally { connection.release(); }
   }
 
   async createDevice(uid: string, name: string | null, model: string | null): Promise<DeviceRecord> {
-    const [result] = await this.db.execute<ResultSetHeader>(
+    await this.db.execute<ResultSetHeader>(
       `INSERT INTO devices (device_uid, display_name, hardware_model, lifecycle_status, connection_status, created_at, updated_at)
        VALUES (?, ?, ?, 'available', 'offline', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`, [uid, name, model],
     );
-    const device = await this.findById(String(result.insertId));
+    const [ids] = await this.db.execute<RowDataPacket[]>('SELECT CAST(LAST_INSERT_ID() AS CHAR) AS id');
+    const device = await this.findById(ids[0].id);
     if (!device) throw new Error('Device was not created');
     return device;
   }
@@ -61,25 +65,6 @@ export class DevicesRepository {
     );
   }
 
-  async consumePairingCode(hash: string): Promise<{ id: string; device_id: string } | null> {
-    const [rows] = await this.db.execute<PairingCodeRow[]>(
-      `SELECT id, device_id FROM device_pairing_codes WHERE code_hash = ? AND consumed_at IS NULL AND revoked_at IS NULL
-       AND expires_at > UTC_TIMESTAMP() LIMIT 1 FOR UPDATE`, [hash],
-    );
-    if (!rows[0]) return null;
-    await this.db.execute('UPDATE device_pairing_codes SET consumed_at = UTC_TIMESTAMP() WHERE id = ?', [rows[0].id]);
-    return { id: String(rows[0].id), device_id: String(rows[0].device_id) };
-  }
-
-  async createPairingRequest(deviceId: string, userId: string, codeId: string): Promise<PairingRequestRecord> {
-    const [result] = await this.db.execute<ResultSetHeader>(
-      `INSERT INTO device_pairing_requests (device_id, user_id, pairing_code_id, status, created_at)
-       VALUES (?, ?, ?, 'pending', CURRENT_TIMESTAMP)`, [deviceId, userId, codeId],
-    );
-    const request = await this.findRequestById(String(result.insertId));
-    if (!request) throw new Error('Pairing request was not created'); return request;
-  }
-
   async findRequestById(id: string, forUpdate = false): Promise<PairingRequestRecord | null> {
     const [rows] = await this.db.execute<RequestRow[]>(
       `SELECT id, device_id, user_id, status, reviewed_by, reviewed_at, review_note, created_at
@@ -99,35 +84,31 @@ export class DevicesRepository {
     return { items: rows.map(toRequest), total: Number(count[0]?.total ?? 0) };
   }
 
-  async approveRequest(request: PairingRequestRecord, adminId: string, note: string | null): Promise<void> {
-    await this.db.execute(
-      `UPDATE device_pairing_requests SET status = 'approved', reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, review_note = ? WHERE id = ?`,
-      [adminId, note, request.id],
-    );
-    await this.db.execute(
-      `INSERT INTO device_assignments (device_id, user_id, pairing_request_id, assigned_by, assigned_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [request.device_id, request.user_id, request.id, adminId],
-    );
-    await this.db.execute(
-      `INSERT INTO device_assignment_history (device_id, user_id, pairing_request_id, assigned_at) VALUES (?, ?, ?, UTC_TIMESTAMP())`,
-      [request.device_id, request.user_id, request.id],
-    );
-    await this.db.execute(`UPDATE devices SET lifecycle_status = 'assigned', updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [request.device_id]);
+  private transactionConnection(): PoolConnection {
+    if (!this.connection) throw new Error('Device lifecycle check requires a transaction');
+    return this.connection;
   }
 
-  async rejectRequest(id: string, adminId: string, note: string | null): Promise<void> {
-    await this.db.execute(`UPDATE device_pairing_requests SET status = 'rejected', reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, review_note = ? WHERE id = ?`, [adminId, note, id]);
+  async assertPairingReady(deviceId: string): Promise<void> {
+    const tx = new PairingTransaction(this.pool, this.transactionConnection());
+    const [clock] = await this.db.execute<RowDataPacket[]>('SELECT UTC_TIMESTAMP() AS now');
+    if (await tx.getActiveAssignment(deviceId) || await tx.hasAnyPending(deviceId)
+      || !await tx.resetAllowsPairing(deviceId, clock[0].now)) {
+      throw new ConflictException('Device has an owner, pending request or unconfirmed reset');
+    }
   }
 
-  async unlink(device: DeviceRecord, userId: string): Promise<void> {
-    const [history] = await this.db.execute<HistoryRow[]>(
-      `SELECT id FROM device_assignment_history WHERE device_id = ? AND user_id = ? AND unlinked_at IS NULL ORDER BY assigned_at DESC LIMIT 1 FOR UPDATE`, [device.id, userId],
-    );
-    if (!history[0]) throw new Error('Current assignment history is missing');
-    await this.db.execute('DELETE FROM device_assignments WHERE device_id = ? AND user_id = ?', [device.id, userId]);
-    await this.db.execute('UPDATE device_assignment_history SET unlinked_at = CURRENT_TIMESTAMP, unlinked_by = ?, unlink_reason = ? WHERE id = ?', [userId, 'User requested unlink', history[0].id]);
-    await this.db.execute(`UPDATE device_credentials SET status = 'revoked', revoked_at = CURRENT_TIMESTAMP WHERE device_id = ? AND status = 'active'`, [device.id]);
-    await this.db.execute(`UPDATE devices SET lifecycle_status = 'available', connection_status = 'offline', updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [device.id]);
+  async assertCredentialReady(deviceId: string): Promise<void> {
+    const tx = new OwnershipTransaction(this.pool, this.transactionConnection());
+    const assignment = await tx.devices.getActiveAssignment(deviceId);
+    if (!assignment || !await tx.verifyDeviceOwnership(assignment.userId, deviceId)) {
+      throw new ForbiddenException('Device requires an approved assignment and confirmed reset');
+    }
+    const owner=await tx.devices.users.findByIdForUpdate(assignment.userId);
+    const roles=owner ? await tx.devices.users.findUserRoles(assignment.userId) : [];
+    if (!owner || owner.status!=='active' || owner.email_verified_at===null || roles.length!==1 || roles[0].code!=='USER') {
+      throw new ForbiddenException('Device owner is not eligible');
+    }
   }
 
   async issueCredential(deviceId: string, hash: string): Promise<void> {
@@ -164,7 +145,5 @@ const toDevice = (r: DeviceRow): DeviceRecord => ({ ...r, id: String(r.id), batt
 const toRequest = (r: RequestRow): PairingRequestRecord => ({ ...r, id: String(r.id), device_id: String(r.device_id), user_id: String(r.user_id), reviewed_by: r.reviewed_by === null ? null : String(r.reviewed_by) });
 interface DeviceRow extends RowDataPacket { id: string; device_uid: string; display_name: string | null; hardware_model: string | null; lifecycle_status: DeviceRecord['lifecycle_status']; connection_status: DeviceRecord['connection_status']; last_seen_at: Date | null; battery_percent: number | null; wifi_rssi: number | null; created_at: Date; updated_at: Date; }
 interface RequestRow extends RowDataPacket { id: string; device_id: string; user_id: string; status: PairingRequestRecord['status']; reviewed_by: string | null; reviewed_at: Date | null; review_note: string | null; created_at: Date; }
-interface PairingCodeRow extends RowDataPacket { id: string; device_id: string }
 interface CredentialRow extends RowDataPacket { device_id: string; device_uid: string }
-interface HistoryRow extends RowDataPacket { id: string }
 interface CountRow extends RowDataPacket { total: string | number }

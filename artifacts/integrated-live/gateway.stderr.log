@@ -1,0 +1,37 @@
+INFO:     Started server process [19308]
+INFO:     Waiting for application startup.
+{"timestamp":"2026-11-06T10:08:55.866551+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8081 (Press CTRL+C to quit)
+INFO:     127.0.0.1:60982 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:60987 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:61778 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:61779 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:61788 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:65310 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:65312 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:64160 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:64506 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:49676 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:49683 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:49699 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:49706 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:62089 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:62097 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:62117 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open

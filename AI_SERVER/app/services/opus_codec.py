@@ -2,6 +2,8 @@
 
 import ctypes as c
 import ctypes.util
+import importlib.util
+from pathlib import Path
 import struct
 
 from app.core.config import get_settings
@@ -14,6 +16,12 @@ class CodecError(ValueError):
 def _load_opus_library():
     # An explicit local DLL path avoids relying on a global Windows PATH.
     path = get_settings().opus_library or ctypes.util.find_library("opus")
+    if not path:
+        bundled = importlib.util.find_spec("opuslib_next")
+        if bundled and bundled.origin:
+            candidate = Path(bundled.origin).parent / "_native" / "opus.dll"
+            if candidate.is_file():
+                path = candidate
     if not path:
         raise CodecError("libopus unavailable")
     try:

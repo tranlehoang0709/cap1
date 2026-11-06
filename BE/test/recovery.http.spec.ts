@@ -1,5 +1,8 @@
 import 'reflect-metadata';
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtService } from '@nestjs/jwt';
+import { JwtAuthGuard } from '../src/common/guards/jwt-auth.guard';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { createHmac } from 'node:crypto';
@@ -11,17 +14,17 @@ import { RecoveryService } from '../src/modules/device-recovery/recovery.service
 import { ResetSourceGuard } from '../src/modules/device-recovery/reset-source.guard';
 
 const key='test-only-recovery-jwt-secret-at-least-32-bytes';const serviceToken='r'.repeat(43);
-const config=new ConfigService({ADMIN_ACCESS_JWT_SECRET:key,ADMIN_ACCESS_JWT_ISSUER:'test',ADMIN_ACCESS_JWT_AUDIENCE:'test',
+const config=new ConfigService({auth:{accessTokenSecret:key},ADMIN_ACCESS_JWT_SECRET:key,ADMIN_ACCESS_JWT_ISSUER:'aiva-iot',ADMIN_ACCESS_JWT_AUDIENCE:'aiva-api',
   DEVICE_RESET_SERVICE_TOKEN:serviceToken,RESET_CONTRACT_APPROVED:'false'});
-const users={canLogin:jest.fn().mockResolvedValue({allowed:true}),getUserRole:jest.fn(async(id:string)=>id==='1'?'ADMIN':'USER')};
+const users={getUserById:jest.fn(async(id:string)=>({id,status:'active',email_verified_at:new Date()})),canLogin:jest.fn().mockResolvedValue({allowed:true}),getUserRole:jest.fn(async(id:string)=>id==='1'?'ADMIN':'USER')};
 const recovery={revokeDeviceAssignment:jest.fn(),getRecovery:jest.fn(),getResetStatus:jest.fn(),restoreDeviceAssignment:jest.fn(),requestDeviceReset:jest.fn(),processResetAcknowledgment:jest.fn()};
-@Module({controllers:[RecoveryController,InternalResetController],providers:[AdminDeviceGuard,ResetSourceGuard,
+@Module({controllers:[RecoveryController,InternalResetController],providers:[AdminDeviceGuard,ResetSourceGuard,JwtService,{provide:APP_GUARD,useClass:JwtAuthGuard},
   {provide:ConfigService,useValue:config},{provide:UsersService,useValue:users},{provide:RecoveryService,useValue:recovery}]})
 class TestModule{}
 function token(sub:string){const h=Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url');
-  const p=Buffer.from(JSON.stringify({sub,exp:Math.floor(Date.now()/1000)+60,iss:'test',aud:'test'})).toString('base64url');
+  const p=Buffer.from(JSON.stringify({sub,typ:'access',exp:Math.floor(Date.now()/1000)+60,iss:'aiva-iot',aud:'aiva-api'})).toString('base64url');
   return `${h}.${p}.${createHmac('sha256',key).update(`${h}.${p}`).digest('base64url')}`;}
-describe('Recovery HTTP routes/authentication',()=>{
+describe('Recovery HTTP routes/authentication including global JWT guard',()=>{
   let app:Awaited<ReturnType<typeof NestFactory.create>>;let base:string;
   beforeAll(async()=>{app=await NestFactory.create(TestModule,{logger:false});await app.listen(0,'127.0.0.1');base=`http://127.0.0.1:${(app.getHttpServer().address() as AddressInfo).port}`;});
   afterAll(async()=>{await app.close();});

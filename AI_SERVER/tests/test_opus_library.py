@@ -34,6 +34,7 @@ def test_explicit_opus_library_does_not_search_global_path(monkeypatch):
 def test_missing_native_library_fails_closed(monkeypatch):
     monkeypatch.setattr(opus_codec, 'get_settings', lambda: SimpleNamespace(opus_library=None))
     monkeypatch.setattr(opus_codec.ctypes.util, 'find_library', lambda name: None)
+    monkeypatch.setattr(opus_codec.importlib.util, 'find_spec', lambda name: None)
     with pytest.raises(CodecError, match='libopus unavailable'):
         opus_codec._load_opus_library()
 
