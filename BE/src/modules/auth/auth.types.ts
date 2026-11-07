@@ -22,11 +22,7 @@ export interface EmailVerificationPayload {
   sub: string;
   typ: 'email_verification';
 }
-
-export interface PasswordResetPayload {
-  sub: string;
-  typ: 'password_reset';
-}
+export interface PasswordResetPayload { sub: string; typ: 'password_reset'; }
 
 export interface TokenPair {
   access_token: string;

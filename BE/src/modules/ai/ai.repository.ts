@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
+import { Pool, PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
+import { lockUserDevices, requireApprovedRobot, ownedConversationHistory } from '../devices/assignment-access';
 import { MYSQL_POOL } from '../../database/database.constants';
 
 @Injectable()
@@ -7,20 +8,45 @@ export class AiRepository {
   constructor(@Inject(MYSQL_POOL) private readonly pool: Pool) {}
   async providers() { const [rows] = await this.pool.execute<ProviderRow[]>('SELECT id, code, name, is_enabled, health_status FROM ai_providers ORDER BY code'); return rows.map(provider); }
   async models(providerId:string){const [rows]=await this.pool.execute<RowDataPacket[]>('SELECT id,provider_id,model_code,capability,is_enabled FROM ai_models WHERE provider_id=? ORDER BY capability,model_code',[providerId]);return rows.map((r)=>({id:String(r.id),provider_id:String(r.provider_id),model_code:r.model_code,capability:r.capability,is_enabled:Boolean(r.is_enabled)}));}
+  async allModels(){const [rows]=await this.pool.execute<RowDataPacket[]>('SELECT id,provider_id,model_code,capability,is_enabled FROM ai_models ORDER BY provider_id,capability,model_code');return rows.map(model);}
+  async createModel(providerId:string,modelCode:string,capability:string,enabled:boolean){const[r]=await this.pool.execute<ResultSetHeader>('INSERT INTO ai_models(provider_id,model_code,capability,is_enabled) VALUES(?,?,?,?)',[providerId,modelCode,capability,enabled]);return this.model(String(r.insertId));}
+  async updateModel(id:string,input:{model_code?:string;is_enabled?:boolean}){const fields:string[]=[],values:(string|boolean)[]=[];if(input.model_code!==undefined){fields.push('model_code=?');values.push(input.model_code);}if(input.is_enabled!==undefined){fields.push('is_enabled=?');values.push(input.is_enabled);}if(!fields.length)return null;values.push(id);const[r]=await this.pool.execute<ResultSetHeader>(`UPDATE ai_models SET ${fields.join(',')} WHERE id=?`,values);return r.affectedRows?this.model(id):null;}
+  async model(id:string){const[rows]=await this.pool.execute<RowDataPacket[]>('SELECT id,provider_id,model_code,capability,is_enabled FROM ai_models WHERE id=? LIMIT 1',[id]);return rows[0]?model(rows[0]):null;}
+  async compatibleModel(id:string,providerId:string){const[rows]=await this.pool.execute<RowDataPacket[]>('SELECT id FROM ai_models WHERE id=? AND provider_id=? AND capability=\'llm\' AND is_enabled=1 LIMIT 1',[id,providerId]);return !!rows[0];}
   async provider(id: string) { const [rows] = await this.pool.execute<ProviderRow[]>('SELECT id, code, name, is_enabled, health_status FROM ai_providers WHERE id = ? LIMIT 1', [id]); return rows[0] ? provider(rows[0]) : null; }
   async setProvider(id: string, enabled: boolean, health: string | null) { await this.pool.execute('UPDATE ai_providers SET is_enabled = ?, health_status = ? WHERE id = ?', [enabled, health, id]); return this.provider(id); }
-  async profile(userId: string) {
-    const [rows] = await this.pool.execute<ProfileRow[]>(`SELECT p.user_id,p.assistant_name,p.system_prompt,p.language_code,p.voice_code,p.preferred_provider_id,p.preferred_llm_model_id,p.updated_at
-      FROM ai_profiles p WHERE p.user_id = ? LIMIT 1`, [userId]); return rows[0] ?? null;
+  private async transaction<T>(work:(c:PoolConnection)=>Promise<T>):Promise<T> {
+    const c=await this.pool.getConnection();
+    try {
+      await c.query('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
+      await c.beginTransaction();
+      const result=await work(c);await c.commit();return result;
+    } catch(error){await c.rollback();throw error;} finally{c.release();}
   }
-  async upsertProfile(userId: string, data: ProfileInput) {
-    await this.pool.execute(`INSERT INTO ai_profiles (user_id,assistant_name,system_prompt,language_code,voice_code,preferred_provider_id,preferred_llm_model_id,updated_at)
-      VALUES (?,?,?,?,?,?,?,CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE assistant_name=VALUES(assistant_name),system_prompt=VALUES(system_prompt),language_code=VALUES(language_code),voice_code=VALUES(voice_code),preferred_provider_id=VALUES(preferred_provider_id),preferred_llm_model_id=VALUES(preferred_llm_model_id),updated_at=CURRENT_TIMESTAMP`,
-      [userId,data.assistant_name,data.system_prompt,data.language_code,data.voice_code,data.preferred_provider_id,data.preferred_llm_model_id]); return this.profile(userId);
+  private async readProfile(c:PoolConnection,userId:string) {
+    const [rows]=await c.execute<ProfileRow[]>(`SELECT p.user_id,p.assistant_name,p.system_prompt,p.language_code,p.voice_code,
+      p.preferred_provider_id,p.preferred_llm_model_id,p.updated_at FROM ai_profiles p WHERE p.user_id=? LIMIT 1`,[userId]);
+    return rows[0] ?? null;
+  }
+  async profile(userId:string) {
+    return this.transaction(async c=>{
+      await requireApprovedRobot(this.pool,c,userId);
+      return this.readProfile(c,userId);
+    });
+  }
+  async upsertProfile(userId:string,data:ProfileInput) {
+    return this.transaction(async c=>{
+      await requireApprovedRobot(this.pool,c,userId);
+      await c.execute(`INSERT INTO ai_profiles (user_id,assistant_name,system_prompt,language_code,voice_code,preferred_provider_id,preferred_llm_model_id,updated_at)
+        VALUES (?,?,?,?,?,?,?,CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE assistant_name=VALUES(assistant_name),system_prompt=VALUES(system_prompt),language_code=VALUES(language_code),voice_code=VALUES(voice_code),preferred_provider_id=VALUES(preferred_provider_id),preferred_llm_model_id=VALUES(preferred_llm_model_id),updated_at=CURRENT_TIMESTAMP`,
+        [userId,data.assistant_name,data.system_prompt,data.language_code,data.voice_code,data.preferred_provider_id,data.preferred_llm_model_id]);
+      return this.readProfile(c,userId);
+    });
   }
   async createCredential(providerId: string, userId: string, label: string, encrypted: string, hint: string) {
     const [r] = await this.pool.execute<ResultSetHeader>(`INSERT INTO api_credentials (provider_id,owner_scope,owner_user_id,label,secret_ciphertext,secret_hint,is_active,created_at) VALUES (?,'USER',?,?,?,?,1,CURRENT_TIMESTAMP)`, [providerId,userId,label,encrypted,hint]); return String(r.insertId);
   }
+  async replaceCredential(id:string,userId:string,label:string,encrypted:string,hint:string){const[r]=await this.pool.execute<ResultSetHeader>(`UPDATE api_credentials SET label=?,secret_ciphertext=?,secret_hint=? WHERE id=? AND owner_scope='USER' AND owner_user_id=? AND is_active=1 AND revoked_at IS NULL`,[label,encrypted,hint,id,userId]);if(r.affectedRows!==1)return null;const[rows]=await this.pool.execute<RowDataPacket[]>('SELECT id,provider_id,label,is_active FROM api_credentials WHERE id=? AND owner_scope=\'USER\' AND owner_user_id=? LIMIT 1',[id,userId]);const row=rows[0];return row?{id:String(row.id),provider_id:String(row.provider_id),label:row.label,is_active:Boolean(row.is_active)}:null;}
   async listCredentials(userId: string) { const [rows] = await this.pool.execute<CredentialRow[]>(`SELECT id,provider_id,label,secret_hint,is_active,created_at,revoked_at FROM api_credentials WHERE owner_scope='USER' AND owner_user_id=? ORDER BY created_at DESC`,[userId]); return rows.map(credential); }
   async listSystemCredentials() { const [rows] = await this.pool.execute<CredentialRow[]>(`SELECT id,provider_id,label,secret_hint,is_active,created_at,revoked_at FROM api_credentials WHERE owner_scope='SYSTEM' ORDER BY created_at DESC`); return rows.map(credential); }
   async createSystemCredential(providerId:string,label:string,encrypted:string,hint:string){const[r]=await this.pool.execute<ResultSetHeader>(`INSERT INTO api_credentials(provider_id,owner_scope,owner_user_id,label,secret_ciphertext,secret_hint,is_active,created_at) VALUES(?,'SYSTEM',NULL,?,?,?,1,CURRENT_TIMESTAMP)`,[providerId,label,encrypted,hint]);return String(r.insertId);}
@@ -45,12 +71,43 @@ export class AiRepository {
   async createConversation(userId:string,title:string,providerId:string,content:string,response:string) {
     const c=await this.pool.getConnection(); try { await c.beginTransaction(); const [r]=await c.execute<ResultSetHeader>(`INSERT INTO conversations (user_id,channel,title,status,started_at) VALUES (?,'WEB',?,'active',CURRENT_TIMESTAMP)`,[userId,title]); const id=String(r.insertId); await c.execute(`INSERT INTO messages (conversation_id,role,content,created_at) VALUES (?, 'user', ?, CURRENT_TIMESTAMP), (?, 'assistant', ?, CURRENT_TIMESTAMP)`,[id,content,id,response]); await c.execute(`INSERT INTO usage_records (user_id,conversation_id,provider_id,request_kind,input_tokens,output_tokens,status,occurred_at) VALUES (?,?,?,'LLM',?,?, 'success', CURRENT_TIMESTAMP)`,[userId,id,providerId,estimate(content),estimate(response)]); await c.commit(); return this.conversation(id,userId); } catch(e){await c.rollback();throw e;} finally{c.release();}
   }
-  async conversation(id:string,userId:string) { const [rows]=await this.pool.execute<ConversationRow[]>(`SELECT id,user_id,device_id,channel,title,status,started_at,ended_at FROM conversations WHERE id=? AND user_id=? AND deleted_at IS NULL LIMIT 1`,[id,userId]); if(!rows[0])return null; const [messages]=await this.pool.execute<MessageRow[]>('SELECT id,role,content,provider_id,created_at FROM messages WHERE conversation_id=? ORDER BY created_at,id',[id]); return {...conversation(rows[0]),messages:messages.map(message)}; }
-  async conversations(userId:string,page:number,limit:number) { const [n]=await this.pool.execute<CountRow[]>('SELECT COUNT(*) total FROM conversations WHERE user_id=? AND deleted_at IS NULL',[userId]); const [rows]=await this.pool.execute<ConversationRow[]>('SELECT id,user_id,device_id,channel,title,status,started_at,ended_at FROM conversations WHERE user_id=? AND deleted_at IS NULL ORDER BY started_at DESC LIMIT ? OFFSET ?',[userId,limit,(page-1)*limit]);return {items:rows.map(conversation),total:Number(n[0]?.total??0)}; }
-  async deleteConversation(id:string,userId:string) {const [r]=await this.pool.execute<ResultSetHeader>('UPDATE conversations SET deleted_at=CURRENT_TIMESTAMP,status=\'deleted\' WHERE id=? AND user_id=? AND deleted_at IS NULL',[id,userId]);return r.affectedRows===1;}
+  async conversation(id:string,userId:string) {
+    return this.transaction(async c=>{
+      await lockUserDevices(this.pool,c,userId);
+      const [rows]=await c.execute<ConversationRow[]>(`SELECT c.id,c.user_id,c.device_id,c.channel,c.title,c.status,c.started_at,c.ended_at
+        FROM conversations c WHERE c.id=? AND c.user_id=? AND c.deleted_at IS NULL AND ${ownedConversationHistory} LIMIT 1`,[id,userId]);
+      if(!rows[0])return null;
+      const [messages]=await c.execute<MessageRow[]>('SELECT id,role,content,provider_id,created_at FROM messages WHERE conversation_id=? ORDER BY created_at,id',[id]);
+      return {...conversation(rows[0]),messages:messages.map(message)};
+    });
+  }
+  async conversations(userId:string,page:number,limit:number) {
+    return this.transaction(async c=>{
+      await lockUserDevices(this.pool,c,userId);
+      const [n]=await c.execute<CountRow[]>(`SELECT COUNT(*) total FROM conversations c WHERE c.user_id=? AND c.deleted_at IS NULL AND ${ownedConversationHistory}`,[userId]);
+      const [rows]=await c.execute<ConversationRow[]>(`SELECT c.id,c.user_id,c.device_id,c.channel,c.title,c.status,c.started_at,c.ended_at
+        FROM conversations c WHERE c.user_id=? AND c.deleted_at IS NULL AND ${ownedConversationHistory}
+        ORDER BY c.started_at DESC,c.id DESC LIMIT ? OFFSET ?`,[userId,limit,(page-1)*limit]);
+      return {items:rows.map(conversation),total:Number(n[0]?.total??0)};
+    });
+  }
+  async deleteConversation(id:string,userId:string) {
+    return this.transaction(async c=>{
+      await lockUserDevices(this.pool,c,userId);
+      const [r]=await c.execute<ResultSetHeader>(`UPDATE conversations c SET deleted_at=CURRENT_TIMESTAMP,status='deleted'
+        WHERE c.id=? AND c.user_id=? AND c.deleted_at IS NULL AND ${ownedConversationHistory}`,[id,userId]);
+      return r.affectedRows===1;
+    });
+  }
+  async renameConversation(id:string,userId:string,title:string){return this.transaction(async c=>{await lockUserDevices(this.pool,c,userId);const [r]=await c.execute<ResultSetHeader>(`UPDATE conversations c SET title=? WHERE c.id=? AND c.user_id=? AND c.deleted_at IS NULL AND ${ownedConversationHistory}`,[title,id,userId]);return r.affectedRows===1;});}
+  async setConversationStatus(id:string,userId:string,status:'active'|'ended'){return this.transaction(async c=>{await lockUserDevices(this.pool,c,userId);const sql=status==='ended'?`UPDATE conversations c SET status=?,ended_at=CURRENT_TIMESTAMP WHERE c.id=? AND c.user_id=? AND c.deleted_at IS NULL AND ${ownedConversationHistory}`:`UPDATE conversations c SET status=?,ended_at=NULL WHERE c.id=? AND c.user_id=? AND c.deleted_at IS NULL AND ${ownedConversationHistory}`;const [r]=await c.execute<ResultSetHeader>(sql,[status,id,userId]);return r.affectedRows===1;});}
+  async deleteAllUserAiData(userId:string){return this.transaction(async c=>{await lockUserDevices(this.pool,c,userId);const [conversations]=await c.execute<ResultSetHeader>(`UPDATE conversations c SET deleted_at=CURRENT_TIMESTAMP,status='deleted' WHERE c.user_id=? AND c.deleted_at IS NULL AND ${ownedConversationHistory}`,[userId]);const [keys]=await c.execute<ResultSetHeader>("UPDATE api_credentials SET is_active=0,revoked_at=CURRENT_TIMESTAMP WHERE owner_scope='USER' AND owner_user_id=? AND revoked_at IS NULL",[userId]);return {success:true,deleted_conversations:conversations.affectedRows,revoked_api_keys:keys.affectedRows};});}
+  async usageTimeseries(userId:string,from:Date,to:Date){const [rows]=await this.pool.execute<RowDataPacket[]>(`SELECT DATE(occurred_at) AS day,provider_id,COUNT(*) AS requests,COALESCE(SUM(input_tokens),0) AS input_tokens,COALESCE(SUM(output_tokens),0) AS output_tokens FROM usage_records WHERE user_id=? AND occurred_at>=? AND occurred_at<? GROUP BY DATE(occurred_at),provider_id ORDER BY day,provider_id`,[userId,from,to]);return rows.map(r=>({day:r.day,provider_id:String(r.provider_id),requests:Number(r.requests),input_tokens:Number(r.input_tokens),output_tokens:Number(r.output_tokens),tokens:Number(r.input_tokens)+Number(r.output_tokens)}));}
+
 }
 export interface ProfileInput {assistant_name:string|null;system_prompt:string|null;language_code:string|null;voice_code:string|null;preferred_provider_id:string|null;preferred_llm_model_id:string|null}
 interface ProviderRow extends RowDataPacket{id:string;code:string;name:string;is_enabled:number|boolean;health_status:string|null} const provider=(r:ProviderRow)=>({id:String(r.id),code:r.code,name:r.name,is_enabled:Boolean(r.is_enabled),health_status:r.health_status});
+const model=(r:RowDataPacket)=>({id:String(r.id),provider_id:String(r.provider_id),model_code:String(r.model_code),capability:String(r.capability),is_enabled:Boolean(r.is_enabled)});
 export interface ProfileRow extends RowDataPacket{user_id:string;assistant_name:string|null;system_prompt:string|null;language_code:string|null;voice_code:string|null;preferred_provider_id:string|null;preferred_llm_model_id:string|null;updated_at:Date}
 interface CredentialRow extends RowDataPacket{id:string;provider_id:string;label:string;secret_hint:string|null;is_active:number|boolean;created_at:Date;revoked_at:Date|null} const credential=(r:CredentialRow)=>({id:String(r.id),provider_id:String(r.provider_id),label:r.label,secret_hint:r.secret_hint?`****${r.secret_hint}`:null,is_active:Boolean(r.is_active),created_at:r.created_at,revoked_at:r.revoked_at});
 interface QuotaRow extends RowDataPacket{requests_per_minute:number|null;requests_per_day:number|null;tokens_per_month:string|null} interface CountRow extends RowDataPacket{total:string|number}

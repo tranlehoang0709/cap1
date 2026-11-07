@@ -44,6 +44,16 @@ export class AuthRepository {
     }
   }
 
+  async resetPassword(userId: string, passwordHash: string): Promise<void> {
+    const connection = await this.pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      await connection.execute('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [passwordHash, userId]);
+      await connection.execute('UPDATE auth_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE user_id = ? AND revoked_at IS NULL', [userId]);
+      await connection.commit();
+    } catch (error) { await connection.rollback(); throw error; } finally { connection.release(); }
+  }
+
   async createUser(email: string, name: string, passwordHash: string, actorId: string | null = null): Promise<PublicUser> {
     const connection = await this.pool.getConnection();
     try {
@@ -88,24 +98,6 @@ export class AuthRepository {
       [userId],
     );
     return result.affectedRows === 1;
-  }
-
-  async resetPassword(userId: string, passwordHash: string): Promise<boolean> {
-    const connection = await this.pool.getConnection();
-    try {
-      await connection.beginTransaction();
-      const [result] = await connection.execute<ResultSetHeader>(
-        'UPDATE users SET password_hash=?,updated_at=CURRENT_TIMESTAMP WHERE id=?', [passwordHash, userId],
-      );
-      await connection.execute('UPDATE auth_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE user_id=? AND revoked_at IS NULL', [userId]);
-      await connection.commit();
-      return result.affectedRows === 1;
-    } catch (error) {
-      await connection.rollback();
-      throw error;
-    } finally {
-      connection.release();
-    }
   }
 
   async createRefreshSession(userId: string, tokenHash: string, expiresAt: Date): Promise<void> {

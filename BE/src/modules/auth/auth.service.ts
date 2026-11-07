@@ -43,30 +43,30 @@ export class AuthService {
     return { success: true };
   }
 
-  async resendVerification(email: string): Promise<{ success: true; verification_token?: string }> {
+  async resendVerification(email: string) {
     const user = await this.repository.findCredentialsByEmail(email.trim().toLowerCase());
     if (!user || user.email_verified_at) return { success: true };
     return { success: true, verification_token: await this.createEmailVerificationToken(user.id) };
   }
 
-  async forgotPassword(email: string): Promise<{ success: true; reset_token?: string }> {
+  async forgotPassword(email: string) {
     const user = await this.repository.findCredentialsByEmail(email.trim().toLowerCase());
     if (!user) return { success: true };
-    return { success: true, reset_token: await this.createPasswordResetToken(user.id) };
+    const token = await this.jwt.signAsync<PasswordResetPayload>({ sub: user.id, typ: 'password_reset' }, {
+      secret: this.config.getOrThrow<string>('auth.accessTokenSecret'), expiresIn: 900,
+      issuer: 'aiva-iot', audience: 'aiva-password-reset',
+    });
+    return { success: true, reset_token: token };
   }
 
   async resetPassword(token: string, newPassword: string): Promise<{ success: true }> {
+    if (Buffer.byteLength(newPassword, 'utf8') > 72) throw new BadRequestException('Password must be at most 72 UTF-8 bytes');
     let payload: PasswordResetPayload;
     try {
-      payload = await this.jwt.verifyAsync<PasswordResetPayload>(token, {
-        secret: this.config.getOrThrow<string>('auth.accessTokenSecret'), issuer: 'aiva-iot', audience: 'aiva-password-reset',
-      });
-      if (payload.typ !== 'password_reset' || !payload.sub) throw new Error('Invalid reset token');
-    } catch {
-      throw new BadRequestException('Invalid or expired password reset token');
-    }
-    if (Buffer.byteLength(newPassword, 'utf8') > 72) throw new BadRequestException('Password must be at most 72 UTF-8 bytes');
-    if (!await this.repository.resetPassword(payload.sub, await bcrypt.hash(newPassword, 12))) throw new BadRequestException('User account was not found');
+      payload = await this.jwt.verifyAsync<PasswordResetPayload>(token, { secret: this.config.getOrThrow<string>('auth.accessTokenSecret'), issuer: 'aiva-iot', audience: 'aiva-password-reset' });
+      if (payload.typ !== 'password_reset' || !payload.sub) throw new Error();
+    } catch { throw new BadRequestException('Invalid or expired password reset token'); }
+    await this.repository.resetPassword(payload.sub, await bcrypt.hash(newPassword, 12));
     return { success: true };
   }
 
@@ -131,13 +131,6 @@ export class AuthService {
     return this.jwt.signAsync<EmailVerificationPayload>({ sub: userId, typ: 'email_verification' }, {
       secret: this.config.getOrThrow<string>('auth.accessTokenSecret'), expiresIn: 900,
       issuer: 'aiva-iot', audience: 'aiva-email-verification',
-    });
-  }
-
-  private async createPasswordResetToken(userId: string): Promise<string> {
-    return this.jwt.signAsync<PasswordResetPayload>({ sub: userId, typ: 'password_reset' }, {
-      secret: this.config.getOrThrow<string>('auth.accessTokenSecret'), expiresIn: 900,
-      issuer: 'aiva-iot', audience: 'aiva-password-reset',
     });
   }
 
