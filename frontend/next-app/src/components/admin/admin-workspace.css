@@ -1,0 +1,93 @@
+/* Admin presentation only. Shared User/Auth tokens and surfaces stay intact. */
+.app-shell[data-portal=admin]{--admin-surface:var(--card);--admin-line:var(--border);--admin-radius:16px}
+.app-shell[data-portal=admin] .sidebar{width:248px;padding:28px 16px 18px;box-shadow:none}
+.app-shell[data-portal=admin] .sidebar>.brand{margin-bottom:28px;padding-inline:12px;letter-spacing:-.8px}
+.app-shell[data-portal=admin] .brand-symbol{border-radius:11px}
+.app-shell[data-portal=admin] .workspace-label{margin:0 4px 8px;padding:12px;background:var(--surface-raised);border-color:var(--admin-line);border-radius:12px}
+.app-shell[data-portal=admin] .workspace-avatar{border:1px solid var(--border);background:var(--card);border-radius:8px}
+.app-shell[data-portal=admin] .workspace-label strong{font-size:12px}
+.app-shell[data-portal=admin] .workspace-label small{font-size:10px;margin-top:2px}
+.app-shell[data-portal=admin] .nav-group{margin:24px 12px 9px;font-size:9px;letter-spacing:1.35px}
+.app-shell[data-portal=admin] .nav-item{min-height:43px;padding:10px 12px;font-size:12px;gap:12px;border:1px solid transparent;border-radius:9px;margin-block:4px;transition:background-color 120ms,color 120ms,border-color 120ms}
+.app-shell[data-portal=admin] .nav-item svg{flex-shrink:0;stroke-width:1.7}
+.app-shell[data-portal=admin] .nav-item.active{background:var(--tint);border-color:color-mix(in srgb,var(--primary) 18%,var(--border));box-shadow:none}
+.app-shell[data-portal=admin] .nav-dot{width:4px;height:4px}
+.app-shell[data-portal=admin] .sidebar-bottom{padding:18px 6px 0;gap:10px}
+.app-shell[data-portal=admin] .account-avatar{width:34px;height:34px;border-radius:10px}
+.app-shell[data-portal=admin] .account-info strong,.app-shell[data-portal=admin] .account-info small{white-space:normal;overflow-wrap:anywhere}
+.app-shell[data-portal=admin] .app-content{margin-left:248px}
+.app-shell[data-portal=admin] .topbar{background:var(--sidebar-surface);backdrop-filter:none;padding:16px 36px;min-height:76px}
+.app-shell[data-portal=admin] .breadcrumb{font-size:12px;gap:14px;min-width:0}
+.app-shell[data-portal=admin] .breadcrumb strong{overflow-wrap:anywhere}
+.app-shell[data-portal=admin] .topbar-actions{gap:14px;flex-shrink:0}
+.app-shell[data-portal=admin] .theme-toggle{box-shadow:none;background:var(--card);border-radius:10px;min-height:40px}
+.app-shell[data-portal=admin] .role-pill{border-radius:6px;font-size:10px;padding:4px 10px;letter-spacing:.2px}
+.app-shell[data-portal=admin] .main-content{max-width:1512px;padding:32px 36px 20px}
+.app-shell[data-portal=admin] .page-heading{margin-bottom:24px;gap:16px}
+.app-shell[data-portal=admin] .page-heading h1{font-size:29px;font-weight:600;letter-spacing:-1px;line-height:1.3}
+.app-shell[data-portal=admin] .page-heading .eyebrow{font-size:9px;letter-spacing:1.35px;margin-bottom:8px}
+.app-shell[data-portal=admin] .heading-mark{width:36px;height:36px;border-radius:10px;box-shadow:none}
+.app-shell[data-portal=admin] .panel{border-radius:var(--admin-radius);box-shadow:none}
+.app-shell[data-portal=admin] .btn{box-shadow:none}
+.app-shell[data-portal=admin] .btn:hover{transform:none;box-shadow:none}
+.app-shell[data-portal=admin] .nav-item:focus-visible,.app-shell[data-portal=admin] .btn:focus-visible,.app-shell[data-portal=admin] .icon-button:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
+.admin-overview-intro{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:0 0 28px;border-bottom:1px solid var(--border);margin-bottom:26px}
+.admin-overview-intro .eyebrow{color:var(--primary);font-size:9px;letter-spacing:1.5px}
+.admin-overview-intro h2{font-size:23px;font-weight:550;letter-spacing:-.65px;margin:9px 0 6px;line-height:1.4}
+.admin-overview-intro p{font-size:12px;color:var(--muted)}
+.admin-overview-intro>.btn{flex-shrink:0;background:var(--card);min-height:40px;padding:9px 14px}
+.admin-metrics{min-height:146px;margin-bottom:26px}
+.admin-dashboard .metric-grid,.admin-metrics-pending{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:0}
+.app-shell[data-portal=admin] .admin-dashboard .metric-card{position:relative;min-height:146px;padding:20px;border-radius:var(--admin-radius);box-shadow:none;background:var(--admin-surface);overflow-wrap:anywhere}
+.admin-dashboard .metric-card>div{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.admin-dashboard .metric-card>div>span:first-child{color:var(--muted);font-size:12px;font-weight:500}
+.admin-dashboard .admin-metric-icon{display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;border-radius:9px;background:var(--tint);color:var(--primary)}
+.admin-dashboard .metric-card strong{display:block;margin-top:15px;font-size:34px;font-weight:550;letter-spacing:-1.2px;line-height:1.15;font-variant-numeric:tabular-nums}
+.admin-dashboard .metric-card small{display:block;color:var(--muted);font-size:10px;margin-top:6px}
+.admin-dashboard-grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(260px,1fr);gap:22px;align-items:start}
+.app-shell[data-portal=admin] .admin-dashboard .panel{padding:22px;margin:0;min-width:0}
+.admin-dashboard .panel-heading{align-items:flex-start;gap:12px;margin-bottom:20px}
+.admin-dashboard .panel-heading h2{font-size:15px;font-weight:600;line-height:1.5;letter-spacing:-.15px}
+.admin-dashboard .panel-heading p{font-size:11px;line-height:1.6;margin-top:5px}
+.admin-dashboard .panel-heading>.btn{font-size:11px;min-height:34px;padding:7px 10px;flex-shrink:0;color:var(--muted);gap:7px}
+.admin-table-label{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:9px;letter-spacing:1px;margin-bottom:14px}
+.admin-table-label svg{color:var(--primary)}
+.admin-services-body{min-height:240px}
+.admin-dashboard .table-scroll{max-width:100%;overflow:auto;border:1px solid var(--border);border-radius:10px;overscroll-behavior-inline:contain}
+.admin-dashboard table{width:100%;font-size:12px;white-space:nowrap}
+.admin-dashboard th{padding:13px 15px;font-size:10px;font-weight:600;letter-spacing:.2px;text-transform:none;background:var(--surface-raised)}
+.admin-dashboard td{padding:16px 15px;font-variant-numeric:tabular-nums;border-color:var(--border)}
+.admin-dashboard .status{font-size:10px;gap:6px;border-radius:6px;padding:4px 8px;white-space:nowrap}
+.admin-dashboard .status i{width:5px;height:5px}
+.admin-dashboard .empty-state{min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px dashed var(--border);border-radius:10px;padding:28px 18px;text-align:center}
+.admin-dashboard .empty-state svg{color:var(--muted);stroke-width:1.4}
+.admin-dashboard .empty-state h3{font-size:13px;font-weight:550;margin-top:12px}
+.admin-dashboard .empty-state p{font-size:11px;max-width:240px;line-height:1.7;margin-top:5px}
+.admin-dashboard .resource-error{padding:10px 0;min-width:0;overflow-wrap:anywhere}
+.admin-dashboard .alert{font-size:12px;border-radius:10px;align-items:flex-start}
+.admin-dashboard .alert svg{flex-shrink:0;margin-top:2px}
+.admin-dashboard .robot-viewer{margin-top:8px}
+.admin-dashboard .robot-poster{min-height:190px;background:var(--surface-raised);border:1px solid var(--border);border-radius:12px}
+.admin-dashboard .robot-viewer>.fine{font-size:10px;line-height:1.65;margin-top:12px}
+.admin-ops-summary{margin-bottom:18px}
+.admin-ops-summary>div{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);padding:11px 0}
+.admin-ops-summary dd{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.admin-quick-links{display:grid;gap:8px}
+.admin-quick-link{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;border:1px solid var(--border);background:var(--surface-raised);font-size:12px;font-weight:550;color:var(--foreground);transition:border-color 120ms,background-color 120ms}
+.admin-quick-link>svg:first-child{color:var(--primary)}
+.admin-quick-link>span{flex:1}
+.admin-quick-link>svg:last-child{color:var(--muted)}
+.admin-quick-link:hover{border-color:color-mix(in srgb,var(--primary) 35%,var(--border));background:var(--tint)}
+.admin-metrics-pending .admin-placeholder{height:146px;border:1px solid var(--border);border-radius:var(--admin-radius);padding:23px;background:var(--card)}
+.admin-placeholder>span{display:block;border-radius:5px;background:var(--border);height:10px;width:64%}
+.admin-placeholder>span+span{height:27px;width:42%;margin-top:25px;opacity:.6}
+.admin-table-pending{border:1px solid var(--border);border-radius:10px;padding:4px 16px}
+.admin-table-pending .admin-placeholder{min-height:73px;display:flex;gap:24px;align-items:center;border-bottom:1px solid var(--border)}
+.admin-table-pending .admin-placeholder:last-child{border:0}
+.admin-table-pending .admin-placeholder>span{height:10px;margin:0;width:44%}
+.app-shell[data-portal=admin] .workspace-footer{margin-top:30px;padding-top:18px;border-top:1px solid var(--border);font-size:10px;gap:12px}
+@media(min-width:1500px){.app-shell[data-portal=admin] .main-content{padding:36px 44px 24px}.app-shell[data-portal=admin] .topbar{padding-inline:44px}}
+@media(min-width:901px) and (max-width:1180px){.admin-dashboard-grid{grid-template-columns:minmax(0,1fr)}.admin-dashboard .robot-panel{max-width:none}.admin-dashboard .robot-poster{min-height:170px}.admin-dashboard .metric-grid,.admin-metrics-pending{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.app-shell[data-portal=admin] .app-content{margin-left:0}.app-shell[data-portal=admin] .sidebar{transition:transform 160ms,var(--motion-fast) visibility}.app-shell[data-portal=admin] .topbar{padding:14px 24px}.app-shell[data-portal=admin] .main-content{padding:26px 24px 20px}.admin-dashboard-grid{grid-template-columns:minmax(0,1.5fr) minmax(230px,1fr);gap:16px}.admin-dashboard .metric-grid,.admin-metrics-pending{gap:12px}.app-shell[data-portal=admin] .admin-dashboard .metric-card{padding:16px}.admin-dashboard .metric-card>div>span:first-child{font-size:11px}.admin-dashboard .metric-card strong{font-size:30px}.admin-dashboard .admin-metric-icon{width:27px;height:27px}.app-shell[data-portal=admin] .admin-dashboard .panel{padding:18px}}
+@media(max-width:700px){.app-shell[data-portal=admin] .main-content{padding:24px 18px 18px}.app-shell[data-portal=admin] .topbar{padding:12px 16px;min-height:68px}.app-shell[data-portal=admin] .breadcrumb{gap:9px;font-size:11px}.app-shell[data-portal=admin] .topbar-actions{gap:8px}.app-shell[data-portal=admin] .page-heading h1{font-size:26px}.app-shell[data-portal=admin] .page-heading{margin-bottom:22px}.admin-overview-intro{align-items:flex-start;flex-direction:column;gap:16px;padding-bottom:22px;margin-bottom:22px}.admin-overview-intro h2{font-size:21px}.admin-overview-intro>.btn{width:100%;justify-content:center}.admin-dashboard .metric-grid,.admin-metrics-pending{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.app-shell[data-portal=admin] .admin-dashboard .metric-card{min-height:135px;padding:16px}.admin-dashboard .metric-card strong{margin-top:16px}.admin-dashboard-grid{grid-template-columns:minmax(0,1fr);gap:18px}.admin-metrics{margin-bottom:22px}.admin-dashboard .panel-heading{flex-wrap:wrap}.admin-dashboard .panel-heading>.btn{min-height:40px}.admin-dashboard .robot-poster{min-height:200px}.app-shell[data-portal=admin] .workspace-footer{flex-wrap:wrap;font-size:9px;margin-top:24px}}
+@media(prefers-reduced-motion:reduce){.app-shell[data-portal=admin] *{transition:none!important;animation:none!important}}

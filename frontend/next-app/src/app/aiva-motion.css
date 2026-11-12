@@ -1,0 +1,12 @@
+/* State changes: prevent a jarring replacement, never move data for decoration. */
+::view-transition{pointer-events:none}
+::view-transition-old(root){display:none}
+::view-transition-new(root){animation:none!important}
+::view-transition-group(.auth-panel),::view-transition-group(.workspace-state){animation-duration:var(--motion-state);animation-timing-function:var(--ease-out)}
+::view-transition-old(.auth-panel),::view-transition-old(.workspace-state){animation:aiva-state-out var(--motion-state) var(--ease-out) both;mix-blend-mode:normal}
+::view-transition-new(.auth-panel),::view-transition-new(.workspace-state){animation:aiva-state-in var(--motion-state) var(--ease-out) both;mix-blend-mode:normal}
+@keyframes aiva-state-in{from{opacity:0}to{opacity:1}}
+@keyframes aiva-state-out{from{opacity:1}to{opacity:0}}
+.skeleton-wrap[data-motion-visible=false] .skeleton,.spinner[data-motion-visible=false]{animation-play-state:paused}
+html[data-page-visible=false] *,html[data-page-visible=false] *::before,html[data-page-visible=false] *::after{animation-play-state:paused!important}
+@media(prefers-reduced-motion:reduce){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}

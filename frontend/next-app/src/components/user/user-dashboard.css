@@ -1,0 +1,51 @@
+/* User Dashboard only. All colors inherit the existing AIVA theme. */
+.user-dashboard{display:grid;gap:24px;min-width:0}
+.user-dashboard .ud-welcome{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:22px 28px;border:1px solid var(--border);border-radius:var(--radius-lg);background:linear-gradient(115deg,var(--glass),color-mix(in srgb,var(--tint) 65%,transparent));position:relative;overflow:hidden;box-shadow:var(--shadow-soft)}
+.user-dashboard .ud-eyebrow{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.12em}
+.user-dashboard .ud-eyebrow>span{width:6px;height:6px;border-radius:50%;background:var(--cyan)}
+.user-dashboard .ud-welcome h2{margin:8px 0 6px;font-size:clamp(22px,2.2vw,30px);line-height:1.2;letter-spacing:-.03em;font-weight:550}
+.user-dashboard .ud-welcome h2>span{color:var(--cyan)}
+.user-dashboard .ud-welcome p{font-size:13px;color:var(--muted);margin:0;max-width:460px;line-height:1.6}
+.user-dashboard .ud-welcome-actions{display:flex;align-items:center;gap:18px;flex-shrink:0}
+.user-dashboard .ud-welcome .btn-primary{background:linear-gradient(120deg,var(--accent-start),var(--accent-end));color:var(--accent-ink);border-color:transparent}
+.user-dashboard .ud-welcome-mark{display:flex;align-items:center;gap:8px;color:var(--cyan);border-left:1px solid var(--border);padding-left:18px}
+.user-dashboard .ud-welcome-mark>svg{width:28px;height:28px;opacity:.8}
+.user-dashboard .ud-welcome-mark>span{font-size:9px;letter-spacing:.14em;color:var(--muted);white-space:nowrap}
+.user-dashboard .ud-metrics{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:20px;min-width:0}
+.user-dashboard .ud-metric,.user-dashboard .ud-personal{padding:24px;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--glass);min-width:0;box-shadow:var(--shadow-soft)}
+.user-dashboard .ud-metric-label{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--muted);font-size:12px;font-weight:500}
+.user-dashboard .ud-metric-label svg{color:var(--cyan);flex-shrink:0}
+.user-dashboard .ud-metric strong{display:block;font-size:40px;font-weight:500;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1.2;margin:20px 0 8px}
+.user-dashboard .ud-metric p{margin:0;color:var(--muted);font-size:11px;line-height:1.65}
+.user-dashboard .ud-personal{background:linear-gradient(130deg,var(--glass),var(--tint))}
+.user-dashboard .ud-personal h3{font-size:21px;line-height:1.35;font-weight:500;letter-spacing:-.025em;margin:18px 0 14px}
+.user-dashboard .ud-personal a{display:inline-flex;align-items:center;gap:10px;color:var(--cyan);font-size:12px;border-radius:4px}
+.user-dashboard .ud-main-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(260px,1fr);gap:24px;align-items:stretch}
+.user-dashboard .panel{margin:0;min-width:0;border-radius:var(--radius-lg);padding:24px;background:var(--glass);box-shadow:var(--shadow-soft)}
+.user-dashboard .panel-heading{margin-bottom:24px;align-items:flex-start;gap:16px}
+.user-dashboard .panel-heading h2{font-size:16px;font-weight:550;letter-spacing:-.025em;line-height:1.4}
+.user-dashboard .panel-heading p{font-size:12px;line-height:1.7;margin-top:6px}
+.user-dashboard .ud-robots .table-scroll{margin:0 -8px}
+.user-dashboard th{font-size:10px;letter-spacing:.05em;font-weight:500;color:var(--muted);padding:14px 12px;background:var(--tint)}
+.user-dashboard td{padding:18px 12px;font-size:12px;overflow-wrap:anywhere}
+.user-dashboard .empty-state{padding:40px 16px;min-height:190px;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.user-dashboard .empty-state>svg{color:var(--cyan);opacity:.65;margin-bottom:16px}
+.user-dashboard .empty-state h3{font-size:14px;font-weight:500;margin:0 0 8px}
+.user-dashboard .empty-state p{font-size:12px;line-height:1.7;max-width:290px}
+.user-dashboard .ud-companion .robot-viewer{min-height:220px}
+.user-dashboard .ud-filter{display:flex;align-items:end;gap:16px;padding:16px;background:color-mix(in srgb,var(--tint) 55%,transparent);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:24px;flex-wrap:wrap}
+.user-dashboard .ud-filter>svg{align-self:center;color:var(--muted);flex-shrink:0}
+.user-dashboard .ud-filter label{display:grid;gap:8px;font-size:11px;color:var(--muted);flex:1;min-width:150px;max-width:240px}
+.user-dashboard .ud-filter input{min-width:0;width:100%;font-size:13px;background:var(--card);color:var(--foreground);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;min-height:42px}
+.user-dashboard .resource-error{padding:16px 0;min-width:0}
+.user-dashboard .resource-error .alert{overflow-wrap:anywhere;font-size:12px}
+.user-dashboard .skeleton-wrap{min-height:100px}
+/* Static loading placeholders: no new continuous animation on this page. */
+.user-dashboard .skeleton,.user-dashboard .skeleton::after{animation:none!important}
+.user-dashboard :is(a,button,input):focus-visible{outline:2px solid var(--cyan);outline-offset:4px}
+/* Animate UI feedback: color tween, no hover scaling or new runtime. */
+.user-dashboard .ud-personal a{transition:color .2s ease}
+@media(hover:hover) and (pointer:fine){.user-dashboard .ud-personal a:hover{color:var(--foreground)}}
+@media(max-width:1100px){.user-dashboard .ud-welcome{padding:32px}.user-dashboard .ud-metrics{gap:16px}.user-dashboard .ud-main-grid{grid-template-columns:minmax(0,1fr)}.user-dashboard .ud-companion .robot-viewer{min-height:190px}}
+@media(max-width:640px){.user-dashboard{gap:16px}.user-dashboard .ud-welcome{padding:24px;gap:0}.user-dashboard .ud-welcome-mark{display:none}.user-dashboard .ud-welcome h2{font-size:32px}.user-dashboard .ud-welcome p{font-size:13px}.user-dashboard .ud-metrics{grid-template-columns:1fr 1fr;gap:12px}.user-dashboard .ud-metric{padding:18px 16px}.user-dashboard .ud-metric-label{font-size:11px;align-items:flex-start}.user-dashboard .ud-metric strong{font-size:34px}.user-dashboard .ud-personal{grid-column:1/-1;padding:20px}.user-dashboard .ud-personal h3{font-size:22px}.user-dashboard .ud-main-grid{gap:16px}.user-dashboard .panel{padding:20px}.user-dashboard .ud-filter{gap:12px;padding:14px}.user-dashboard .ud-filter>svg{display:none}.user-dashboard .ud-filter label{max-width:none;min-width:100%;font-size:12px}.user-dashboard .ud-filter input{font-size:16px}.user-dashboard .ud-filter>.btn{width:100%}.user-dashboard .table-scroll{max-width:100%}}
+@media(prefers-reduced-motion:reduce){.user-dashboard *{animation:none!important;transition:none!important}}

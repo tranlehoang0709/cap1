@@ -1,0 +1,16 @@
+/* Imported only by the development harness. No opacity/visibility isolation. */
+.auth-debug-panel{position:fixed;left:12px;bottom:12px;z-index:200;width:min(330px,calc(100vw - 24px));max-height:65vh;overflow:auto;border:1px solid #6d7a94;border-radius:9px;background:#111827;color:#e5edff;font:12px/1.5 system-ui;box-shadow:none}
+.auth-debug-panel summary{padding:10px 12px;cursor:pointer;font-weight:650}
+.auth-debug-controls{padding:0 12px 12px;display:grid;gap:9px}
+.auth-debug-controls p{font-size:11px;color:#bfcee5}
+.auth-debug-controls button{display:flex;justify-content:space-between;gap:12px;padding:8px 10px;border:1px solid #52627d;border-radius:5px;background:#1e293b;color:#e5edff;font:inherit;transition:none}
+.auth-debug-controls button[aria-checked=true]{border-color:#72d9ec}.auth-debug-controls button[aria-checked=false]{border-color:#e8a58b}
+.auth-debug-presets{display:flex;gap:6px}.auth-debug-presets button{flex:1;justify-content:center;padding:7px 0}
+.auth-debug-nova-off{height:calc(clamp(320px,45vh,440px) + 44px);width:100%;display:grid;place-items:center;font-size:12px;color:var(--muted)}
+@media(max-width:1000px){.auth-debug-nova-off{height:394px}}
+@media(max-height:760px) and (min-width:701px){.auth-debug-nova-off{height:334px}}
+@media(max-width:700px){.auth-debug-nova-off{height:259px}}
+.smart-auth[data-auth-debug-glass=off],.smart-auth[data-auth-debug-glass=off] *,.smart-auth[data-auth-debug-glass=off] *::before,.smart-auth[data-auth-debug-glass=off] *::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;filter:none!important;box-shadow:none!important;text-shadow:none!important}
+.smart-auth[data-auth-debug-glass=off] .auth-glass-layer{background:var(--card)!important}
+.smart-auth[data-auth-debug-glass=off] :is(input,.tabs,.theme-toggle,.brand-symbol){background:var(--card)!important}
+.smart-auth[data-auth-debug-form=off] #auth-form,.smart-auth[data-auth-debug-form=off] #auth-form *,.smart-auth[data-auth-debug-form=off] #auth-form *::before,.smart-auth[data-auth-debug-form=off] #auth-form *::after{transition:none!important;animation:none!important;view-transition-name:none!important}

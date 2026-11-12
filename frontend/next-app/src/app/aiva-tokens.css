@@ -1,0 +1,46 @@
+/* AIVA has two themes. Dark is the no-JS/default fallback. */
+:root,.dark {
+--background:#090f20; --foreground:#edf2ff; --card:#111c31; --surface-raised:#152139;
+ --muted:#a8b7d0; --border:#263550; --primary:#acbbff; --primary-foreground:#101b35;
+ --tint:#1b2a48; --danger:#ff9fb5; --success:#98dbc5; --cyan:#76d8ec; --lavender:#b5aff0;
+ --ambient-cyan:#235f7a; --ambient-violet:#6355ac; --wave-color:#607fb8; --dot-color:#617ba8;
+ --halo-opacity:.43; --form-halo-opacity:.22; --grid-opacity:.13; --wave-opacity:.25;
+ --glass:color-mix(in srgb,var(--card) 82%,transparent); --sidebar-surface:#0d172a;
+ --accent-start:#96d7ef; --accent-end:#b6b2ed; --accent-ink:#10223a;
+ --shadow-soft:0 8px 30px -20px #00000052; --shadow-lift:0 12px 32px -20px #00000080;
+ color-scheme:dark;
+ --radius-sm:8px; --radius:.75rem; --radius-lg:18px;
+ --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px; --space-8:32px;
+ --ease-out:cubic-bezier(.22,1,.36,1); --motion-fast:160ms; --motion-theme:240ms; --motion-state:200ms;
+ --auth-cyan-dark:#087fa3; --auth-cyan-light:#98dfe9; --auth-violet-dark:#6146b5; --auth-violet-light:#c8c0f4;
+ --auth-base-top:#080e23; --auth-base-mid:#101831; --auth-base-bottom:#070e20;
+ --auth-glow-cyan:#087fa3; --auth-glow-violet:#6146b5; --auth-glow-opacity:.48;
+ --flow-cyan:#63dbe9; --flow-violet:#8a82f0; --flow-pink:#c19ce5;
+ --flow-core-opacity:.74; --flow-glow-opacity:.42; --flow-haze-opacity:.22;
+ --mesh-color:#75a9d2; --mesh-opacity:.28; --vignette-color:#020613;
+ --auth-glass:color-mix(in srgb,#101c35 78%,transparent); --auth-form-border:#819ac52c;
+ --auth-edge:#9acbe67a; --auth-edge-violet:#9779e678; --auth-corner:color-mix(in srgb,#7f94d4 12%,transparent);
+ --auth-form-shadow:0 28px 90px -40px #000000b0,inset 0 1px 0 #dceaff0b;
+}
+.light {
+--background:#f5f8ff; --foreground:#17243c; --card:#ffffff; --surface-raised:#fbfcff;
+ --muted:#54647e; --border:#dce4f2; --primary:#4b58bf; --primary-foreground:#ffffff;
+ --tint:#eaf0ff; --danger:#ad304d; --success:#216d57; --cyan:#177e9a; --lavender:#7778b7;
+ --ambient-cyan:#8cdeed; --ambient-violet:#b8b5ee; --wave-color:#789fce; --dot-color:#879bc0;
+ --halo-opacity:.45; --form-halo-opacity:.27; --grid-opacity:.15; --wave-opacity:.34;
+ --glass:color-mix(in srgb,var(--card) 85%,transparent); --sidebar-surface:#fafdff;
+ --accent-start:#405fc3; --accent-end:#6c60c3; --accent-ink:#ffffff;
+ --shadow-soft:0 8px 30px -20px #2b467a26; --shadow-lift:0 12px 30px -20px #25468138;
+ --radius-sm:8px; --radius:.75rem; --radius-lg:18px;
+ --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px; --space-8:32px;
+ --ease-out:cubic-bezier(.22,1,.36,1); --motion-fast:160ms; --motion-theme:240ms; --motion-state:200ms;
+ color-scheme:light;
+ --auth-base-top:#f8faff; --auth-base-mid:#eef5ff; --auth-base-bottom:#f5f8ff;
+ --auth-glow-cyan:#98dfe9; --auth-glow-violet:#c8c0f4; --auth-glow-opacity:.54;
+ --flow-cyan:#379cc0; --flow-violet:#9183c9; --flow-pink:#b6a1d3;
+ --flow-core-opacity:.40; --flow-glow-opacity:.20; --flow-haze-opacity:.12;
+ --mesh-color:#7d9abb; --mesh-opacity:.16; --vignette-color:#d8e3f6;
+ --auth-glass:color-mix(in srgb,#ffffff 76%,transparent); --auth-form-border:#a4b8d74d;
+ --auth-edge:#92bbd99c; --auth-edge-violet:#a99cd969; --auth-corner:color-mix(in srgb,#9ac9f0 16%,transparent);
+ --auth-form-shadow:0 28px 80px -46px #526f9a57,inset 0 1px 0 #ffffff;
+}

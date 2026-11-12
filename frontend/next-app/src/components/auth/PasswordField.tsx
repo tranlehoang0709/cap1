@@ -1,0 +1,5 @@
+'use client';
+import {useState} from 'react';
+import {Eye,EyeOff} from 'lucide-react';
+import {useNovaInteractions} from '@/components/robot/NovaInteractionProvider';
+export function PasswordField({confirm=false,register=false}:{confirm?:boolean;register?:boolean}){const [visible,setVisible]=useState(false);const nova=useNovaInteractions();const id=confirm?'auth-confirm':'auth-password';return <div className="auth-field"><label htmlFor={id}>{confirm?'Nhập lại mật khẩu':'Mật khẩu'}</label><div className="auth-password"><input id={id} name={confirm?'confirm_password':'password'} type={visible?'text':'password'} required minLength={register?8:1} autoComplete={register?'new-password':'current-password'}/><button type="button" aria-label={(visible?'Ẩn':'Hiện')+(confirm?' mật khẩu nhập lại':' mật khẩu')} aria-pressed={visible} onPointerDown={e=>e.preventDefault()} onClick={()=>{setVisible(v=>!v);nova.send({type:'visibility'});}}>{visible?<EyeOff size={17}/>:<Eye size={17}/>}</button></div></div>;}

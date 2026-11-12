@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>*{box-sizing:border-box}
+nav[hidden],.expression-demo[hidden]{display:none}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:"Segoe UI",system-ui,sans-serif;color:#dfedfb;color-scheme:dark}
+#stage{height:100%;display:grid;grid-template-rows:30px minmax(0,1fr) 26px;background:radial-gradient(ellipse at 50% 58%,#17334d 0,#0b182b 55%,#081220 100%);border:1px solid #343d50;border-radius:16px;overflow:hidden}
+body.light{color:#253c52;color-scheme:light}
+body.light #stage{background:radial-gradient(ellipse at 50% 58%,#e5eff9 0,#f3f7fc 60%,#f8fbff 100%);border-color:#d7dce7}
+body.light header>span,body.light footer,body.light .hint{color:#344a61}
+body.light button{color:#253c52;background:#e5eef8;border-color:#9bb3cb}
+body.light button:hover{background:#d5e6f5;border-color:#478da5}
+body.light button:active{background:#c5dcec}
+body.light button:focus-visible,body.light canvas:focus-visible{outline-color:#087e9e}
+header,footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 10px;min-width:0}
+header>span{font-size:9px;letter-spacing:.6px;white-space:nowrap;color:#a6cee5}
+nav{display:flex;gap:4px}
+button{font:inherit;font-size:10px;color:#dff6ff;background:#182f45;border:1px solid #4b6e87;border-radius:6px;padding:3px 6px;min-height:24px;cursor:pointer;touch-action:manipulation}
+button:hover{background:#284d67;border-color:#66d7ef}button:active{background:#356080}
+button:focus-visible,canvas:focus-visible{outline:2px solid #6fe4ff;outline-offset:-3px}
+button:disabled{opacity:.5;cursor:default}
+#viewport{min-width:0;min-height:0;position:relative;overflow:hidden}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+#fallback{position:absolute;inset:0;display:grid;place-items:center}
+#fallback[hidden]{display:none}
+#fallback .robot{height:95%;width:100%;display:grid;place-items:center}
+#fallback svg{height:100%;max-width:90%}#fallback .holo-stage{display:none}
+footer{font-size:9px;color:#a6bed3;line-height:1.25}
+#status{overflow-wrap:anywhere}.hint{color:#b5d5e8;text-align:right}
+body.card .hint{display:none}
+@media(max-width:330px){header>span{font-size:8px;letter-spacing:0}header,footer{padding:0 6px}nav{gap:2px}button{padding:2px 4px;font-size:9px}.hint{display:none}}
+@media(max-width:280px){header>span{display:none}header{justify-content:flex-end}}
+#stage:not(.ready) footer{height:auto}#stage:not(.ready){grid-template-rows:30px minmax(0,1fr) minmax(26px,auto)}
+/* Chỉ tăng khả năng đọc của hero; giữ nguyên hàng header/footer và canvas. */
+body.hero header>span{font-size:10px;letter-spacing:.3px}
+body.hero footer{font-size:11px}
+body.hero button{font-size:12px;line-height:1.2;min-height:28px;padding:2px 6px}
+@media(max-width:420px){body.hero header>span{letter-spacing:0}body.hero header,body.hero footer{padding:0 6px}body.hero nav{gap:3px}body.hero button{font-size:11px;padding:2px 4px}body.hero footer{font-size:10px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+.expression-demo{display:flex;align-items:center;gap:4px;min-width:0;font-size:9px;line-height:1.1}
+.expression-demo small{display:block;font-size:8px}
+.expression-demo select{font:inherit;font-size:10px;min-width:0;max-width:112px;height:24px;color:#dff6ff;background:#182f45;border:1px solid #4b6e87;border-radius:6px}
+.expression-demo select:focus-visible{outline:2px solid #6fe4ff;outline-offset:-2px}
+body.light .expression-demo select{color:#253c52;background:#e5eef8;border-color:#9bb3cb}
+body.light .expression-demo select:focus-visible{outline-color:#087e9e}
+@media(max-width:240px){.expression-demo{font-size:8px}.expression-demo select{max-width:92px;font-size:9px}footer{gap:3px}}
+</style></head>
+<body class="dark hero">
+<section id="stage" aria-label="AIVA Interactive Core">
+  <header><span>AIVA / INTERACTIVE CORE</span><nav aria-label="Điều khiển robot" hidden>
+    <button id="wave" type="button">Vẫy tay</button>
+    <button id="reset" type="button">Reset</button>
+    <button id="pause" type="button" aria-pressed="false">Dừng</button>
+  </nav></header>
+  <div id="viewport">
+    <div id="fallback"><div class="robot" role="img" aria-label="Robot AIVA với hiệu ứng chiều sâu 3D">
+<div class="holo-stage" aria-hidden="true"><div class="holo-grid"></div><div class="holo-beam"></div><div class="holo-platform"><i></i><i></i><i></i></div><span class="holo-particle p1"></span><span class="holo-particle p2"></span><span class="holo-particle p3"></span><span class="holo-particle p4"></span><div class="holo-label">AIVA / VIRTUAL ASSISTANT</div></div>
+<svg viewBox="0 0 160 185" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<defs>
+  <linearGradient id="aiva-shell" x1="0" y1="0" x2="1" y2=".35"><stop stop-color="#f7fbff"/><stop offset=".28" stop-color="#e6eef9"/><stop offset=".62" stop-color="#9cacc4"/><stop offset=".85" stop-color="#687b99"/><stop offset="1" stop-color="#bac9df"/></linearGradient>
+  <radialGradient id="aiva-head" cx=".3" cy=".2" r=".85"><stop stop-color="#ffffff"/><stop offset=".45" stop-color="#dce8f8"/><stop offset=".78" stop-color="#91a3bf"/><stop offset="1" stop-color="#516784"/></radialGradient>
+  <linearGradient id="aiva-screen" x1="0" y1="0" x2=".7" y2="1"><stop stop-color="#243955"/><stop offset=".4" stop-color="#081728"/><stop offset="1" stop-color="#020915"/></linearGradient>
+  <radialGradient id="aiva-chest" cx=".32" cy=".2" r=".9"><stop stop-color="#f7fbff"/><stop offset=".55" stop-color="#bdcde2"/><stop offset="1" stop-color="#5e7798"/></radialGradient>
+</defs>
+<ellipse class="robot-ground" cx="80" cy="167" rx="44" ry="8" fill="#020712"/>
+<ellipse cx="80" cy="166" rx="55" ry="12" fill="none" stroke="#398ddd" stroke-opacity=".18"/>
+<g class="robot-body">
+  <rect x="52" y="118" width="22" height="37" rx="10" fill="url(#aiva-shell)" stroke="#c2d3ec" stroke-opacity=".4"/>
+  <rect x="89" y="118" width="22" height="37" rx="10" fill="url(#aiva-shell)"/>
+  <ellipse cx="62" cy="150" rx="12" ry="5" fill="#8196b2"/><ellipse cx="100" cy="150" rx="12" ry="5" fill="#6b819f"/>
+  <rect x="29" y="91" width="18" height="42" rx="9" fill="url(#aiva-shell)" transform="rotate(9 38 96)"/>
+  <g class="robot-arm"><rect x="116" y="91" width="18" height="42" rx="9" fill="url(#aiva-shell)" transform="rotate(-9 125 96)"/></g>
+  <rect x="46" y="84" width="69" height="55" rx="25" fill="url(#aiva-chest)" stroke="#d0def1" stroke-opacity=".45"/>
+  <path d="M54 104q0-13 12-15" stroke="white" stroke-width="3" stroke-linecap="round" opacity=".55" fill="none"/>
+  <ellipse cx="81" cy="89" rx="22" ry="6" fill="#3c536d" opacity=".45"/>
+  <path d="M81 23v-9" stroke="#aec4e0" stroke-width="4"/><circle class="robot-core" cx="81" cy="11" r="4" fill="#5be5ff"/>
+  <rect x="33" y="40" width="10" height="28" rx="5" fill="#6983a3"/><rect x="119" y="40" width="10" height="28" rx="5" fill="#4a6486"/>
+  <rect x="37" y="24" width="88" height="69" rx="28" fill="url(#aiva-head)" stroke="#dceaff" stroke-opacity=".65"/>
+  <rect x="47" y="34" width="68" height="47" rx="18" fill="url(#aiva-screen)" stroke="#4a607a" stroke-width="2"/>
+  <path class="face-scan" d="M55 46h52" stroke="#68e1ff" stroke-opacity=".35" stroke-width="2"/>
+  <path d="M54 47q0-7 9-7h33" stroke="#b8dcff" stroke-width="2" opacity=".28" fill="none" stroke-linecap="round"/>
+  <path d="M44 43q2-13 20-14" stroke="white" stroke-width="3" opacity=".75" fill="none" stroke-linecap="round"/>
+  <ellipse class="robot-eye" cx="67" cy="56" rx="5" ry="9" fill="#45d5ff"/><ellipse class="robot-eye" cx="96" cy="56" rx="5" ry="9" fill="#45d5ff"/>
+  <path d="M74 72q8 5 15 0" stroke="#40caff" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <circle cx="81" cy="111" r="9" fill="#527c9f"/><circle class="robot-core" cx="81" cy="111" r="5" fill="#52ddff"/>
+  <path d="M67 128h28" stroke="#627c9a" stroke-opacity=".6" stroke-linecap="round"/>
+</g>
+</svg></div></div>
+  </div>
+  <footer><span hidden>Demo · <span id="status" role="status">Đang khởi tạo 3D…</span></span><label class="expression-demo" title="Chỉ xem thử trên frontend, không điều khiển robot thật"><span>Xem thử biểu cảm<small>Demo frontend</small></span><select id="expression" aria-label="Xem thử biểu cảm — Demo frontend"><option value="neutral">😐 Bình thường</option><option value="happy">😊 Vui vẻ</option><option value="angry">😠 Tức giận</option><option value="sad">😢 Buồn bã</option><option value="sleepy">😴 Buồn ngủ</option></select></label></footer>
+</section>
+<script id="aiva-config" type="application/json">{"hero":true,"online":false,"paused":false}</script>
+<script></script>
+<script></script>
+<script src="diagnostics.js"></script><script src="robot.bundle.js"></script></body></html>
