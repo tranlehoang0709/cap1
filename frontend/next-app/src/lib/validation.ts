@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { validatePersonalAssistantBody } from './personal-assistant';
 const identifier = z.string().regex(/^[1-9]\d{0,18}$/).refine(v => BigInt(v) <= 9223372036854775807n);
 const SENSITIVE_RESPONSE_KEY =
     /^(secret|secret_token|access_token|refresh_token|verification_token|reset_token|service_token|token|credential|credentials|password|password_hash|secret_ciphertext|hash|code_hash|pairing_code_hash|token_hash|challenge|challenge_hash|api_key|private_key|client_secret|encrypted_blob_uri|encryption_key_ref)$/i;
@@ -45,6 +46,15 @@ export function validateBody(operation: string, body: Record<string, unknown>) {
     }
     if (operation === 'password') {
         z.string().min(8).max(72).refine(v => new TextEncoder().encode(v).length <= 72).parse(body.new_password);
+    }
+    if (
+        operation.startsWith('personalTask') ||
+        operation.startsWith('personalPlan') ||
+        operation.startsWith('personalEvent') ||
+        operation.startsWith('personalReminder') ||
+        operation.startsWith('personalMemory')
+    ) {
+        return validatePersonalAssistantBody(operation, body);
     }
     return body;
 }

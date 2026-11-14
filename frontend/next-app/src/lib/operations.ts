@@ -1,5 +1,6 @@
 // Explicit BFF allowlist. No browser-supplied upstream path or Authorization.
 import { isProtectedSettingKey } from './validation';
+import { personalAssistantOperations } from './personal-assistant';
 export type Operation = {
     method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
     role: 'USER' | 'ADMIN' | 'ANY';
@@ -25,12 +26,13 @@ export const operations: Record<string, Operation> = {
     firmware: { method: 'GET', role: 'ADMIN', path: '/admin/firmware' }, firmwareCreate: { method: 'POST', role: 'ADMIN', path: '/admin/firmware', fields: ['hardware_model', 'version', 'file_uri', 'checksum_sha256'] }, firmwareRelease: { method: 'POST', role: 'ADMIN', path: '/admin/firmware/:id/release', fields: [] },
     instances: { method: 'GET', role: 'ADMIN', path: '/admin/monitoring/instances' }, logs: { method: 'GET', role: 'ADMIN', path: '/admin/logs', query: ['page', 'limit', 'severity', 'component'] }, audits: { method: 'GET', role: 'ADMIN', path: '/admin/audit-logs', query: ['page', 'limit'] }, settings: { method: 'GET', role: 'ADMIN', path: '/admin/system-settings' }, settingSave: { method: 'PUT', role: 'ADMIN', path: '/admin/system-settings/:key', fields: ['value'] }
 };
-export function resolveOperation(name: string, role: string, params: Record<string, unknown> = {}) { const op = operations[name]; if (!op)
+export function resolveOperation(name: string, role: string, params: Record<string, unknown> = {}) { const op = operations[name] ?? personalAssistantOperations[name]; if (!op)
     throw new Error('UNKNOWN_OPERATION'); if (op.role !== 'ANY' && op.role !== role)
-    throw new Error('FORBIDDEN'); let path = op.path; for (const part of [':id', ':key'])
+    throw new Error('FORBIDDEN'); let path = op.path; for (const part of [':id', ':sessionId', ':key'])
     if (path.includes(part)) {
         const v = params[part.slice(1)];
-        if (typeof v !== 'string' || !(part === ':id' ? /^[1-9]\d{0,18}$/ : /^[A-Za-z0-9_.-]{1,120}$/).test(v))
+        const isNumericId = part === ':id' || part === ':sessionId';
+        if (typeof v !== 'string' || !(isNumericId ? /^[1-9]\d{0,18}$/ : /^[A-Za-z0-9_.-]{1,120}$/).test(v))
             throw new Error('INVALID_PARAMETER');
         if (part === ':key' && isProtectedSettingKey(v))
             throw new Error('FORBIDDEN_SETTING_KEY');

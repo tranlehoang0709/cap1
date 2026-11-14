@@ -16,6 +16,12 @@ import {
   useResource,
 } from '@/components/data-ui';
 import { RobotViewer } from '@/components/robot-viewer';
+import {
+  PersonalAssistantWorkspace,
+  PersonalAssistantWorkspaceView,
+} from '@/components/user/PersonalAssistantTasks';
+
+export { PersonalAssistantWorkspace, PersonalAssistantWorkspaceView };
 
 type Resource = ReturnType<typeof useResource>;
 const robotColumns = cols('display_name', 'connection_status', 'lifecycle_status');
@@ -38,6 +44,7 @@ export function UserDashboard() {
   const history = useResource('conversations', { page: '1', limit: '5' });
   return (
     <UserDashboardView robots={robots} history={history}>
+      <PersonalAssistantWorkspace />
       <Usage />
     </UserDashboardView>
   );

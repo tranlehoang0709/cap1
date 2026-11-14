@@ -36,16 +36,63 @@
 .user-dashboard .ud-filter{display:flex;align-items:end;gap:16px;padding:16px;background:color-mix(in srgb,var(--tint) 55%,transparent);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:24px;flex-wrap:wrap}
 .user-dashboard .ud-filter>svg{align-self:center;color:var(--muted);flex-shrink:0}
 .user-dashboard .ud-filter label{display:grid;gap:8px;font-size:11px;color:var(--muted);flex:1;min-width:150px;max-width:240px}
-.user-dashboard .ud-filter input{min-width:0;width:100%;font-size:13px;background:var(--card);color:var(--foreground);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;min-height:42px}
+.user-dashboard .ud-filter input,.user-dashboard .ud-filter select{min-width:0;width:100%;font-size:13px;background:var(--card);color:var(--foreground);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;min-height:42px}
+.user-dashboard .ud-pa-grid{display:grid;gap:24px;min-width:0}
+.user-dashboard .ud-pa-header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.user-dashboard .ud-pa-filter label{max-width:260px}
+.user-dashboard .ud-pa-filter-buttons{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.user-dashboard .ud-pa-task-cell{display:grid;gap:4px;min-width:0}
+.user-dashboard .ud-pa-task-title{font-weight:550;color:var(--foreground);overflow-wrap:anywhere}
+.user-dashboard .ud-pa-task-desc{font-size:11px;color:var(--muted);line-height:1.5;overflow-wrap:anywhere}
+.user-dashboard .ud-pa-plan-badge,.user-dashboard .ud-pa-priority-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:color-mix(in srgb,var(--tint) 70%,transparent);font-size:11px;color:var(--foreground);max-width:100%;overflow-wrap:anywhere}
+.user-dashboard .ud-pa-priority-badge[data-priority="HIGH"]{border-color:color-mix(in srgb,var(--rose,#ef4444) 55%,var(--border));background:color-mix(in srgb,var(--rose,#ef4444) 14%,transparent);color:var(--foreground)}
+.user-dashboard .ud-pa-priority-badge[data-priority="MEDIUM"]{border-color:color-mix(in srgb,var(--amber,#f59e0b) 50%,var(--border));background:color-mix(in srgb,var(--amber,#f59e0b) 12%,transparent);color:var(--foreground)}
+.user-dashboard .ud-pa-priority-badge[data-priority="LOW"]{border-color:color-mix(in srgb,var(--cyan,#06b6d4) 45%,var(--border));background:color-mix(in srgb,var(--cyan,#06b6d4) 10%,transparent);color:var(--foreground)}
+.user-dashboard .ud-pa-plan-badge svg,.user-dashboard .ud-pa-priority-badge svg{color:var(--cyan);flex-shrink:0}
+.user-dashboard .ud-pa-detail-box{margin-top:20px;padding:18px;border:1px solid var(--border);border-radius:var(--radius);background:color-mix(in srgb,var(--tint) 45%,transparent);min-width:0}
+.user-dashboard .ud-pa-detail-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.user-dashboard .ud-pa-detail-header h3{margin:0 0 4px;font-size:14px;font-weight:550}
+.user-dashboard .ud-pa-summary-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:20px;min-width:0}
+.user-dashboard .ud-pa-summary-card{padding:16px 18px;border-radius:var(--radius);border:1px solid var(--border);background:color-mix(in srgb,var(--tint) 50%,transparent);min-width:0;display:grid;gap:6px}
+.user-dashboard .ud-pa-summary-label{font-size:11px;color:var(--muted);font-weight:500}
+.user-dashboard .ud-pa-summary-card strong{font-size:28px;font-weight:550;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.2}
+.user-dashboard .ud-pa-plans-list{display:grid;gap:16px;min-width:0}
+.user-dashboard .ud-pa-plan-card{padding:18px 20px;border-radius:var(--radius);border:1px solid var(--border);background:color-mix(in srgb,var(--tint) 38%,transparent);display:grid;gap:14px;min-width:0}
+.user-dashboard .ud-pa-plan-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.user-dashboard .ud-pa-plan-card-head h3{margin:0 0 4px;font-size:15px;font-weight:550}
+.user-dashboard .ud-pa-plan-head-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.user-dashboard .ud-pa-plan-metrics{display:flex;flex-wrap:wrap;gap:12px 20px;font-size:12px;color:var(--foreground);font-variant-numeric:tabular-nums}
+.user-dashboard .ud-pa-progress-track{width:100%;height:10px;border-radius:999px;background:var(--card);border:1px solid var(--border);overflow:hidden}
+.user-dashboard .ud-pa-progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent-start),var(--cyan))}
+.user-dashboard .ud-pa-sessions-list{display:grid;gap:10px;padding-top:6px;border-top:1px solid var(--border);min-width:0}
+.user-dashboard .ud-pa-session-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius-sm);background:var(--card);border:1px solid var(--border);flex-wrap:wrap;min-width:0}
+.user-dashboard .ud-pa-session-info{display:grid;gap:6px;min-width:0}
+.user-dashboard .ud-pa-session-info strong{font-size:12px;font-weight:550;overflow-wrap:anywhere}
+.user-dashboard .ud-pa-session-badges{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px}
+.user-dashboard .ud-pa-partial-note{color:var(--muted);font-size:11px}
+.user-dashboard .ud-pa-subtask-cell{border-left:2px solid color-mix(in srgb,var(--cyan) 40%,transparent)}
+.user-dashboard .ud-pa-task-title{display:inline-flex;align-items:center;gap:6px}
+.user-dashboard .ud-pa-subtask-icon{color:var(--cyan);flex-shrink:0}
+.user-dashboard .ud-pa-task-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.user-dashboard .ud-pa-subtask-badge,.user-dashboard .ud-pa-subtask-count,.user-dashboard .ud-pa-event-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:color-mix(in srgb,var(--tint) 55%,transparent);font-size:11px;color:var(--muted)}
+.user-dashboard .ud-pa-event-badge svg{color:var(--cyan);flex-shrink:0}
+.user-dashboard .ud-pa-status-cell{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.user-dashboard .ud-pa-progress-pill{font-size:11px;font-weight:550;font-variant-numeric:tabular-nums;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:color-mix(in srgb,var(--tint) 60%,transparent);color:var(--foreground)}
+.user-dashboard .ud-pa-task-progress-track{width:76px;height:6px;border-radius:999px;background:var(--card);border:1px solid var(--border);overflow:hidden;flex-shrink:0}
+.user-dashboard .ud-pa-task-progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent-start),var(--cyan))}
+.user-dashboard .ud-pa-pagination{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap;font-size:12px}
+.user-dashboard .ud-pa-pagination-actions{display:flex;align-items:center;gap:8px}
+.user-dashboard .ud-pa-detail-subtasks{margin-bottom:12px;font-size:12px}
+.user-dashboard .ud-pa-detail-subtasks ul{margin:6px 0 0 18px;padding:0;display:grid;gap:4px}
 .user-dashboard .resource-error{padding:16px 0;min-width:0}
 .user-dashboard .resource-error .alert{overflow-wrap:anywhere;font-size:12px}
 .user-dashboard .skeleton-wrap{min-height:100px}
 /* Static loading placeholders: no new continuous animation on this page. */
 .user-dashboard .skeleton,.user-dashboard .skeleton::after{animation:none!important}
-.user-dashboard :is(a,button,input):focus-visible{outline:2px solid var(--cyan);outline-offset:4px}
+.user-dashboard :is(a,button,input,select):focus-visible{outline:2px solid var(--cyan);outline-offset:4px}
 /* Animate UI feedback: color tween, no hover scaling or new runtime. */
 .user-dashboard .ud-personal a{transition:color .2s ease}
 @media(hover:hover) and (pointer:fine){.user-dashboard .ud-personal a:hover{color:var(--foreground)}}
-@media(max-width:1100px){.user-dashboard .ud-welcome{padding:32px}.user-dashboard .ud-metrics{gap:16px}.user-dashboard .ud-main-grid{grid-template-columns:minmax(0,1fr)}.user-dashboard .ud-companion .robot-viewer{min-height:190px}}
-@media(max-width:640px){.user-dashboard{gap:16px}.user-dashboard .ud-welcome{padding:24px;gap:0}.user-dashboard .ud-welcome-mark{display:none}.user-dashboard .ud-welcome h2{font-size:32px}.user-dashboard .ud-welcome p{font-size:13px}.user-dashboard .ud-metrics{grid-template-columns:1fr 1fr;gap:12px}.user-dashboard .ud-metric{padding:18px 16px}.user-dashboard .ud-metric-label{font-size:11px;align-items:flex-start}.user-dashboard .ud-metric strong{font-size:34px}.user-dashboard .ud-personal{grid-column:1/-1;padding:20px}.user-dashboard .ud-personal h3{font-size:22px}.user-dashboard .ud-main-grid{gap:16px}.user-dashboard .panel{padding:20px}.user-dashboard .ud-filter{gap:12px;padding:14px}.user-dashboard .ud-filter>svg{display:none}.user-dashboard .ud-filter label{max-width:none;min-width:100%;font-size:12px}.user-dashboard .ud-filter input{font-size:16px}.user-dashboard .ud-filter>.btn{width:100%}.user-dashboard .table-scroll{max-width:100%}}
+@media(max-width:1100px){.user-dashboard .ud-welcome{padding:32px}.user-dashboard .ud-metrics{gap:16px}.user-dashboard .ud-main-grid{grid-template-columns:minmax(0,1fr)}.user-dashboard .ud-companion .robot-viewer{min-height:190px}.user-dashboard .ud-pa-summary-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.user-dashboard{gap:16px}.user-dashboard .ud-welcome{padding:24px;gap:0}.user-dashboard .ud-welcome-mark{display:none}.user-dashboard .ud-welcome h2{font-size:32px}.user-dashboard .ud-welcome p{font-size:13px}.user-dashboard .ud-metrics{grid-template-columns:1fr 1fr;gap:12px}.user-dashboard .ud-metric{padding:18px 16px}.user-dashboard .ud-metric-label{font-size:11px;align-items:flex-start}.user-dashboard .ud-metric strong{font-size:34px}.user-dashboard .ud-personal{grid-column:1/-1;padding:20px}.user-dashboard .ud-personal h3{font-size:22px}.user-dashboard .ud-main-grid,.user-dashboard .ud-pa-grid{gap:16px}.user-dashboard .ud-pa-summary-cards{grid-template-columns:1fr;gap:12px}.user-dashboard .panel{padding:20px}.user-dashboard .ud-filter{gap:12px;padding:14px}.user-dashboard .ud-filter>svg{display:none}.user-dashboard .ud-filter label{max-width:none;min-width:100%;font-size:12px}.user-dashboard .ud-filter input,.user-dashboard .ud-filter select{font-size:16px}.user-dashboard .ud-filter>.btn,.user-dashboard .ud-pa-filter-buttons,.user-dashboard .ud-pa-filter-buttons>.btn{width:100%}.user-dashboard .table-scroll{max-width:100%}}
 @media(prefers-reduced-motion:reduce){.user-dashboard *{animation:none!important;transition:none!important}}

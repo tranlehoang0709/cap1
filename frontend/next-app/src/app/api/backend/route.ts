@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         if (body && Object.keys(body).some(k => !(op.fields || []).includes(k)))
             throw new BackendError(400, 'Trường dữ liệu không được phép.');
         if (body)
-            validateBody(input.operation, body);
+            body = validateBody(input.operation, body);
         if (input.operation === 'assistantSave') {
             const old = object(await upstream('/ai/profile', 'GET', undefined, session.access));
             body = { ...body, preferred_provider_id: old.preferred_provider_id ?? null, preferred_llm_model_id: old.preferred_llm_model_id ?? null };
@@ -58,6 +58,12 @@ export async function POST(req: Request) {
         if(op.method!=='GET'){try{assertAcknowledged(result);}catch{throw new BackendError(502,'Backend chưa xác nhận thao tác. Kiểm tra kết quả trước khi thử lại.');}}
         if (input.operation === 'conversation' && object(result).user_id !== user.id)
             throw new BackendError(403, 'Hội thoại không thuộc tài khoản hiện tại.');
+        if (
+            ['personalTaskDetail', 'personalPlanDetail', 'personalEventDetail', 'personalReminderDetail', 'personalMemoryDetail'].includes(input.operation) &&
+            object(result).user_id !== undefined &&
+            String(object(result).user_id) !== user.id
+        )
+            throw new BackendError(403, 'Dữ liệu cá nhân không thuộc tài khoản hiện tại.');
         if (input.operation === 'password')
             await destroySession();
         const data = input.operation === 'chat' ? chatReply.parse(result) : input.operation === 'settings' ? filterSystemSettings(result) : result;
