@@ -7,16 +7,8 @@ from fastapi import FastAPI
 from app.api.device_profiles import router as device_profiles_router
 from app.api.health import router
 from app.api.websocket import router as websocket_router
+from app.core.runtime_config import RuntimeSettings
 from app.core.config import Settings, get_settings
-from app.core.robot_config import RobotSettings
-from app.core.lan_config import LanSettings
-from app.core.live_config import LiveSettings
-from app.api.web_chat import router as web_chat_router
-from app.services.backend_execution import UsageReporter
-from app.api.xiaozhi_ota import router as ota_router
-from app.api.lan_robot import router as lan_robot_router
-from app.core.backend_config import BackendSettings
-from app.api.robot_websocket import router as robot_router
 from app.core.logging import configure_logging, get_logger
 
 logger = get_logger()
@@ -42,11 +34,33 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         backend_client = getattr(application.state, "backend_client", None)
         if backend_client is not None:
             await backend_client.aclose()
+        local_llm = getattr(application.state, "local_llm", None)
+        if local_llm is not None:
+            await local_llm.aclose()
         _log_lifecycle(event_level, "AI Server shutdown")
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     application = FastAPI(title="AIVA-IoT AI Server", lifespan=lifespan)
+    runtime = RuntimeSettings()
+    application.state.runtime = runtime.runtime
+    if runtime.runtime == "local":
+        from app.api.local_runtime import install_local_routes
+        application.state.settings = settings if settings is not None else Settings(
+            _env_file=None, host="127.0.0.1", port=8002, reload=False)
+        application.include_router(router)
+        application.include_router(device_profiles_router)
+        install_local_routes(application)
+        return application
+    from app.core.robot_config import RobotSettings
+    from app.core.lan_config import LanSettings
+    from app.core.live_config import LiveSettings
+    from app.api.web_chat import router as web_chat_router
+    from app.services.backend_execution import UsageReporter
+    from app.api.xiaozhi_ota import router as ota_router
+    from app.api.lan_robot import router as lan_robot_router
+    from app.core.backend_config import BackendSettings
+    from app.api.robot_websocket import router as robot_router
     application.state.settings = settings if settings is not None else get_settings()
     application.state.robot_settings = RobotSettings()
     application.state.lan_settings = LanSettings()

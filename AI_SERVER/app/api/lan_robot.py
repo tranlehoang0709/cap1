@@ -25,6 +25,15 @@ IDLE_TIMEOUT_SECONDS = 45
 logger = get_logger("lan_robot")
 
 
+def resolved_execution_runtime(config) -> str:
+    code = config.provider.code
+    if code == "GEMINI":
+        return "cloud"
+    if code == "LOCAL":
+        return "local"
+    raise ValueError("Unsupported robot AI provider")
+
+
 @router.websocket("/ws/robot")
 async def robot(ws: WebSocket):
     if ws.scope.get("scheme") != "wss":
@@ -58,9 +67,26 @@ async def robot(ws: WebSocket):
         await state.robot_slots.acquire()
         acquired = True
         session = await authorize_device(state.backend_client, proof, context())
-        await session.resolve(context(), include_credential=True)
+        await session.resolve(context())
         initial_config = session.config
+        execution_runtime = resolved_execution_runtime(initial_config)
+        log_event(logger, logging.INFO, "robot.config.resolved",
+                  "Resolved Backend robot configuration",
+                  credential_id=(initial_config.credentialReference.id
+                                 if initial_config.credentialReference else None),
+                  credential_scope=initial_config.credentialScope,
+                  credential_source=initial_config.credentialSource,
+                  provider=initial_config.provider.code,
+                  model=initial_config.model.modelCode)
         await ws.accept()
+        if execution_runtime == "local":
+            log_event(logger, logging.WARNING, "robot.local_route.unavailable",
+                      "Local robot voice runtime is not ready",
+                      provider="LOCAL", error_code="LOCAL_RUNTIME_NOT_READY")
+            await ws.send_json({"type": "error", "code": "LOCAL_RUNTIME_NOT_READY",
+                                "retryable": True})
+            await ws.close(1013)
+            return
         incoming = await asyncio.wait_for(ws.receive(), HELLO_TIMEOUT_SECONDS)
         text = incoming.get("text")
         if not isinstance(text, str) or len(text.encode()) > 4096:
@@ -86,16 +112,34 @@ async def robot(ws: WebSocket):
         # heartbeat events invoke BE and revalidate the credential/owner.
         last_received = time.monotonic()
         while True:
-            if orch.state in (SessionState.ERROR, SessionState.CLOSED):
-                if orch.turn is not None:
-                    await ws.send_json({"type": "status", "state": "failed",
-                        "session_id": session_id, "turn_id": orch.turn.turn_id})
-                await ws.send_json({'type':'error','session_id':session_id,'code':'AI_TURN_FAILED'})
+            if orch.state == SessionState.ERROR:
+                failed_turn_id = orch.turn.turn_id if orch.turn is not None else None
+                if orch.task is not None and not orch.task.done():
+                    await orch.task
+                if orch.recover_after_turn_error():
+                    # Do not send a session-level error frame here.  SD2
+                    # treats that frame as a fatal protocol error and closes
+                    # the socket.  The failed turn is already represented by
+                    # the scoped status above; keep the authenticated session
+                    # alive and advertise readiness for the next wake word.
+                    await ws.send_json({"type": "status", "state": "listening",
+                        "session_id": session_id, "turn_id": failed_turn_id,
+                        "retryable": True})
+                    continue
                 await ws.close(1013)
                 return
+            if orch.state == SessionState.CLOSED:
+                break
             try:
                 message = await asyncio.wait_for(ws.receive(), min(1, IDLE_TIMEOUT_SECONDS))
             except TimeoutError:
+                # An admitted manual turn may legitimately remain quiet while
+                # the user is thinking or pausing.  VAD/explicit listen.stop
+                # owns turn completion; the session idle timeout must not
+                # disconnect an authenticated robot in LISTENING.
+                if orch.state == SessionState.LISTENING:
+                    last_received = time.monotonic()
+                    continue
                 if time.monotonic()-last_received >= IDLE_TIMEOUT_SECONDS:
                     raise
                 continue

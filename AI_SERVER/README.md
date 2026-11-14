@@ -621,3 +621,35 @@ The standalone `scripts/gemini_voice_demo.py` streams text through `LLMRunner`, 
 
 See [SD2 Gemini LAN setup and test results](docs/sd2-gemini-lan.md) for the local
 `.env`, Windows native audio, USB configuration and observed quota limitation.
+
+
+### Local AI foundation (Prompt 01)
+
+Cloud startup scripts remain unchanged (default runtime `cloud`, port 8000).
+Run `run_local.cmd` for a separate Local process on 127.0.0.1:8002.
+Copy `.env.local.example` to `.env.local` and supply `LOCAL_LLM_API_KEY`
+matching the separately managed llama-server on port 8001. Local startup reads
+`.env.local`, never cloud `.env`. It does not launch or alter llama-server.
+`/health` retains `status: ok` and adds runtime/readiness; local `/ready` returns
+503 until generation and voice are implemented. See
+[Prompt 01 audit and validation](docs/local-foundation-prompt01.md).
+
+### Local Gemma text chat (Prompt 02)
+
+Local text chat is available at `POST /local/chat` after configuring
+`LOCAL_LLM_API_KEY` and a separate `LOCAL_LLM_CHAT_TOKEN` (at least 43
+characters) in `.env.local`. The runtime discovers the exact model ID from
+llama-server `/v1/models`; it does not hardcode or select a cloud model.
+Send `user_id`, `session_id`, `content`, and `stream`. With `stream: true`,
+the response is Server-Sent Events containing `delta`, then `done`.
+Conversation history is bounded, process-local, and isolated by user/session.
+Voice remains unavailable.
+
+### Local Vietnamese STT (Prompt 03)
+
+Local runtime loads `Systran/faster-whisper-small` once per process with
+CTranslate2 CUDA/float16. Model files stay in the configured Hugging Face cache
+outside this repository. The adapter accepts mono PCM16 or raw Opus, converts
+to 16 kHz PCM in memory, applies silence/VAD handling, and emits the existing
+`TranscriptionResult` contract. Local TTS and robot routing remain disabled.
+See [Prompt 03 report](docs/local-stt-prompt03.md).

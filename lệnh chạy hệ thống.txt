@@ -1,0 +1,38 @@
+connect wifi:
+tailscale up --unattended --timeout=30s
+tailscale funnel --bg http://127.0.0.1:8081
+tailscale funnel status
+-pws admin
+gemma4:
+.\llama-server.exe -hf ggml-org/gemma-4-e4b-it-GGUF:Q4_0 -fa auto --host 0.0.0.0 --port 8001 --api-key "API_KEY_CUA_BAN"
+- cmd
+
+gemma3:
+ollama pull gemma3:xb ollama run gemma3:xb
+ollama rmk gemma3:xb
+(x = 4 || 12 cho cau hinh card 16gb 32gb)
+- cmd
+
+cong he thong:
+-fe web/app: 
+cd E:\learn\AI_Project\cap1\frontend
+.\.venv\Scripts\python.exe -m streamlit run app.py --server.port 8501
+ 
+-Local URL: http://localhost:8501
+-Network URL: http://192.168.0.103:8501
+-External URL: http://116.110.4.32:8501
+
+-be : 
+cd E:\learn\AI_Project\cap1\BE
+npm.cmd run start:dev
+-3000
+
+-xiaozhi lan: 
+cd E:\learn\AI_Project\cap1\AI_SERVER
+.\run_lan.cmd
+-8000
+
+-xiaozhi wifi: 
+cd E:\learn\AI_Project\cap1\AI_SERVER
+.\.venv\Scripts\python.exe scripts\run_robot_gateway.py
+-8081

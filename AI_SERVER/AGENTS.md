@@ -492,3 +492,50 @@ unary WAV remains for adapters without a stream method. Firmware waits for the
 scoped `status/listening` acknowledgement before mic capture. No audio file is
 written. Status events carry session and turn IDs. Real BE, TLS, Gemini
 credential readiness and SD2 hardware remain separate acceptance gates.
+
+
+## Prompt 01 - Local runtime foundation (2026-11-14)
+
+| From | Via | Note |
+|---|---|---|
+| `scripts/run_local.py` | `AI_RUNTIME=local` | Port 8002 |
+| `create_app()` | Local route branch | No cloud imports |
+| `/health` | runtime + readiness | Liveness retained |
+| `/ready` | `local_readiness()` | Voice NOT_READY |
+| `LlamaServerAdapter` | `/v1/models` | Env key, no retry |
+| Local voice routes | 503 / WS 1013 | No cloud fallback |
+
+See `docs/local-foundation-prompt01.md`. Local STT/TTS and generation are
+unimplemented seams; model metadata readiness does not imply voice readiness.
+
+## Prompt 02 - Local Gemma text chat (2026-11-14)
+
+| From | Via | Note |
+|---|---|---|
+| `/local/chat` | Local bearer auth | Text only |
+| Local chat | `LlamaServerAdapter` | SSE completion |
+| Adapter | `/v1/models` | Real model ID |
+| Adapter | `/chat/completions` | No cloud fallback |
+| Local LLM calls | shared HTTP client | Reuse connection |
+| Local shutdown | `LlamaServerAdapter.aclose` | Close HTTP client |
+| user + session | bounded RAM history | TTL isolation |
+| disconnect | `AudioContext.cancel` | Close HTTP stream |
+
+Local `/internal/web-chat` remains blocked because it is the Cloud BE-only
+contract. Local voice, STT/TTS, Xiaozhi and PA functions remain out of scope.
+See `docs/local-gemma-prompt02.md`.
+
+## Prompt 03 - Local Vietnamese STT (2026-11-14)
+
+| From | Via | Note |
+|---|---|---|
+| raw Opus | `OpusCodec.decode` | 16k mono PCM |
+| PCM frames | `LocalSTTAdapter` | RAM only |
+| Local STT | faster-whisper small | CUDA float16 |
+| STT result | `TranscriptionResult` | UTF-8 vi |
+| silence | RMS + VAD 2000 ms | Empty final |
+| Local runtime | one model cache | No cloud |
+
+The existing robot routes and WebSocket protocol are unchanged. Local STT is
+runtime-ready, but Local voice stays NOT_READY because TTS and gateway routing
+are outside Prompt 03. See `docs/local-stt-prompt03.md`.

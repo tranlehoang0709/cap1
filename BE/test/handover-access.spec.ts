@@ -24,7 +24,8 @@ describe('Handover SQL access rules (mock connection, no live database)',()=>{
     expect(tx.requireApprovedRobot).toHaveBeenCalledWith('7');expect(tx.profile).not.toHaveBeenCalled();expect(tx.saveProfile).not.toHaveBeenCalled();
   });
   it('history and live AI context both require the exact current assignment',async()=>{
-    expect(visibleConversation).toContain('h.id=c.assignment_history_id');
+    expect(visibleConversation).toContain('h.device_id=c.device_id');
+    expect(visibleConversation).toContain('h.user_id=c.user_id');
     expect(visibleConversation).toContain('h.unlinked_at IS NULL');
     expect(visibleConversation).toContain('a.assigned_at=h.assigned_at');
     expect(visibleConversation).toContain('p.status=\'approved\'');
@@ -36,7 +37,7 @@ describe('Handover SQL access rules (mock connection, no live database)',()=>{
     expect(await repo.deleteConversation('20','7')).toBe(false);
     const sql=c.execute.mock.calls.filter(([sql]:[string])=>sql.includes('conversations c'));
     expect(sql).toHaveLength(4);
-    expect(ownedConversationHistory).toContain('h.id=c.assignment_history_id');
+    expect(ownedConversationHistory).toContain('h.device_id=c.device_id');
     expect(ownedConversationHistory).toContain('h.user_id=c.user_id');
     expect(ownedConversationHistory).toBe(visibleConversation);
     for(const [query,values] of sql){

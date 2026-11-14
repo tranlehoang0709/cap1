@@ -5,12 +5,13 @@ from app.clients.gemini_tts import WAV_FORMAT
 from app.core.stt_config import GeminiSTTSettings
 from app.core.tts_config import GeminiTTSSettings
 from app.models.tts import PlaybackLimits, TTSConfig
-from app.services.live_gemini import quota_gemini
+from app.services.live_gemini import quota_gemini, env_system_gemini_key
 from app.services.llm import LLMRunner
 from app.services.opus_codec import OpusCodec
 from app.services.orchestrator import AIOrchestrator, OrchestrationLimits
 from app.services.robot_transport import RobotAudioOutput, GeminiOpusTTSAdapter, OPUS_FORMAT, PCM_FORMAT
 from app.services.turn_detection import TurnDetectionConfig, TextRules
+from app.services.voice_response_policy import voice_system_prompt
 
 
 def create_live_robot(state, ws, session, session_id, version):
@@ -18,17 +19,17 @@ def create_live_robot(state, ws, session, session_id, version):
     # Limits match the existing robot orchestrator: 16k history chars, 16 turns,
     # and <= 15 s input by default. Reserve before accepting turn audio.
     base_prompt = config.profile.systemPrompt or ''
-    prompt = (base_prompt.rstrip() + "\n\n" if base_prompt.strip() else "") + (
-        "Voice response requirements: Answer in Vietnamese using at most two short, complete sentences. "
-        "Keep the whole answer under 300 characters. Do not use Markdown, lists, headings, or unfinished text."
-    )
+    # Keep short answers concise, but allow multi-sentence explanations when
+    # the question needs them.  Hard-capping every turn caused comparisons and
+    # instructions to lose their important trailing details.
+    prompt = voice_system_prompt(base_prompt or "Bạn là trợ lý AIVA.")
     # Backend quota is denominated in provider tokens, not PCM/audio bytes.
     # One UTF-8 byte per token is a conservative upper bound for the bounded
     # prompt, transcript and 16k-character in-session history.
     llm, limits = quota_gemini(state, session,
                                input_bound_bytes=len(prompt.encode()) + 16000 + 16000,
                                defer_turn_completion=True, expected_system_prompt=prompt)
-    secret = config.credential
+    secret = env_system_gemini_key()
     stt_settings = GeminiSTTSettings(GEMINI_API_KEY=secret)
     tts_settings = GeminiTTSSettings(GEMINI_API_KEY=secret)
     if config.profile.voiceCode:
@@ -45,7 +46,9 @@ def create_live_robot(state, ws, session, session_id, version):
     codec = OpusCodec(16000, 60)
     try:
         orch = AIOrchestrator(session.key, stt=stt, llm=llm,
-            tts=GeminiOpusTTSAdapter(tts, source, max_wav_bytes=settings.max_output_audio_bytes),
+        tts=GeminiOpusTTSAdapter(tts, source, max_wav_bytes=settings.max_output_audio_bytes,
+                                 use_stream=(tts_settings.stream_enabled
+                                             or not hasattr(tts, "synthesize"))),
             output=output, llm_runner=LLMRunner(limits), input_metadata=PCM_FORMAT.metadata,
             turn_config=TurnDetectionConfig(settings.min_silence_ms, settings.transcript_stability_ms, settings.max_turn_duration_ms),
             language_rules=TextRules(('.', '?', '!'), ('...', 'và', 'nhưng', 'ừm')),

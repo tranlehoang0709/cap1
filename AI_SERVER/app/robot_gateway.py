@@ -1,8 +1,11 @@
 """Funnel-only ASGI entrypoint. No general reverse proxy or forwarded-header trust."""
 import ipaddress
+import logging
+from app.core.logging import get_logger, log_event
 
 PUBLIC_HOST = "desktop-m27leua.tail022082.ts.net"
 PUBLIC_ORIGIN = "https://" + PUBLIC_HOST
+logger = get_logger("gateway")
 
 
 class RobotGateway:
@@ -28,6 +31,7 @@ class RobotGateway:
                    and not scope.get("query_string")
                    and (kind == "websocket" or scope.get("method") == "POST"))
         if not allowed or not self.authorization_ready:
+            log_event(logger, logging.WARNING, "gateway.request.denied", "Gateway request denied", stage=kind, error_code="NOT_ALLOWED" if not allowed else "AUTH_UNAVAILABLE")
             if kind == "websocket":
                 await send({"type": "websocket.close", "code": 1008})
             else:
@@ -42,7 +46,17 @@ class RobotGateway:
         secured["headers"] = [(k, v) for k, v in scope["headers"]
                               if not k.lower().startswith(b"x-forwarded-")
                               and k.lower() != b"forwarded"]
-        return await self.application(secured, receive, send)
+        log_event(logger, logging.INFO, "gateway.upstream.forward", "Gateway forwarding request upstream", stage=kind)
+        async def logged_send(message):
+            if message.get("type") == "http.response.start":
+                log_event(logger, logging.INFO if message.get("status", 500) < 400 else logging.WARNING,
+                          "gateway.ota.response", "Gateway OTA response", http_status=message.get("status"), stage="ota")
+            elif message.get("type") == "websocket.accept":
+                log_event(logger, logging.INFO, "gateway.wss.accepted", "Gateway WSS handshake accepted", stage="websocket")
+            elif message.get("type") == "websocket.close":
+                log_event(logger, logging.INFO, "gateway.wss.closed", "Gateway WSS closed", close_code=message.get("code"), stage="websocket")
+            await send(message)
+        return await self.application(secured, receive, logged_send)
 
 
 def create_gateway():

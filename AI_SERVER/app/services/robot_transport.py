@@ -4,12 +4,16 @@ import asyncio
 from dataclasses import replace
 import io
 import wave
+import logging
 
 from app.models.audio import AudioFrame, AudioMetadata
 from app.models.tts import AudioFormat, PlaybackEvidence, TTSConfig, TTSAudioChunk, TTSRequest, TTSError, TTSErrorCode
 from app.protocol.audio_framing import FramingConfig, encode_audio_frame
 from app.clients.gemini_tts import PCM_FORMAT as GEMINI_PCM_FORMAT
 from app.services.opus_codec import CodecError, OpusCodec, PCMOpusFrames, resample_pcm16
+from app.core.logging import get_logger, log_event
+
+logger = get_logger("robot_transport")
 
 OPUS_FORMAT = AudioFormat(AudioMetadata("opus", 16000, 1, 60), "raw")
 PCM_FORMAT = AudioFormat(AudioMetadata("pcm", 16000, 1, 60, "s16le"), "raw")
@@ -42,19 +46,21 @@ class OpusTTSAdapter:
 
 class WavOpusTTSAdapter:
     """Convert provider WAV output to negotiated 16 kHz mono 60 ms Opus."""
-    def __init__(self, delegate, source_config: TTSConfig, *, max_wav_bytes: int = 5_000_000):
+    def __init__(self, delegate, source_config: TTSConfig, *, max_wav_bytes: int = 5_000_000,
+                 use_stream: bool = False):
         if not isinstance(source_config, TTSConfig) or source_config.audio_format.data_format != "wav":
             raise TTSError(TTSErrorCode.INVALID_INPUT)
         if type(max_wav_bytes) is not int or not 0 < max_wav_bytes <= 19_000_000:
             raise TTSError(TTSErrorCode.INVALID_INPUT)
         self.delegate, self.source_config, self.max_wav_bytes = delegate, source_config, max_wav_bytes
+        self.use_stream = bool(use_stream)
 
     async def synthesize(self, request: TTSRequest, context):
         if request.config.audio_format != OPUS_FORMAT:
             raise TTSError(TTSErrorCode.INVALID_INPUT)
         source_request = replace(request, config=self.source_config)
         pcm_stream = getattr(self.delegate, "stream_pcm", None)
-        if callable(pcm_stream):
+        if self.use_stream and callable(pcm_stream):
             source = pcm_stream(source_request, context)
             encoder = None
             sequence = input_sequence = total_bytes = 0
@@ -205,6 +211,8 @@ class RobotAudioOutput:
             await self.ws.send_bytes(packet)
             self.next_packet_at = max(self.next_packet_at, loop.time()) + .06
         self.count += 1
+        if self.count == 1 or self.count % 25 == 0:
+            log_event(logger, logging.INFO, "opus.frame.sent", "Opus playback frame sent", session_id=self.session_id, frame_count=self.count)
 
     async def finish(self, scope, context):
         context.check()
@@ -212,6 +220,7 @@ class RobotAudioOutput:
             raise ValueError("Invalid playback finish")
         self.finished = True
         await self.json(self.control("stop") | {"audio_chunks": self.count})
+        log_event(logger, logging.INFO, "playback.ready", "Playback stream finished sending", session_id=self.session_id, audio_frames=self.count, ack_state="ready")
 
     async def wait_playback_complete(self, scope, context):
         if scope != self.scope or self.aborted:
@@ -229,9 +238,11 @@ class RobotAudioOutput:
         if (state == "ready" and type(message.get("audio_chunks")) is int
             and message["audio_chunks"] == 0 and not self.ready.is_set() and not self.finished):
             self.ready.set()
+            log_event(logger, logging.INFO, "playback.ack", "Playback ready acknowledgement accepted", session_id=self.session_id, ack_state="ready")
         elif (state == "complete" and self.finished and not self.complete.is_set()
               and type(message.get("audio_chunks")) is int and message["audio_chunks"] == self.count):
             self.complete.set()
+            log_event(logger, logging.INFO, "playback.ack", "Playback complete acknowledgement accepted", session_id=self.session_id, ack_state="complete", audio_frames=self.count)
         else:
             raise ValueError("Unexpected playback event")
         return True

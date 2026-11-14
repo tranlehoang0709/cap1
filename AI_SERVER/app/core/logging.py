@@ -7,11 +7,15 @@ import hashlib
 import logging
 import re
 import traceback
+import os
+from pathlib import Path
+from logging.handlers import RotatingFileHandler
 from datetime import datetime, timezone
 from typing import Any
 
 _LOGGER_NAME = "ai_server"
 _HANDLER_MARKER = "_ai_server_console_handler"
+_FILE_HANDLER_MARKER = "_ai_server_file_handler"
 _REDACTIONS = (
     re.compile(r"(?i)(authorization\s*[:=]\s*)(?:bearer\s+)?[^\s,;]+"),
     re.compile(r"(?i)(\bbearer\s+)[A-Za-z0-9._~+/-]{8,}"),
@@ -23,7 +27,9 @@ _REDACTIONS = (
 )
 _SAFE_CONTEXT = {"connection_id", "session_ref", "device_ref", "close_code", "reason", "error_type",
                  "turn_ref", "state", "stage", "latency_ms", "session_valid", "config_present",
-                 "gemini_provider", "credential_present", "credential_reference", "system_prompt"}
+                 "gemini_provider", "credential_present", "credential_reference", "system_prompt",
+                 "model", "error_code", "http_status", "audio_bytes", "audio_frames", "frame_count",
+                 "provider", "status", "latency_ms", "ack_state"}
 _SECRET_KEY = re.compile(
     r"(?i)^(?:authorization|device[_ -]?token|access[_ -]?token|refresh[_ -]?token|"
     r"api[_ -]?key|secret|password)$"
@@ -77,7 +83,7 @@ def _event_from_message(message: str) -> str:
 
 
 def configure_logging(log_level: str) -> logging.Logger:
-    """Configure one idempotent console handler for the application logger."""
+    """Configure idempotent console and rotating file handlers."""
     logger = logging.getLogger(_LOGGER_NAME)
     level = 5 if log_level == "trace" else getattr(logging, log_level.upper())
     logger.setLevel(level)
@@ -89,6 +95,19 @@ def configure_logging(log_level: str) -> logging.Logger:
         logger.addHandler(handler)
     handler.setFormatter(_JsonFormatter())
     handler.setLevel(logging.NOTSET)
+    log_dir = Path(os.getenv("AI_SERVER_LOG_DIR", str(Path(__file__).resolve().parents[2] / "logs")))
+    try:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        file_handler = next((item for item in logger.handlers if getattr(item, _FILE_HANDLER_MARKER, False)), None)
+        if file_handler is None:
+            file_handler = RotatingFileHandler(log_dir / "ai_server.log", maxBytes=5_000_000, backupCount=5, encoding="utf-8")
+            setattr(file_handler, _FILE_HANDLER_MARKER, True)
+            logger.addHandler(file_handler)
+        file_handler.setFormatter(_JsonFormatter())
+        file_handler.setLevel(logging.NOTSET)
+    except OSError:
+        # Console logging remains available if the log directory is unavailable.
+        pass
     return logger
 
 

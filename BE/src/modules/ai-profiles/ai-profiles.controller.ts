@@ -17,6 +17,10 @@ export class InternalAIConfigController {
   }
   @Post('turns/start') @HttpCode(200)
   start(@Body() body: unknown) { return this.ai.startTurn(body); }
+  @Post('turns/user-message') @HttpCode(200)
+  userMessage(@Body() body: unknown) { return this.ai.recordUserMessage(body); }
+  @Post('turns/assistant-message') @HttpCode(200)
+  assistantMessage(@Body() body: unknown) { return this.ai.recordAssistantMessage(body); }
   @Post('turns/complete') @HttpCode(200)
   complete(@Body() body: unknown) { return this.ai.completeTurn(body); }
 }

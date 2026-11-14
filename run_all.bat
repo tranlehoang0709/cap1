@@ -63,44 +63,49 @@ if not errorlevel 1 (
   exit /b 1
 )
 
-echo Starting AIVA-IoT services in separate windows...
+echo Starting AIVA-IoT services in four separate CMD windows...
 rem Clear ERRORLEVEL left by successful negative findstr checks above.
 ver >nul
 
 rem Start Backend first so integrated authorize/config/quota calls have a target.
-netstat -ano | findstr /R /C:":3000 .*LISTENING" >nul
-if errorlevel 1 start "AIVA Backend" /D "%~dp0BE" "%ComSpec%" /k npm.cmd run start:dev
+call :start_if_missing 3000 "[AIVA Backend]" "%~dp0BE" "call npm.cmd run start:dev"
 
 rem Give NestJS a moment to bind before starting the media services.
 timeout /t 3 /nobreak >nul
 
-netstat -ano | findstr /R /C:":8000 .*LISTENING" >nul
-if errorlevel 1 (
-  start "AIVA AI Server LAN" /D "%~dp0AI_SERVER" "%ComSpec%" /k call run_lan.cmd
-) else (
-  echo AI Server is already listening on port 8000; keeping the existing process.
-)
-ver >nul
-netstat -ano | findstr /R /C:":8081 .*LISTENING" >nul
-if errorlevel 1 (
-  start "AIVA Robot Gateway" /D "%~dp0AI_SERVER" "%ComSpec%" /k .venv\Scripts\python.exe scripts\run_robot_gateway.py
-) else (
-  echo Robot Gateway is already listening on 127.0.0.1:8081; keeping the existing process.
-)
-ver >nul
-netstat -ano | findstr /R /C:":8501 .*LISTENING" >nul
-if errorlevel 1 start "AIVA Frontend" /D "%~dp0frontend" "%ComSpec%" /k .venv\Scripts\python.exe -m streamlit run app.py --server.port 8501
+call :start_if_missing 8000 "[AIVA AI_SERVER]" "%~dp0AI_SERVER" "call run_lan.cmd"
+call :start_if_missing 8081 "[AIVA Gateway]" "%~dp0AI_SERVER" "call .venv\Scripts\python.exe scripts\run_robot_gateway.py"
+call :start_if_missing 8501 "[AIVA Frontend]" "%~dp0frontend" "call .venv\Scripts\python.exe -m streamlit run app.py --server.port 8501"
 
 echo Started or reused AI Server LAN at port 8000, Robot Gateway at 127.0.0.1:8081, Backend at port 3000, and Streamlit at port 8501.
-timeout /t 2 /nobreak >nul
+timeout /t 5 /nobreak >nul
 echo Current listeners:
 netstat -ano | findstr /R /C:":3000 .*LISTENING" /C:":8000 .*LISTENING" /C:":8081 .*LISTENING" /C:":8501 .*LISTENING"
+for %%P in (3000 8000 8081 8501) do (
+  netstat -ano | findstr /R /C:":%%P .*LISTENING" >nul
+  if errorlevel 1 echo ERROR: port %%P is not listening. Check the corresponding service window above.
+)
 echo Backend requires MySQL and the aiva_iot database migration to be ready.
 echo WIFI_INTERNET requires Tailscale Funnel to forward the public hostname to 127.0.0.1:8081.
 echo Firmware is built separately after loading ESP-IDF 6.0.3:
 echo   cd /d "%~dp0xiaozhi-esp32"
 echo   py scripts\build.py
 pause
+exit /b 0
+
+:start_if_missing
+set "CHECK_PORT=%~1"
+set "WINDOW_TITLE=%~2"
+set "SERVICE_DIR=%~3"
+set "SERVICE_CMD=%~4"
+netstat -ano | findstr /R /C:":%CHECK_PORT% .*LISTENING" >nul
+if errorlevel 1 goto start_service
+echo %WINDOW_TITLE% port %CHECK_PORT% is already listening; keeping existing PID(s):
+netstat -ano | findstr /R /C:":%CHECK_PORT% .*LISTENING"
+exit /b 0
+:start_service
+echo Opening %WINDOW_TITLE% on port %CHECK_PORT%...
+start "%WINDOW_TITLE%" /D "%SERVICE_DIR%" "%ComSpec%" /d /k "%SERVICE_CMD%"
 exit /b 0
 
 :missing_dependencies

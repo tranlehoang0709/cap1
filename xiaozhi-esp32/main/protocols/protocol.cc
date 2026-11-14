@@ -89,6 +89,7 @@ void Protocol::SendStartListening(ListeningMode mode) {
         message += ",\"mode\":\"manual\"";
     }
     message += "}";
+    ESP_LOGI(TAG, "Sending listen.start mode=%s session_present=%d", mode == kListeningModeRealtime ? "realtime" : (mode == kListeningModeAutoStop ? "auto" : "manual"), !session_id_.empty());
     if (SendText(message)) {
         ESP_LOGI(TAG, "Sent listen.start");
     } else {

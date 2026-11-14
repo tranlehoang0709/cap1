@@ -5,6 +5,9 @@ from collections.abc import AsyncIterator, Callable
 import base64
 import binascii
 import socket
+import logging
+
+from app.core.logging import get_logger, log_event
 
 from app.models.audio import AudioError, ErrorCode, AudioMetadata
 from app.models.tts import AudioFormat, TTSAudioChunk, TTSRequest, TTSError, TTSErrorCode
@@ -13,6 +16,7 @@ from app.services.audio_context import AudioContext
 
 WAV_FORMAT = AudioFormat(AudioMetadata("wav", 24000, 1, 20, "s16le"), "wav")
 PCM_FORMAT = AudioFormat(AudioMetadata("pcm", 24000, 1, 20, "s16le"), "s16le")
+logger = get_logger("gemini_tts")
 
 
 class GeminiTTSAdapter:
@@ -98,8 +102,16 @@ class GeminiTTSAdapter:
                 candidate_count=1,
                 automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
             )
-            response = await context.run(lambda: client.aio.models.generate_content(
-                model=self.model, contents=request.text, config=config))
+            async def _generate_with_deadline():
+                # The SDK timeout is not sufficient on every transport: some
+                # versions leave the awaitable pending after the HTTP socket
+                # stalls.  Bound the provider call independently so a robot
+                # turn cannot consume the whole 90s orchestration deadline.
+                operation = client.aio.models.generate_content(
+                    model=self.model, contents=request.text, config=config)
+                return await asyncio.wait_for(operation, timeout=self.timeout_seconds)
+
+            response = await context.run(_generate_with_deadline)
             audio = None
             for candidate in (getattr(response, "candidates", None) or ()):
                 content = getattr(candidate, "content", None)
@@ -120,7 +132,11 @@ class GeminiTTSAdapter:
                 raise TTSError(TTSErrorCode.INVALID_AUDIO)
             context.check()
             yield TTSAudioChunk(0, audio, WAV_FORMAT)
-        except (TTSError, GeneratorExit):
+        except TTSError as error:
+            log_event(logger, logging.WARNING, "tts.provider_error", "Gemini TTS request failed",
+                      error_type=error.code.value, stage="synthesize")
+            raise
+        except GeneratorExit:
             raise
         except AudioError as error:
             code = TTSErrorCode.CANCELLED if error.code == ErrorCode.CANCELLED else TTSErrorCode.TIMEOUT
@@ -129,7 +145,12 @@ class GeminiTTSAdapter:
         except (TimeoutError, asyncio.TimeoutError):
             raise TTSError(TTSErrorCode.TIMEOUT) from None
         except Exception as error:
-            raise TTSError(classify_provider_error(error)) from None
+            code = classify_provider_error(error)
+            status = getattr(error, "status_code", None) or getattr(error, "status", None)
+            log_event(logger, logging.WARNING, "tts.provider_error", "Gemini TTS request failed",
+                      error_type=code.value, error_code=code.value, http_status=status,
+                      model=self.model, stage="synthesize")
+            raise TTSError(code) from None
         finally:
             if client is not None and owns_client:
                 try:
@@ -207,9 +228,14 @@ class GeminiTTSAdapter:
             raise TTSError(code) from None
         except (TimeoutError, asyncio.TimeoutError):
             self._diagnostic("sdk_timeout", request)
+            log_event(logger, logging.WARNING, "tts.provider_error", "Gemini TTS request timed out",
+                      error_type="TimeoutError", stage="stream_pcm")
             raise TTSError(TTSErrorCode.TIMEOUT) from None
         except Exception as error:
-            raise TTSError(classify_provider_error(error)) from None
+            code = classify_provider_error(error)
+            log_event(logger, logging.WARNING, "tts.provider_error", "Gemini TTS request failed",
+                      error_type=code.value, stage="stream_pcm")
+            raise TTSError(code) from None
         finally:
             if stream is not None:
                 try:

@@ -3,6 +3,7 @@
 import asyncio
 from collections.abc import AsyncIterator
 import re
+import logging
 from typing import Protocol
 
 from app.core.llm_config import LLMSettings
@@ -13,6 +14,9 @@ from app.models.llm import (
 )
 from app.services.audio_context import AudioContext
 from app.services.turn_input import HalfDuplexTurn, TurnPhase
+from app.core.logging import get_logger, log_event
+
+logger = get_logger("llm_runner")
 
 
 class LLMAdapter(Protocol):
@@ -188,11 +192,22 @@ class LLMRunner:
             context.check()
             conversation.commit(request, result)
             yield result
-        except LLMError:
+        except LLMError as error:
+            log_event(logger, logging.WARNING, "llm.runner_error", "LLM runner failed",
+                      error_code=error.code.value, stage="llm")
             raise
         except AudioError as error:
             raise LLMError(LLMErrorCode.CANCELLED if error.code == ErrorCode.CANCELLED else LLMErrorCode.TIMEOUT) from None
-        except Exception:
+        except Exception as error:
+            backend_code = getattr(getattr(error, "code", None), "value", None)
+            backend_status = getattr(error, "status", None)
+            if backend_code is not None:
+                log_event(logger, logging.WARNING, "llm.backend_error",
+                          "Backend operation failed after LLM stream",
+                          error_code=backend_code, http_status=backend_status,
+                          stage="backend")
+            log_event(logger, logging.WARNING, "llm.runner_error", "LLM runner unexpected failure",
+                      error_code="PROVIDER_ERROR", error_type=type(error).__name__, stage="llm")
             raise LLMError(LLMErrorCode.PROVIDER_ERROR) from None
         finally:
             try:
