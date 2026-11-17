@@ -24,4 +24,20 @@ export class MonitoringRepository {
     const [r] = await this.pool.query<ResultSetHeader>('INSERT INTO resource_metrics(instance_id,cpu_percent,memory_percent,gpu_percent,gpu_memory_percent,active_sessions,recorded_at) VALUES(?,?,?,?,?,?,COALESCE(?,CURRENT_TIMESTAMP))', [instanceId, d.cpu_percent ?? null, d.memory_percent ?? null, d.gpu_percent ?? null, d.gpu_memory_percent ?? null, d.active_sessions ?? null, d.recorded_at ?? null]);
     return { id: String(r.insertId) };
   }
+  async instanceMetrics(instanceId: string, limit = 20) {
+    const [rows] = await this.pool.query<RowDataPacket[]>(
+      'SELECT id,instance_id,cpu_percent,memory_percent,gpu_percent,gpu_memory_percent,active_sessions,recorded_at FROM resource_metrics WHERE instance_id=? ORDER BY recorded_at DESC,id DESC LIMIT ?',
+      [instanceId, limit]
+    );
+    return rows.map((r) => ({
+      id: String(r.id),
+      instance_id: String(r.instance_id),
+      cpu_percent: r.cpu_percent === null || r.cpu_percent === undefined ? null : Number(r.cpu_percent),
+      memory_percent: r.memory_percent === null || r.memory_percent === undefined ? null : Number(r.memory_percent),
+      gpu_percent: r.gpu_percent === null || r.gpu_percent === undefined ? null : Number(r.gpu_percent),
+      gpu_memory_percent: r.gpu_memory_percent === null || r.gpu_memory_percent === undefined ? null : Number(r.gpu_memory_percent),
+      active_sessions: r.active_sessions === null || r.active_sessions === undefined ? null : Number(r.active_sessions),
+      recorded_at: r.recorded_at,
+    }));
+  }
 }

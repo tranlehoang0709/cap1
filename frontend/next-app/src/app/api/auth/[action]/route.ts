@@ -43,13 +43,42 @@ export async function POST(req: Request, { params }: {
         }
         if (action === 'register') {
             const v = z.object({ email: z.email().max(255), display_name: z.string().trim().min(1).max(150), password: z.string().min(8).max(72).refine(x => Buffer.byteLength(x, 'utf8') <= 72) }).strict().parse(body);
-            await upstream('/auth/register', 'POST', v);
-            return Response.json({ success: true, message: 'Đã đăng ký. Cần xác minh email trước khi đăng nhập. Kênh gửi lại xác minh chưa được Backend hỗ trợ.' });
+            const res = await upstream('/auth/register', 'POST', v) as { verification_sent?: boolean };
+            const sent = Boolean(res?.verification_sent);
+            return Response.json({
+                success: true,
+                verification_sent: sent,
+                message: sent
+                    ? 'Đã đăng ký. Mã OTP 6 chữ số đã được gửi đến email của bạn.'
+                    : 'Đã đăng ký tài khoản. Vui lòng xác minh email trước khi đăng nhập.',
+            });
         }
         if (action === 'verify') {
-            const v = z.object({ token: z.string().min(1).max(4096) }).strict().parse(body);
+            const v = z.object({
+                email: z.email().max(255),
+                code: z.string().trim().regex(/^\d{6}$/, 'Mã OTP phải gồm đúng 6 chữ số.'),
+            }).strict().parse(body);
             await upstream('/auth/verify-email', 'POST', v);
             return Response.json({ success: true });
+        }
+        if (action === 'resend') {
+            const v = z.object({ email: z.email().max(255) }).strict().parse(body);
+            const res = await upstream('/auth/resend-verification', 'POST', v) as { message?: string };
+            return Response.json({ success: true, message: res?.message || 'Mã OTP xác minh mới đã được gửi đến email của bạn.' });
+        }
+        if (action === 'forgot') {
+            const v = z.object({ email: z.email().max(255) }).strict().parse(body);
+            const res = await upstream('/auth/password/forgot', 'POST', v) as { message?: string };
+            return Response.json({ success: true, message: res?.message || 'Nếu email tồn tại trong hệ thống, mã OTP khôi phục đã được gửi.' });
+        }
+        if (action === 'reset') {
+            const v = z.object({
+                email: z.email().max(255),
+                code: z.string().trim().regex(/^\d{6}$/, 'Mã OTP phải gồm đúng 6 chữ số.'),
+                new_password: z.string().min(8).max(72).refine(x => Buffer.byteLength(x, 'utf8') <= 72),
+            }).strict().parse(body);
+            await upstream('/auth/password/reset', 'POST', v);
+            return Response.json({ success: true, message: 'Đã đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.' });
         }
         throw new BackendError(404, 'Không tìm thấy.');
     }

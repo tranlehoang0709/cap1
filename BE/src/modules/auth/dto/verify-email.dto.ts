@@ -1,7 +1,14 @@
-import { IsString, Length } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsString, Matches, MaxLength } from 'class-validator';
 
 export class VerifyEmailDto {
+  @ApiProperty()
+  @IsEmail()
+  @MaxLength(255)
+  email!: string;
+
+  @ApiProperty({ example: '123456' })
   @IsString()
-  @Length(20, 2048)
-  token!: string;
+  @Matches(/^\d{6}$/, { message: 'Mã OTP phải gồm đúng 6 chữ số.' })
+  code!: string;
 }

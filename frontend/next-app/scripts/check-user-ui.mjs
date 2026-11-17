@@ -73,12 +73,12 @@ try {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   assert.equal(await page.locator('.user-dashboard').evaluate(node => node.getAnimations({ subtree: true }).filter(animation => animation.playState === 'running').length), 0);
   assert.equal(await page.locator('canvas,iframe').count(), 0);
-  await page.getByRole('button', { name: 'Khám phá robot 3D', exact: true }).click();
-  await page.locator('iframe').waitFor();
-  assert.equal(await page.locator('iframe').getAttribute('src'), '/robot/index.html');
-  await page.getByRole('button', { name: 'Đóng mô hình / dừng chuyển động', exact: true }).click();
-  assert.equal(await page.locator('iframe').count(), 0);
-  result.checks.push('PASS: loading/error/empty, retry callback, reduced motion, zero initial canvas/iframe; existing viewer open/close controls (3D engine not tested)');
+  await page.getByRole('button', { name: 'Khám phá NOVA 3D', exact: true }).click();
+  await page.locator('.nova-companion-stage canvas').waitFor();
+  assert.equal(await page.locator('canvas').count(), 1);
+  await page.getByRole('button', { name: 'Đóng mô hình 3D / tiết kiệm tài nguyên', exact: true }).click();
+  assert.equal(await page.locator('canvas,iframe').count(), 0);
+  result.checks.push('PASS: loading/error/empty, retry callback, reduced motion, zero initial canvas/iframe; existing NOVA 3D viewer open/close controls');
   assert.deepEqual(result.errors, []);
 } catch (error) { result.errors.push(error.stack); process.exitCode = 1; }
 finally {

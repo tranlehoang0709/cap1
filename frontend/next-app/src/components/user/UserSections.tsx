@@ -369,6 +369,7 @@ export function Assistant() {
 
 export function Chat() {
   const ready = useResource('chatReadiness');
+  const historyState = useResource('conversations', { page: '1', limit: '20' });
   const [messages, setMessages] = useState<
     {
       role: 'user' | 'assistant';
@@ -379,14 +380,77 @@ export function Chat() {
   const [textValue, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [conversation, setConversation] = useState('');
+  const [conversationStatus, setConversationStatus] = useState<'active' | 'ended' | ''>('');
+
+  let savedConversations: Row[] = [];
+  try {
+    savedConversations = rows(historyState.data);
+  } catch {}
+
+  async function selectConversation(id: string) {
+    if (!id || busy) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const detail = object(await api('conversation', { params: { id } }));
+      const loaded = rows(detail.messages).map((m) => ({
+        role: (String(m.role) === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
+        content: String(m.content ?? ''),
+      }));
+      setConversation(String(detail.id ?? id));
+      setConversationStatus(String(detail.status) === 'ended' ? 'ended' : 'active');
+      setMessages(loaded);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function closeActiveConversation() {
+    if (!conversation || busy) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      await api('conversationClose', { params: { id: conversation } });
+      setConversationStatus('ended');
+      setNotice(`Đã đóng phiên hội thoại #${conversation}.`);
+      historyState.reload();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resumeSelectedConversation() {
+    if (!conversation || busy) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      await api('conversationResume', { params: { id: conversation } });
+      setConversationStatus('active');
+      setNotice(`Đã mở lại phiên hội thoại #${conversation} để tiếp tục trò chuyện.`);
+      historyState.reload();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function send(e?: React.FormEvent) {
     e?.preventDefault();
-    if (busy || ready.loading || ready.error || !textValue.trim()) return;
+    if (busy || ready.loading || ready.error || !textValue.trim() || conversationStatus === 'ended') return;
     const content = textValue.trim();
     setBusy(true);
     setError('');
+    setNotice('');
     setMessages((prev) => {
       const last = prev[prev.length - 1];
       if (last && last.role === 'user' && last.failed && last.content === content) {
@@ -396,9 +460,13 @@ export function Chat() {
     });
     setText('');
     try {
-      const r = chatReply.parse(await api('chat', { body: { content } }));
+      const payload: Record<string, string> = { content };
+      if (conversation) payload.conversation_id = conversation;
+      const r = chatReply.parse(await api('chat', { body: payload }));
       setMessages((prev) => [...prev, { role: 'assistant', content: r.content }]);
       setConversation(r.conversation_id);
+      setConversationStatus('active');
+      historyState.reload();
     } catch (err) {
       setMessages((prev) => {
         const last = prev[prev.length - 1];
@@ -422,19 +490,63 @@ export function Chat() {
         </div>
         <div>
           <h2>AIVA Assistant</h2>
-          <p className="muted">Dịch vụ do quản trị viên cấu hình</p>
+          <p className="muted">
+            {conversation
+              ? `Phiên hội thoại #${conversation} (${conversationStatus === 'ended' ? 'Đã đóng' : 'Đang hoạt động'})`
+              : 'Dịch vụ do quản trị viên cấu hình · Phiên mới'}
+          </p>
         </div>
-        <Button
-          variant="ghost"
-          disabled={busy}
-          onClick={() => {
-            setMessages([]);
-            setConversation('');
-            setError('');
-          }}
-        >
-          Cuộc trò chuyện mới
-        </Button>
+        <div className="row-actions">
+          {savedConversations.length > 0 && (
+            <select
+              aria-label="Chọn phiên hội thoại"
+              value={conversation}
+              disabled={busy}
+              onChange={(e) => {
+                const nextId = e.target.value;
+                if (!nextId) {
+                  setMessages([]);
+                  setConversation('');
+                  setConversationStatus('');
+                  setError('');
+                  setNotice('');
+                } else {
+                  void selectConversation(nextId);
+                }
+              }}
+            >
+              <option value="">+ Phiên trò chuyện mới</option>
+              {savedConversations.map((c) => (
+                <option key={String(c.id)} value={String(c.id)}>
+                  #{String(c.id)} · {String(c.title || 'Hội thoại Web')} ({String(c.status)})
+                </option>
+              ))}
+            </select>
+          )}
+          {conversation && conversationStatus !== 'ended' && (
+            <Button variant="outline" disabled={busy} onClick={() => void closeActiveConversation()}>
+              Đóng phiên
+            </Button>
+          )}
+          {conversation && conversationStatus === 'ended' && (
+            <Button variant="outline" disabled={busy} onClick={() => void resumeSelectedConversation()}>
+              Tiếp tục phiên
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            disabled={busy}
+            onClick={() => {
+              setMessages([]);
+              setConversation('');
+              setConversationStatus('');
+              setError('');
+              setNotice('');
+            }}
+          >
+            Cuộc trò chuyện mới
+          </Button>
+        </div>
       </div>
       <div className="chat-messages" aria-live="polite">
         {!messages.length ? (
@@ -444,7 +556,7 @@ export function Chat() {
             </span>
             <div className="eyebrow">YOUR PERSONAL INTELLIGENCE</div>
             <h2>Hôm nay, bạn muốn khám phá điều gì?</h2>
-            <p>Gửi một câu hỏi để bắt đầu cùng AIVA.</p>
+            <p>Gửi một câu hỏi để bắt đầu hoặc chọn phiên đã lưu để tiếp tục cùng AIVA.</p>
             <div className="prompt-grid">
               {[
                 'Giúp tôi lên kế hoạch cho hôm nay',
@@ -480,7 +592,7 @@ export function Chat() {
             quota và khả năng thực thi khi gửi.
           </p>
         </ResourceState>
-        <Notice error={error} />
+        <Notice error={error} success={notice} />
         {error && (
           <p className="fine">
             Tin nhắn của bạn vẫn được giữ trên màn hình. Không tự động gửi lại; nếu mất
@@ -489,7 +601,7 @@ export function Chat() {
         )}
         {conversation && (
           <p className="fine">
-            Backend xác nhận hội thoại #{conversation}.{' '}
+            Backend xác nhận hội thoại #{conversation} ({conversationStatus === 'ended' ? 'Đã đóng — bấm Tiếp tục phiên để gửi thêm tin nhắn' : 'Đang duy trì ngữ cảnh nhiều lượt'}).{' '}
             <Link href="/user/conversations">Xem lịch sử đã lưu</Link>
           </p>
         )}
@@ -499,7 +611,11 @@ export function Chat() {
           </label>
           <textarea
             id="chat-content"
-            placeholder="Hỏi AIVA điều gì đó… (Nhấn Enter để gửi, Shift+Enter để xuống dòng)"
+            placeholder={
+              conversationStatus === 'ended'
+                ? 'Phiên hội thoại này đã đóng. Bấm "Tiếp tục phiên" ở trên để gửi thêm tin nhắn.'
+                : 'Hỏi AIVA điều gì đó… (Nhấn Enter để gửi, Shift+Enter để xuống dòng)'
+            }
             value={textValue}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
@@ -510,7 +626,7 @@ export function Chat() {
                 e.keyCode !== 229
               ) {
                 e.preventDefault();
-                if (!busy && !ready.loading && !ready.error && textValue.trim()) {
+                if (!busy && !ready.loading && !ready.error && conversationStatus !== 'ended' && textValue.trim()) {
                   void send();
                 }
               }
@@ -518,10 +634,10 @@ export function Chat() {
             maxLength={16000}
             required
             rows={2}
-            disabled={busy || ready.loading || !!ready.error}
+            disabled={busy || ready.loading || !!ready.error || conversationStatus === 'ended'}
           />
           <Button
-            disabled={busy || ready.loading || !!ready.error || !textValue.trim()}
+            disabled={busy || ready.loading || !!ready.error || conversationStatus === 'ended' || !textValue.trim()}
             type="submit"
             aria-label="Gửi tin nhắn"
           >
@@ -529,9 +645,8 @@ export function Chat() {
           </Button>
         </form>
         <p className="fine">
-          Lịch sử trên màn hình được giữ trong phiên trình duyệt hiện tại. Mỗi lượt gửi
-          tạo một yêu cầu độc lập theo API hiện hành; việc lưu trữ dài hạn do Backend
-          xác nhận tại mục Lịch sử hội thoại.
+          Ngữ cảnh hội thoại nhiều lượt được đồng bộ trực tiếp với MySQL theo mã phiên
+          (#conversation_id) của tài khoản hiện tại.
         </p>
       </div>
     </Panel>
@@ -547,24 +662,65 @@ export function Conversations() {
   const [selected, setSelected] = useState('');
   const acts = useActions(() => {
     state.reload();
-    setSelected('');
   });
   return (
     <>
       <Notice success={acts.notice} />
       <Panel
         title="Hội thoại đã lưu"
-        description="Chỉ hiển thị dữ liệu thuộc tài khoản đang đăng nhập."
+        description="Chỉ hiển thị dữ liệu thuộc tài khoản đang đăng nhập. Hỗ trợ xem chi tiết, đổi tiêu đề, đóng/mở lại phiên hoặc xóa."
       >
         <ResourceState state={state}>
           <DataTable
             data={state.data}
             columns={cols('id', 'title', 'channel', 'status', 'started_at')}
             actions={(r) => (
-              <>
+              <div className="row-actions">
                 <Button variant="ghost" onClick={() => setSelected(String(r.id))}>
-                  Mở
+                  Xem lịch sử
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    acts.open({
+                      title: 'Đổi tiêu đề hội thoại',
+                      operation: 'conversationRename',
+                      params: rowId(r),
+                      fields: [textField('title', 'Tiêu đề mới', r.title, 200)],
+                    })
+                  }
+                >
+                  Đổi tên
+                </Button>
+                {String(r.status) === 'ended' ? (
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      acts.open({
+                        title: 'Tiếp tục phiên hội thoại',
+                        operation: 'conversationResume',
+                        params: rowId(r),
+                        description: 'Mở lại phiên hội thoại này để tiếp tục trò chuyện nhiều lượt.',
+                      })
+                    }
+                  >
+                    Tiếp tục phiên
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      acts.open({
+                        title: 'Đóng phiên hội thoại',
+                        operation: 'conversationClose',
+                        params: rowId(r),
+                        description: 'Đánh dấu kết thúc phiên hội thoại hiện tại. Bạn vẫn có thể xem lại hoặc mở lại sau.',
+                      })
+                    }
+                  >
+                    Đóng phiên
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() =>
@@ -573,6 +729,9 @@ export function Conversations() {
                       operation: 'conversationDelete',
                       params: rowId(r),
                       danger: true,
+                      onDone: () => {
+                        if (selected === String(r.id)) setSelected('');
+                      },
                       description:
                         'Xóa hội thoại đã chọn khỏi lịch sử. Không thể hoàn tác từ giao diện.',
                     })
@@ -580,17 +739,13 @@ export function Conversations() {
                 >
                   Xóa
                 </Button>
-              </>
+              </div>
             )}
           />
           <Pagination data={state.data} page={page} setPage={setPage} />
         </ResourceState>
       </Panel>
       {selected && <ConversationDetail key={selected} conversationId={selected} />}
-      <Blocked>
-        Bộ nhớ dài hạn và tài liệu cá nhân chưa có API được thống nhất. Chức năng chưa
-        được kích hoạt.
-      </Blocked>
       {acts.dialog}
     </>
   );
@@ -749,9 +904,35 @@ export function Privacy() {
           </div>
         </ResourceState>
       </Panel>
-      <Blocked>
-        Chưa có API xóa hàng loạt bộ nhớ, tài liệu và toàn bộ dữ liệu AI.
-      </Blocked>
+      <Panel
+        title="Xóa toàn bộ dữ liệu hội thoại AI"
+        description="Xóa toàn bộ lịch sử hội thoại AI thuộc quyền sở hữu của tài khoản hiện tại. Dữ liệu Kế hoạch và Công việc cá nhân (Personal Assistant) được giữ nguyên."
+      >
+        <div className="privacy-setting">
+          <ShieldCheck size={32} />
+          <div>
+            <h3>Làm sạch lịch sử hội thoại AI</h3>
+            <p>
+              Thao tác này xóa vĩnh viễn toàn bộ hội thoại AI đã lưu khỏi danh sách hiển thị của bạn và không thể hoàn tác.
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            onClick={() =>
+              acts.open({
+                title: 'Xóa toàn bộ dữ liệu hội thoại AI',
+                operation: 'userAiDataDelete',
+                danger: true,
+                requireConfirm: true,
+                description:
+                  'Xác nhận xóa toàn bộ lịch sử hội thoại AI của tài khoản. Các kế hoạch nhiều buổi và công việc cá nhân (Personal Assistant) không bị xóa bởi thao tác này.',
+              })
+            }
+          >
+            Xóa dữ liệu AI của tôi
+          </Button>
+        </div>
+      </Panel>
       {acts.dialog}
     </>
   );

@@ -42,13 +42,19 @@ export class ApiExceptionFilter implements ExceptionFilter {
       message = status < 500 ? exception.message : 'The request could not be completed';
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
+      code = 'HTTP_ERROR';
       const payload = exception.getResponse();
       if (typeof payload === 'string') message = payload;
       else if (payload && typeof payload === 'object') {
-        const body = payload as { message?: string | string[]; error?: string };
-        code = body.error?.toUpperCase().replaceAll(' ', '_') ?? 'HTTP_ERROR';
+        const body = payload as { message?: string | string[]; error?: unknown; code?: unknown };
+        // Expose only a bounded machine-readable code, never arbitrary payload data.
+        const validCode = (value: unknown): value is string =>
+          typeof value === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(value);
+        const fallback = typeof body.error === 'string' ? body.error.toUpperCase().replaceAll(' ', '_') : undefined;
+        code = validCode(body.code) ? body.code : validCode(fallback) ? fallback : 'HTTP_ERROR';
         message = Array.isArray(body.message) ? body.message.join('; ') : body.message ?? message;
       }
+      if (status >= 500) message = 'The request could not be completed';
     }
     response.status(status).json({ statusCode: status, code, message, path: request.url, timestamp: new Date().toISOString() });
   }

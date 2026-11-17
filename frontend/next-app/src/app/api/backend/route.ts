@@ -29,12 +29,32 @@ export async function POST(req: Request) {
         if (input.operation === 'chat' || input.operation === 'chatReadiness') {
             try {
                 const catalogue = await upstream('/ai/providers', 'GET', undefined, session.access);
-                const selected = providerForChat(catalogue, process.env.AIVA_CHAT_PROVIDER_ID);
+                let profile: unknown = {};
+                try {
+                    profile = await upstream('/user/ai/profile', 'GET', undefined, session.access);
+                }
+                catch (profileErr) {
+                    if (!(profileErr instanceof BackendError && profileErr.status === 403))
+                        throw profileErr;
+                }
+                const preferredId = typeof object(profile).preferredProviderId === 'string' && object(profile).preferredProviderId
+                    ? String(object(profile).preferredProviderId)
+                    : undefined;
+                const configuredId = process.env.AIVA_CHAT_PROVIDER_ID?.trim() || preferredId;
+                const selected = providerForChat(catalogue, configuredId);
                 if (selected.code !== 'LOCAL')
-                    requireSystemScope(selected, await upstream('/user/ai/profile', 'GET', undefined, session.access));
+                    requireSystemScope(selected, profile);
                 if (input.operation === 'chatReadiness')
-                    return Response.json({ configured: true }, { headers: { 'Cache-Control': 'no-store' } });
-                body = { content: z.string().trim().min(1).max(16000).parse(body?.content), provider_id: selected.id };
+                    return Response.json({ configured: true, provider: { id: String(selected.id), code: selected.code, name: selected.name } }, { headers: { 'Cache-Control': 'no-store' } });
+                const rawConvId = body?.conversation_id;
+                const conversationId = rawConvId !== undefined && rawConvId !== null && String(rawConvId).trim() !== ''
+                    ? z.string().regex(/^[1-9]\d{0,18}$/).parse(String(rawConvId).trim())
+                    : undefined;
+                body = {
+                    content: z.string().trim().min(1).max(16000).parse(body?.content),
+                    provider_id: String(selected.id),
+                    ...(conversationId ? { conversation_id: conversationId } : {}),
+                };
             }
             catch (e) {
                 if (e instanceof Error && e.message.startsWith('BLOCKED:'))
@@ -56,7 +76,7 @@ export async function POST(req: Request) {
         }
         const result = await upstream(op.path + (query.size ? '?' + query.toString() : ''), op.method, body, session.access, headers);
         if(op.method!=='GET'){try{assertAcknowledged(result);}catch{throw new BackendError(502,'Backend chưa xác nhận thao tác. Kiểm tra kết quả trước khi thử lại.');}}
-        if (input.operation === 'conversation' && object(result).user_id !== user.id)
+        if (['conversation', 'conversationRename', 'conversationClose', 'conversationResume'].includes(input.operation) && object(result).user_id !== undefined && String(object(result).user_id) !== user.id)
             throw new BackendError(403, 'Hội thoại không thuộc tài khoản hiện tại.');
         if (
             ['personalTaskDetail', 'personalPlanDetail', 'personalEventDetail', 'personalReminderDetail', 'personalMemoryDetail'].includes(input.operation) &&

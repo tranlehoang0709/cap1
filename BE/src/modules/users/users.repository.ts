@@ -38,19 +38,20 @@ export class UsersRepository {
     return rows[0] ? this.toUserWithCredential(rows[0]) : null;
   }
 
-  async listUsers(page: number, limit: number, search?: string): Promise<{ items: Array<PublicUser & { role: RoleCode }>; total: number }> {
+  async listUsers(page: number, limit: number, search?: string): Promise<{ items: Array<PublicUser & { role: RoleCode; robot_count: number }>; total: number }> {
     const where = search ? 'WHERE u.email LIKE ? OR u.display_name LIKE ?' : '';
     const values = search ? [`%${search}%`, `%${search}%`] : [];
     const [countRows] = await this.executor.execute<CountRow[]>(
       `SELECT COUNT(*) AS total FROM users u ${where}`, values as never[],
     );
     const [rows] = await this.executor.execute<UserWithRoleRow[]>(
-      `SELECT u.id, u.email, u.display_name, u.status, u.email_verified_at, u.last_login_at, u.created_at, u.updated_at, r.code AS role
+      `SELECT u.id, u.email, u.display_name, u.status, u.email_verified_at, u.last_login_at, u.created_at, u.updated_at, r.code AS role,
+              (SELECT COUNT(*) FROM device_assignments da WHERE da.user_id = u.id) AS robot_count
        FROM users u INNER JOIN user_roles ur ON ur.user_id = u.id INNER JOIN roles r ON r.id = ur.role_id
        ${where} ORDER BY u.created_at DESC LIMIT ? OFFSET ?`, [...values, limit, (page - 1) * limit] as never[],
     );
     return {
-      items: rows.map((row) => ({ ...this.toPublicUser(row), role: row.role })),
+      items: rows.map((row) => ({ ...this.toPublicUser(row), role: row.role, robot_count: Number(row.robot_count ?? 0) })),
       total: Number(countRows[0]?.total ?? 0),
     };
   }
@@ -239,5 +240,5 @@ interface CountRow extends RowDataPacket {
   total: number | string;
 }
 
-interface UserWithRoleRow extends PublicUserRow { role: RoleCode }
+interface UserWithRoleRow extends PublicUserRow { role: RoleCode; robot_count?: number | string }
 interface PrivacyRow extends RowDataPacket { save_history: number | boolean }

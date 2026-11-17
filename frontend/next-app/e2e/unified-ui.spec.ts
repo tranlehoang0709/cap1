@@ -59,10 +59,10 @@ test('register transitions to verify with preserved email and verify transitions
  await page.getByLabel('Mật khẩu',{exact:true}).fill('ValidPass123!');
  await page.getByLabel('Nhập lại mật khẩu',{exact:true}).fill('ValidPass123!');
  await page.getByRole('button',{name:'Tạo tài khoản'}).click();
- await expect(page.getByRole('tab',{name:'Xác minh',exact:true})).toHaveAttribute('aria-selected','true');
- await expect(page.locator('form')).toContainText('user@example.invalid');
- const tokenInput=page.getByLabel('Mã xác minh');
- await tokenInput.fill('header.payload.signature');
+ await expect(page.getByRole('heading',{name:'Xác minh email.'})).toBeVisible();
+ await expect(page.getByLabel('Email tài khoản')).toHaveValue('user@example.invalid');
+ const tokenInput=page.getByLabel('Mã OTP xác minh (6 chữ số)');
+ await tokenInput.fill('123456');
  await page.getByRole('button',{name:'Xác minh email'}).click();
  await expect(page.getByRole('tab',{name:'Đăng nhập',exact:true})).toHaveAttribute('aria-selected','true');
  await expect(page.getByLabel('Email',{exact:true})).toHaveValue('user@example.invalid');

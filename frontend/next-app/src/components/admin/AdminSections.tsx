@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Plus, RefreshCw } from 'lucide-react';
+import { Cpu, Plus, RefreshCw } from 'lucide-react';
 import { rows, type Row } from '@/lib/contracts';
 import { filterSystemSettings } from '@/lib/validation';
 import { Button } from '../ui/button';
@@ -178,7 +178,7 @@ export function Users() {
         <ResourceState state={state}>
           <DataTable
             data={state.data}
-            columns={cols('id', 'display_name', 'email', 'role', 'status')}
+            columns={cols('id', 'display_name', 'email', 'role', 'robot_count', 'status')}
             actions={(r) => (
               <>
                 <Button
@@ -651,6 +651,8 @@ export function Monitoring() {
   const [tab, setTab] = useState('instances');
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<Record<string, string>>({});
+  const [selectedInstanceId, setSelectedInstanceId] = useState('');
+  const [selectedInstanceCode, setSelectedInstanceCode] = useState('');
   const state = useResource(
     tab,
     tab === 'instances'
@@ -659,75 +661,162 @@ export function Monitoring() {
   );
 
   return (
-    <Panel
-      title="Vận hành nền tảng"
-      actions={
-        <Button variant="outline" onClick={state.reload}>
-          <RefreshCw size={15} />
-          Tải lại
-        </Button>
-      }
-    >
-      <div className="tabs" role="tablist" aria-label="Monitoring">
-        {(
-          [
-            ['instances', 'Phiên AI (Instances)'],
-            ['logs', 'Nhật ký hệ thống (System logs)'],
-            ['audits', 'Nhật ký kiểm toán (Audit logs)'],
-          ] as const
-        ).map(([v, label]) => (
-          <button
-            type="button"
-            key={v}
-            role="tab"
-            aria-selected={tab === v}
-            onClick={() => {
-              setTab(v);
+    <>
+      <Panel
+        title="Vận hành nền tảng"
+        actions={
+          <Button variant="outline" onClick={state.reload}>
+            <RefreshCw size={15} />
+            Tải lại
+          </Button>
+        }
+      >
+        <div className="tabs" role="tablist" aria-label="Monitoring">
+          {(
+            [
+              ['instances', 'Phiên AI (Instances)'],
+              ['logs', 'Nhật ký hệ thống (System logs)'],
+              ['audits', 'Nhật ký kiểm toán (Audit logs)'],
+            ] as const
+          ).map(([v, label]) => (
+            <button
+              type="button"
+              key={v}
+              role="tab"
+              aria-selected={tab === v}
+              onClick={() => {
+                setTab(v);
+                setPage(1);
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {tab === 'logs' && (
+          <form
+            className="filter-bar"
+            onSubmit={(e) => {
+              e.preventDefault();
               setPage(1);
+              setFilter(
+                Object.fromEntries(
+                  [...new FormData(e.currentTarget).entries()].filter(
+                    ([, v]) => String(v).trim() !== ''
+                  )
+                ) as Record<string, string>
+              );
             }}
           >
-            {label}
-          </button>
-        ))}
-      </div>
-      {tab === 'logs' && (
-        <form
-          className="filter-bar"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setPage(1);
-            setFilter(
-              Object.fromEntries(
-                [...new FormData(e.currentTarget).entries()].filter(
-                  ([, v]) => String(v).trim() !== ''
-                )
-              ) as Record<string, string>
-            );
+            <label>
+              Mức độ (Severity)
+              <input name="severity" placeholder="error, warn, info…" />
+            </label>
+            <label>
+              Thành phần (Component)
+              <input name="component" placeholder="auth, ai, device…" />
+            </label>
+            <Button variant="outline">Lọc</Button>
+          </form>
+        )}
+        <ResourceState state={state}>
+          <DataTable
+            data={state.data}
+            columns={
+              tab === 'instances'
+                ? cols('id', 'instance_code', 'status', 'last_healthcheck_at', 'started_at')
+                : tab === 'logs'
+                  ? cols('id', 'severity', 'component', 'message', 'created_at')
+                  : cols('id', 'actor_user_id', 'action', 'target_id', 'created_at')
+            }
+            actions={
+              tab === 'instances'
+                ? (r) => (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedInstanceId(String(r.id));
+                        setSelectedInstanceCode(String(r.instance_code || `#${r.id}`));
+                      }}
+                    >
+                      Tài nguyên (CPU/RAM/GPU/VRAM)
+                    </Button>
+                  )
+                : undefined
+            }
+          />
+          {tab !== 'instances' && <Pagination data={state.data} page={page} setPage={setPage} />}
+        </ResourceState>
+      </Panel>
+      {tab === 'instances' && selectedInstanceId && (
+        <InstanceResourceMetrics
+          key={selectedInstanceId}
+          instanceId={selectedInstanceId}
+          instanceCode={selectedInstanceCode}
+          onClose={() => {
+            setSelectedInstanceId('');
+            setSelectedInstanceCode('');
           }}
-        >
-          <label>
-            Mức độ (Severity)
-            <input name="severity" placeholder="error, warn, info…" />
-          </label>
-          <label>
-            Thành phần (Component)
-            <input name="component" placeholder="auth, ai, device…" />
-          </label>
-          <Button variant="outline">Lọc</Button>
-        </form>
-      )}
-      <ResourceState state={state}>
-        <DataTable
-          data={state.data}
-          columns={
-            tab === 'instances'
-              ? cols('id', 'instance_code', 'status', 'last_healthcheck_at')
-              : tab === 'logs'
-                ? cols('id', 'severity', 'component', 'message', 'created_at')
-                : cols('id', 'actor_user_id', 'action', 'target_id', 'created_at')
-          }
         />
-        {tab !== 'instances' && <Pagination data={state.data} page={page} setPage={setPage} />}
+      )}
+    </>
+  );
+}
+
+function InstanceResourceMetrics({
+  instanceId,
+  instanceCode,
+  onClose,
+}: {
+  instanceId: string;
+  instanceCode: string;
+  onClose: () => void;
+}) {
+  const metricsState = useResource('instanceMetrics', { limit: '20' }, { id: instanceId });
+  let items: Row[] = [];
+  try {
+    items = rows(metricsState.data);
+  } catch {}
+  return (
+    <Panel
+      title={`Thông số tài nguyên AI Server · ${instanceCode} (ID #${instanceId})`}
+      description="Dữ liệu CPU, RAM, GPU, VRAM và số phiên hoạt động từ bảng resource_metrics trên MySQL."
+      actions={
+        <div className="row-actions">
+          <Button variant="outline" onClick={metricsState.reload}>
+            <RefreshCw size={15} />
+            Làm mới
+          </Button>
+          <Button variant="ghost" onClick={onClose}>
+            Đóng
+          </Button>
+        </div>
+      }
+    >
+      <ResourceState state={metricsState}>
+        {items.length === 0 ? (
+          <div className="empty-state">
+            <Cpu size={28} />
+            <h3>Chưa có dữ liệu telemetry phần cứng</h3>
+            <p>
+              AI Server instance này chưa gửi bản ghi thông số CPU, RAM, GPU, VRAM nào vào
+              bảng <code>resource_metrics</code>. Hệ thống không tạo số liệu giả.
+            </p>
+          </div>
+        ) : (
+          <DataTable
+            data={items}
+            columns={cols(
+              'id',
+              'cpu_percent',
+              'memory_percent',
+              'gpu_percent',
+              'gpu_memory_percent',
+              'active_sessions',
+              'recorded_at'
+            )}
+          />
+        )}
       </ResourceState>
     </Panel>
   );

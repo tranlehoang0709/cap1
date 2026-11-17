@@ -1470,7 +1470,7 @@ export class PersonalAssistantRepository {
   ): Promise<boolean> {
     const executor = conn ?? this.pool;
     const [rows] = await executor.execute<RowDataPacket[]>(
-      `SELECT id FROM device_assignments WHERE user_id = ? AND device_id = ? LIMIT 1`,
+      `SELECT device_id FROM device_assignments WHERE user_id = ? AND device_id = ? LIMIT 1`,
       [userId, deviceId]
     );
     return Boolean(rows[0]);

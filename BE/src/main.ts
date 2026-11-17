@@ -26,7 +26,7 @@ async function bootstrap(): Promise<void> {
     .addBearerAuth()
     .build();
   SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, swaggerConfig), { jsonDocumentUrl: 'api/docs-json' });
-  await app.listen(config.getOrThrow<number>('app.port'));
+  await app.listen(config.getOrThrow<number>('app.port'), process.env.HOST || '0.0.0.0');
 }
 
 void bootstrap();

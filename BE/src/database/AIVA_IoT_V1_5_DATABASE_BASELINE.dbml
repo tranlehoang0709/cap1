@@ -327,3 +327,89 @@ Table system_settings {
   updated_at datetime [not null]
   Note: 'Do not store plaintext API secrets.'
 }
+Table personal_plans {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id]
+  title varchar(255) [not null]
+  description text
+  goal varchar(500)
+  total_sessions int [not null, default: 1]
+  status varchar(24) [not null, default: 'active']
+  start_date date
+  end_date date
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  deleted_at datetime
+  indexes { (user_id, status) }
+}
+Table personal_events {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id]
+  plan_id bigint [ref: > personal_plans.id]
+  title varchar(255) [not null]
+  description text
+  location varchar(255)
+  start_at datetime [not null]
+  end_at datetime
+  status varchar(24) [not null, default: 'scheduled']
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  indexes { (user_id, start_at) }
+}
+Table personal_tasks {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id]
+  plan_id bigint [ref: > personal_plans.id]
+  event_id bigint [ref: > personal_events.id]
+  session_number int
+  title varchar(500) [not null]
+  description text
+  status varchar(24) [not null, default: 'pending']
+  priority varchar(24) [not null, default: 'MEDIUM']
+  progress_percent int [not null, default: 0]
+  due_at datetime
+  completed_at datetime
+  cancelled_at datetime
+  cancel_reason varchar(500)
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  deleted_at datetime
+  indexes { (user_id, status), (plan_id, session_number), (user_id, due_at) }
+}
+Table personal_reminders {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id]
+  task_id bigint [ref: > personal_tasks.id]
+  event_id bigint [ref: > personal_events.id]
+  remind_at datetime [not null]
+  message varchar(500) [not null]
+  channel varchar(24) [not null, default: 'VOICE']
+  status varchar(24) [not null, default: 'pending']
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  indexes { (user_id, remind_at) }
+}
+Table reminder_deliveries {
+  id bigint [pk, increment]
+  reminder_id bigint [not null, ref: > personal_reminders.id]
+  device_id bigint [ref: > devices.id]
+  channel varchar(24) [not null]
+  status varchar(24) [not null, default: 'pending']
+  delivered_at datetime
+  acknowledged_at datetime
+  error_message varchar(500)
+  created_at datetime [not null]
+  indexes { (reminder_id), (device_id) }
+}
+Table personal_memories {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id]
+  memory_key varchar(120) [not null]
+  memory_value text [not null]
+  category varchar(60)
+  confidence decimal(4,3)
+  source_conversation_id bigint [ref: > conversations.id]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  indexes { (user_id, memory_key) [unique] }
+}

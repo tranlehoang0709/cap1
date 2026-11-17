@@ -17,17 +17,17 @@ test('auth tabs use interruptible local motion and retain the live canvas',async
  await page.getByRole('tab',{name:'Đăng ký',exact:true}).click();await expect(page.getByLabel('Nhập lại mật khẩu',{exact:true})).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>window.__authStarts)).toBeGreaterThan(0);expect(await page.evaluate(()=>window.__authDurations)).toContain(200);expect(await page.evaluate(()=>document.getAnimations().map(a=>a.id))).toContain('aiva-auth-surface');
  // Real mouse events while the previous 200 ms animation is still active.
- for(const tab of ['Xác minh','Đăng nhập']){await page.waitForTimeout(60);await page.getByRole('tab',{name:tab,exact:true}).click({force:true});await expect(page.getByRole('tab',{name:tab,exact:true})).toHaveAttribute('aria-selected','true');}
+ for(const tab of ['Đăng nhập','Đăng ký']){await page.waitForTimeout(60);await page.getByRole('tab',{name:tab,exact:true}).click({force:true});await expect(page.getByRole('tab',{name:tab,exact:true})).toHaveAttribute('aria-selected','true');}
  await expect(page.locator('.auth-form')).toHaveAttribute('data-auth-motion','idle');await page.evaluate(()=>window.__slowAuth=false);
  // Repeat real pointer clicks at the unmodified production duration as well.
- for(const tab of ['Đăng ký','Xác minh','Đăng nhập']){await page.getByRole('tab',{name:tab,exact:true}).click({force:true});await expect(page.getByRole('tab',{name:tab,exact:true})).toHaveAttribute('aria-selected','true');await page.waitForTimeout(60);}
+ for(const tab of ['Đăng nhập','Đăng ký','Đăng nhập']){await page.getByRole('tab',{name:tab,exact:true}).click({force:true});await expect(page.getByRole('tab',{name:tab,exact:true})).toHaveAttribute('aria-selected','true');await page.waitForTimeout(60);}
  await expect(page.locator('.auth-form')).toHaveAttribute('data-auth-motion','idle');expect(await page.evaluate(()=>window.__vtStarts)).toBe(0);expect(await canvas?.evaluate(el=>el.isConnected)).toBe(true);expect(await page.evaluate(()=>window.__nova!().frames)).toBeGreaterThan(before);expect(await page.evaluate(()=>window.__vtErrors)).toEqual([]);expect(errors).toEqual([]);
  await writeFile(`test-results/animation-${info.project.name}-transitions.json`,JSON.stringify(await page.evaluate(()=>({mode:'local-waapi',started:window.__vtStarts,ready:window.__vtReady,errors:window.__vtErrors})),null,2));
 });
 
 test('rapid auth requests apply the latest tab without snapshot queues or leaked animations',async({page})=>{
  await ready(page);const canvas=await page.locator('canvas').elementHandle();
- const results=await page.evaluate(async()=>{const sequence=[1,2,0,2,1,0],selected:number[]=[];for(const i of sequence){document.querySelectorAll<HTMLElement>('[role=tab]')[i].dispatchEvent(new MouseEvent('click',{bubbles:true,detail:1}));await new Promise(r=>setTimeout(r,40));selected.push([...document.querySelectorAll('[role=tab]')].findIndex(el=>el.getAttribute('aria-selected')==='true'));}return {sequence,selected};});
+ const results=await page.evaluate(async()=>{const sequence=[1,0,1,0,1,0],selected:number[]=[];for(const i of sequence){document.querySelectorAll<HTMLElement>('[role=tab]')[i].dispatchEvent(new MouseEvent('click',{bubbles:true,detail:1}));await new Promise(r=>setTimeout(r,40));selected.push([...document.querySelectorAll('[role=tab]')].findIndex(el=>el.getAttribute('aria-selected')==='true'));}return {sequence,selected};});
  expect(results.selected).toEqual(results.sequence);await expect(page.locator('.auth-form')).toHaveAttribute('data-auth-motion','idle');expect(await page.evaluate(()=>document.getAnimations().filter(a=>a.id.startsWith('aiva-auth-')).length)).toBe(0);expect(await canvas?.evaluate(el=>el.isConnected)).toBe(true);
  await page.emulateMedia({reducedMotion:'reduce'});await page.getByRole('tab',{name:'Đăng ký',exact:true}).click();expect(await page.evaluate(()=>document.getAnimations().filter(a=>a.id.startsWith('aiva-auth-')).length)).toBe(0);
 });
@@ -58,6 +58,6 @@ test('pending spinner pauses when offscreen and releases on completion (transpor
 });
 
 test('reduced motion and unsupported View Transition keep all auth tabs functional',async({page})=>{
- await page.emulateMedia({reducedMotion:'reduce'});await ready(page);for(const tab of ['Đăng ký','Xác minh','Đăng nhập'])await page.getByRole('tab',{name:tab,exact:true}).click();expect(await page.evaluate(()=>window.__vtStarts)).toBe(0);
+ await page.emulateMedia({reducedMotion:'reduce'});await ready(page);for(const tab of ['Đăng ký','Đăng nhập'])await page.getByRole('tab',{name:tab,exact:true}).click();expect(await page.evaluate(()=>window.__vtStarts)).toBe(0);
  await page.emulateMedia({reducedMotion:'no-preference'});await page.addInitScript(()=>{Object.defineProperty(document,'startViewTransition',{configurable:true,value:undefined});});await ready(page);await page.getByRole('tab',{name:'Đăng ký',exact:true}).click();await expect(page.getByLabel('Nhập lại mật khẩu',{exact:true})).toBeVisible();
 });

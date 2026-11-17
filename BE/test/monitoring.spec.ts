@@ -29,6 +29,13 @@ describe('Current monitoring repository and presence contract, mocked MySQL',()=
     expect(await service.metrics('9',{cpu_percent:42,active_sessions:2})).toEqual({id:'12'});
     expect(query.mock.calls[0][1]).toEqual(['9',42,null,null,null,2,null]);
   });
+  it('instanceMetrics reads resource_metrics columns scoped to instance_id',async()=>{
+    const sample=[{id:'1',instance_id:'9',cpu_percent:35,memory_percent:50,gpu_percent:20,gpu_memory_percent:25,active_sessions:1,recorded_at:'2026-11-14T15:00:00Z'}];
+    query.mockResolvedValue([[{id:1,instance_id:9,cpu_percent:35,memory_percent:50,gpu_percent:20,gpu_memory_percent:25,active_sessions:1,recorded_at:'2026-11-14T15:00:00Z'}]]);
+    expect(await service.instanceMetrics('9',10)).toEqual(sample);
+    expect(query.mock.calls[0][0]).toContain('FROM resource_metrics WHERE instance_id=?');
+    expect(query.mock.calls[0][1]).toEqual(['9',10]);
+  });
   it('database failure is propagated, never fabricated as a successful heartbeat',async()=>{
     query.mockRejectedValue(new Error('test database unavailable'));
     await expect(service.heartbeat({instance_code:'test'})).rejects.toThrow('test database unavailable');

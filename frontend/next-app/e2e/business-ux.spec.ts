@@ -53,3 +53,46 @@ test('fixture: usage date inputs match applied query and companion poses fit the
  await companion.getByRole('button',{name:'Bình thường',exact:true}).click();await expect(companion.locator('[data-smart-mode]')).toHaveAttribute('data-smart-mode','idle');await page.waitForTimeout(5500);await expect(companion.locator('[data-beast-mode]')).toHaveAttribute('data-beast-mode','normal');
  const box=(await companion.locator('canvas').boundingBox())!;expect(box.height).toBe(200);expect(await page.locator('canvas').count()).toBe(1);
 });
+
+test('fixture: PA-10/11/12 personal task management, priority update, and multi-session plan progress',async({page})=>{
+ await login(page,'user');
+ const pa=page.getByTestId('personal-assistant-workspace');
+ await expect(pa).toBeVisible();
+
+ // PA-12 initial multi-session progress: 3/10 sessions (30%), remaining 7 sessions, partial session 4 not completed
+ await expect(pa.getByTestId('plan-10-completed')).toContainText('Completed: 3/10 sessions.');
+ await expect(pa.getByTestId('plan-10-progress')).toContainText('Progress: 30%.');
+ await expect(pa.getByTestId('plan-10-remaining')).toContainText('Remaining: 7 sessions.');
+ await expect(pa.locator('[data-session-id="4"]')).toHaveAttribute('data-session-completed','false');
+
+ // PA-10 create new task: "Hoàn thành báo cáo đồ án trước 17:00 ngày mai."
+ await pa.getByRole('button',{name:'Tạo công việc mới'}).click();
+ const dialog=page.getByRole('dialog');
+ await expect(dialog).toBeVisible();
+ await dialog.locator('input[name="title"]').fill('Hoàn thành báo cáo đồ án trước 17:00 ngày mai.');
+ await dialog.locator('textarea[name="description"]').fill('Nộp báo cáo chương 4 và chương 5.');
+ await dialog.locator('select[name="priority"]').selectOption('MEDIUM');
+ await dialog.locator('select[name="plan_id"]').selectOption('10');
+ await dialog.locator('input[name="session_number"]').fill('4');
+ await dialog.getByRole('button',{name:'Lưu công việc'}).click();
+ await expect(dialog).toHaveCount(0);
+
+ await expect(pa.getByText('Hoàn thành báo cáo đồ án trước 17:00 ngày mai.')).toBeVisible();
+
+ // PA-11 update priority without losing task info
+ await pa.getByRole('button',{name:'Đổi ưu tiên Hoàn thành báo cáo đồ án trước 17:00 ngày mai.'}).click();
+ const prioDialog=page.getByRole('dialog');
+ await prioDialog.locator('select[name="priority"]').selectOption('HIGH');
+ await prioDialog.getByRole('button',{name:'Xác nhận đổi ưu tiên'}).click();
+ await expect(prioDialog).toHaveCount(0);
+ await expect(pa.locator('tr',{hasText:'Hoàn thành báo cáo đồ án trước 17:00 ngày mai.'}).locator('[data-priority="HIGH"]')).toBeVisible();
+ await expect(pa.locator('tr',{hasText:'Hoàn thành báo cáo đồ án trước 17:00 ngày mai.'})).toContainText('Nộp báo cáo chương 4 và chương 5.');
+
+ // PA-10 & PA-12 mark task completed and complete session 4 -> 4/10 sessions (40%)
+ await pa.getByRole('button',{name:'Hoàn thành Hoàn thành báo cáo đồ án trước 17:00 ngày mai.'}).click();
+ await expect(pa.getByTestId('pa-completed-tasks')).toHaveText('2');
+ await pa.getByRole('button',{name:'Hoàn thành buổi 4 của Kế hoạch đồ án 10 buổi'}).click();
+ await expect(pa.getByTestId('plan-10-completed')).toContainText('Completed: 4/10 sessions.');
+ await expect(pa.getByTestId('plan-10-progress')).toContainText('Progress: 40%.');
+ await expect(pa.getByTestId('plan-10-remaining')).toContainText('Remaining: 6 sessions.');
+});
