@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowUpRight, Plus, Send, ShieldCheck, Sparkles } from 'lucide-react';
 import { api } from '@/lib/client';
 import { chatReply, object, rows, type Row } from '@/lib/contracts';
+import { memoryAwareChatContent } from '@/lib/personal-assistant';
 import { date, display } from '@/lib/utils';
 import { Spinner } from '../motion/VisibleMotion';
 import { RobotViewer } from '../robot-viewer';
@@ -378,6 +379,8 @@ export function Chat() {
     }[]
   >([]);
   const [textValue, setText] = useState('');
+  const [includeMemories, setIncludeMemories] = useState(false);
+  const [memorySearch, setMemorySearch] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -460,7 +463,11 @@ export function Chat() {
     });
     setText('');
     try {
-      const payload: Record<string, string> = { content };
+      const messageContent = await memoryAwareChatContent(
+        content, includeMemories, memorySearch,
+        (query) => api('personalMemories', { query }),
+      );
+      const payload: Record<string, string> = { content: messageContent };
       if (conversation) payload.conversation_id = conversation;
       const r = chatReply.parse(await api('chat', { body: payload }));
       setMessages((prev) => [...prev, { role: 'assistant', content: r.content }]);
@@ -605,6 +612,10 @@ export function Chat() {
             <Link href="/user/conversations">Xem lịch sử đã lưu</Link>
           </p>
         )}
+        <label><input type="checkbox" checked={includeMemories} disabled={busy} onChange={(e) => setIncludeMemories(e.target.checked)} />Đính kèm ghi nhớ cá nhân đã lưu vào tin nhắn gửi AI</label>
+        {includeMemories && <label>Từ khóa ghi nhớ (để trống để dùng tất cả)
+          <input maxLength={200} value={memorySearch} disabled={busy} onChange={(e) => setMemorySearch(e.target.value)} />
+        </label>}
         <form onSubmit={send}>
           <label className="sr-only" htmlFor="chat-content">
             Nội dung tin nhắn

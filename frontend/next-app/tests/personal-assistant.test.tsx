@@ -29,7 +29,7 @@ test('PA BFF preserves consent, partial progress and session schedules', () => {
   assert.throws(() => validateBody('personalTaskUpdate', { progress_percent: 100 }));
   assert.equal(validateBody('personalTaskUpdate', { event_id: null }).event_id, null);
   const sessions = [{ title: 'Session 1', due_at: '2026-11-16T09:00:00Z' }];
-  assert.deepEqual(validateBody('personalPlanCreate', { title: 'Plan', total_sessions: 1, sessions }).sessions, sessions);
+  assert.deepEqual(validateBody('personalPlanCreate', { title: 'Plan', goal: 'Study', confirmed: true, total_sessions: 1, sessions }).sessions, sessions);
 });
 
 test('PA-10/11/12 BFF operations resolve for USER and validate numeric path parameters', () => {

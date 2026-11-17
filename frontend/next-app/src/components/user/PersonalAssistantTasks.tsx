@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Bell,
   Brain,
@@ -21,7 +21,9 @@ import {
   Trash2,
   XCircle,
 } from 'lucide-react';
-import { api } from '@/lib/client';
+import { api, ApiError } from '@/lib/client';
+import { PlanDraftEditor, ScheduleSummary } from './PersonalAssistantPlanning';
+import type { PlanStep } from '@/lib/personal-planning';
 import { date, display } from '@/lib/utils';
 import {
   buildPriorityUpdatePayload,
@@ -53,6 +55,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import {
   Notice,
+  Pagination,
   Panel,
   ResourceState,
   Status,
@@ -116,6 +119,7 @@ export function PersonalAssistantWorkspace() {
           }));
         }}
       />
+      <ScheduleSummary />
       <PersonalAssistantExtensions />
     </>
   );
@@ -182,6 +186,8 @@ export function PersonalAssistantWorkspaceView({
 
   // Create Plan modal state (PA-12)
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
+  const [planSteps, setPlanSteps] = useState<PlanStep[]>([]);
+  const [planDraftBusy, setPlanDraftBusy] = useState(false);
   const [planTitleInput, setPlanTitleInput] = useState('');
   const [planGoalInput, setPlanGoalInput] = useState('');
   const [planDescInput, setPlanDescInput] = useState('');
@@ -190,6 +196,14 @@ export function PersonalAssistantWorkspaceView({
   const [planEndDateInput, setPlanEndDateInput] = useState('');
   const [planFormError, setPlanFormError] = useState('');
   const [planFormBusy, setPlanFormBusy] = useState(false);
+  const planSaving = useRef(false);
+  const [confirmedPlanRevision, setConfirmedPlanRevision] = useState('');
+  const planRevision = JSON.stringify([
+    planTitleInput, planGoalInput, planDescInput, planTotalSessionsInput,
+    planStartDateInput, planEndDateInput, planSteps,
+  ]);
+  const planConfirmed = confirmedPlanRevision === planRevision;
+
 
   let tasks: PersonalTask[] = [];
   let tasksParseError = '';
@@ -523,10 +537,14 @@ export function PersonalAssistantWorkspaceView({
 
   async function handleCreatePlanSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (planSaving.current || planFormBusy || planDraftBusy) return;
+    planSaving.current = true;
     setPlanFormError('');
     setActionError('');
     setActionSuccess('');
     try {
+      if (!planConfirmed) throw new Error('Vui lòng xác nhận nội dung kế hoạch hiện tại.');
+      if (!planSteps.length) throw new Error('Kế hoạch cần ít nhất một bước cụ thể.');
       const totalSessions = Number(planTotalSessionsInput.trim());
       const rawPayload: Record<string, unknown> = {
         title: planTitleInput,
@@ -536,10 +554,16 @@ export function PersonalAssistantWorkspaceView({
       if (planDescInput.trim()) rawPayload.description = planDescInput.trim();
       if (planStartDateInput.trim()) rawPayload.start_date = planStartDateInput.trim();
       if (planEndDateInput.trim()) rawPayload.end_date = planEndDateInput.trim();
+      if (planSteps.length) {
+        rawPayload.sessions = planSteps.map((step, index) => ({ ...step, session_number: index + 1 }));
+        rawPayload.total_sessions = planSteps.length;
+        rawPayload.confirmed = true;
+      }
       const body = validatePersonalAssistantBody('personalPlanCreate', rawPayload);
       setPlanFormBusy(true);
       await api('personalPlanCreate', { body });
       setPlanDialogOpen(false);
+      setPlanSteps([]);
       setPlanTitleInput('');
       setPlanGoalInput('');
       setPlanDescInput('');
@@ -551,6 +575,7 @@ export function PersonalAssistantWorkspaceView({
     } catch (e) {
       setPlanFormError((e as Error).message);
     } finally {
+      planSaving.current = false;
       setPlanFormBusy(false);
     }
   }
@@ -1573,9 +1598,9 @@ export function PersonalAssistantWorkspaceView({
       {/* Dialog: Create Multi-Session Plan (PA-12) */}
       <Dialog
         open={planDialogOpen}
-        busy={planFormBusy}
+        busy={planFormBusy || planDraftBusy}
         onOpenChange={(open) => {
-          if (!open && !planFormBusy) setPlanDialogOpen(false);
+          if (!open && !planFormBusy && !planDraftBusy) setPlanDialogOpen(false);
         }}
         title="Tạo kế hoạch cá nhân nhiều buổi"
         description="Hệ thống khởi tạo kế hoạch trong personal_plans và các buổi tương ứng trong personal_tasks."
@@ -1594,9 +1619,11 @@ export function PersonalAssistantWorkspaceView({
             />
           </label>
           <label>
-            Mục tiêu kế hoạch (tùy chọn)
+            Mục tiêu kế hoạch
             <input
               name="plan_goal"
+              required
+              disabled={planFormBusy || planDraftBusy}
               type="text"
               maxLength={500}
               placeholder="Ví dụ: Hoàn thành 100% các mốc kiểm thử và tài liệu"
@@ -1624,7 +1651,8 @@ export function PersonalAssistantWorkspaceView({
               min={1}
               max={365}
               step={1}
-              value={planTotalSessionsInput}
+              value={planSteps.length ? String(planSteps.length) : planTotalSessionsInput}
+              readOnly={planSteps.length > 0}
               onChange={(e) => setPlanTotalSessionsInput(e.target.value)}
             />
           </label>
@@ -1646,17 +1674,27 @@ export function PersonalAssistantWorkspaceView({
               onChange={(e) => setPlanEndDateInput(e.target.value)}
             />
           </label>
+          <PlanDraftEditor
+            goal={planGoalInput} steps={planSteps} onChange={(steps) => { setPlanSteps(steps); if (steps.length) setPlanTotalSessionsInput(String(steps.length)); }}
+            disabled={planFormBusy} onBusyChange={setPlanDraftBusy}
+          />
+          <label>
+            <input type="checkbox" required checked={planConfirmed}
+              disabled={planFormBusy || planDraftBusy}
+              onChange={(e) => setConfirmedPlanRevision(e.target.checked ? planRevision : '')} />
+            Tôi đã xem mục tiêu và các bước, xác nhận lưu kế hoạch này.
+          </label>
           <Notice error={planFormError} />
           <div className="form-actions">
             <Button
               type="button"
               variant="outline"
-              disabled={planFormBusy}
+              disabled={planFormBusy || planDraftBusy}
               onClick={() => setPlanDialogOpen(false)}
             >
               Hủy
             </Button>
-            <Button type="submit" disabled={planFormBusy}>
+            <Button type="submit" disabled={planFormBusy || planDraftBusy}>
               {planFormBusy ? 'Đang chờ Backend…' : 'Lưu kế hoạch'}
             </Button>
           </div>
@@ -1674,7 +1712,9 @@ export function PersonalAssistantExtensions() {
 
   const eventsState = useResource('personalEvents', { page: '1', limit: '20' });
   const remindersState = useResource('personalReminders', { page: '1', limit: '20' });
-  const memoriesState = useResource('personalMemories', { page: '1', limit: '20' });
+  const [memoryPage, setMemoryPage] = useState(1);
+  const [memorySearch, setMemorySearch] = useState('');
+  const memoriesState = useResource('personalMemories', { page: String(memoryPage), limit: '20', search: memorySearch });
 
   // Event modal
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
@@ -1694,6 +1734,7 @@ export function PersonalAssistantExtensions() {
   const [remError, setRemError] = useState('');
   // Memory modal
   const [memDialogOpen, setMemDialogOpen] = useState(false);
+  const [editingMemory, setEditingMemory] = useState<PersonalMemory | null>(null);
   const [memKey, setMemKey] = useState('');
   const [memValue, setMemValue] = useState('');
   const [memCategory, setMemCategory] = useState('');
@@ -1809,14 +1850,16 @@ export function PersonalAssistantExtensions() {
     e.preventDefault();
     setMemError(''); setNotice('');
     try {
-      const body = validatePersonalAssistantBody('personalMemoryCreate', {
+      const operation = editingMemory ? 'personalMemoryUpdate' : 'personalMemoryCreate';
+      const body = validatePersonalAssistantBody(operation, {
         consent: memConsent,
+        ...(editingMemory?.revision ? { expected_revision: editingMemory.revision } : {}),
         memory_key: memKey,
         memory_value: memValue,
-        ...(memCategory.trim() ? { category: memCategory.trim() } : {}),
+        category: memCategory.trim() || null,
       });
       setMemBusy(true);
-      await api('personalMemoryCreate', { body });
+      await api(operation, { body, ...(editingMemory ? { params: { id: editingMemory.id } } : {}) });
       setMemDialogOpen(false);
       setMemConsent(false);
       setMemKey(''); setMemValue(''); setMemCategory('');
@@ -1824,12 +1867,14 @@ export function PersonalAssistantExtensions() {
       memoriesState.reload();
     } catch (err) {
       setMemError((err as Error).message);
+      if (err instanceof ApiError && err.status === 409) memoriesState.reload();
     } finally {
       setMemBusy(false);
     }
   }
 
   async function handleDeleteMemory(id: string) {
+    if (!window.confirm('Xóa vĩnh viễn ghi nhớ này?')) return;
     setBusyId(`mem-${id}`); setError(''); setNotice('');
     try {
       await api('personalMemoryDelete', { params: { id } });
@@ -2011,13 +2056,16 @@ export function PersonalAssistantExtensions() {
       {activeTab === 'memories' && (
         <>
           <div className="toolbar" style={{ marginBottom: '12px' }}>
-            <Button type="button" onClick={() => { setMemError(''); setMemDialogOpen(true); }}>
+            <Button type="button" onClick={() => { setEditingMemory(null); setMemKey(''); setMemValue(''); setMemCategory(''); setMemConsent(false); setMemError(''); setMemDialogOpen(true); }}>
               <Plus size={15} aria-hidden="true" /> Lưu ghi nhớ
             </Button>
             <Button variant="ghost" type="button" onClick={memoriesState.reload}>
               <RefreshCw size={15} aria-hidden="true" /> Tải lại
             </Button>
           </div>
+          <label>Tìm thông tin đã ghi nhớ
+            <input value={memorySearch} maxLength={200} onChange={(e) => { setMemorySearch(e.target.value); setMemoryPage(1); }} />
+          </label>
           <ResourceState state={memoriesState}>
             {memories.length === 0 ? (
               <p className="muted">Chưa có ghi nhớ cá nhân nào được lưu.</p>
@@ -2039,6 +2087,10 @@ export function PersonalAssistantExtensions() {
                         <td>{mem.memory_value}</td>
                         <td>{mem.category ?? '—'}</td>
                         <td>
+                          <Button type="button" variant="outline" onClick={() => {
+                            setEditingMemory(mem); setMemKey(mem.memory_key); setMemValue(mem.memory_value);
+                            setMemCategory(mem.category ?? ''); setMemConsent(false); setMemError(''); setMemDialogOpen(true);
+                          }}>Chỉnh sửa</Button>
                           <Button
                             variant="destructive"
                             type="button"
@@ -2055,6 +2107,7 @@ export function PersonalAssistantExtensions() {
               </div>
             )}
           </ResourceState>
+          <Pagination data={memoriesState.data} page={memoryPage} setPage={setMemoryPage} />
         </>
       )}
 
@@ -2128,7 +2181,7 @@ export function PersonalAssistantExtensions() {
         open={memDialogOpen}
         busy={memBusy}
         onOpenChange={(o) => { if (!o && !memBusy) setMemDialogOpen(false); }}
-        title="Lưu ghi nhớ cá nhân"
+        title={editingMemory ? "Cập nhật ghi nhớ cá nhân" : "Lưu ghi nhớ cá nhân"}
       >
         <form className="form-stack" onSubmit={handleCreateMemory}>
           <label>

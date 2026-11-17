@@ -363,6 +363,11 @@ export class CreatePlanSessionSeedDto {
 }
 
 export class CreatePlanDto {
+  @ApiPropertyOptional({ description: 'Explicit confirmation for a plan with supplied steps' })
+  @IsOptional()
+  @IsBoolean()
+  confirmed?: boolean;
+
   @ApiProperty({ maxLength: 255 })
   @IsString()
   @MinLength(1)
@@ -719,6 +724,12 @@ export class CreateMemoryDto {
 }
 
 export class UpdateMemoryDto {
+  @ApiPropertyOptional({ description: 'Revision read before editing this memory' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-f0-9]{64}$/)
+  expected_revision?: string;
+
   @ApiProperty({ description: 'Explicit consent to store the updated memory' })
   @Transform(({ obj, key }) => obj[key])
   @IsBoolean()
