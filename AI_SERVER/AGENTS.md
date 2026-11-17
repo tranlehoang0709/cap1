@@ -513,7 +513,7 @@ unimplemented seams; model metadata readiness does not imply voice readiness.
 | From | Via | Note |
 |---|---|---|
 | `/local/chat` | Local bearer auth | Text only |
-| Local chat | `LlamaServerAdapter` | SSE completion |
+| Local chat | `LlamaServerAdapter` | Thinking disabled |
 | Adapter | `/v1/models` | Real model ID |
 | Adapter | `/chat/completions` | No cloud fallback |
 | Local LLM calls | shared HTTP client | Reuse connection |
@@ -539,3 +539,286 @@ See `docs/local-gemma-prompt02.md`.
 The existing robot routes and WebSocket protocol are unchanged. Local STT is
 runtime-ready, but Local voice stays NOT_READY because TTS and gateway routing
 are outside Prompt 03. See `docs/local-stt-prompt03.md`.
+
+## Prompt 04-FIX - Local Vietnamese TTS (2026-11-14)
+
+| From | Via | Note |
+|---|---|---|
+| Gemma text | Piper VAIS1000 | Offline CPU |
+| Piper chunks | PCM16 22.05k | RAM only |
+| PCM stream | `PCMOpusFrames` | Resample 16k |
+| Opus encoder | 60 ms packets | Xiaozhi format |
+| Local readiness | cached Piper voice | TTS READY |
+
+The Piper voice is loaded once per process from the user cache outside Git.
+
+## Prompt 05-FIX / 06-A - Local robot routing (2026-11-14)
+
+| From | Via | Note |
+|---|---|---|
+| Gateway WSS | Backend resolve | Device-owned |
+| `GEMINI` | Cloud app | Existing path |
+| `LOCAL` | Loopback `8002` | No fallback |
+| Robot Opus | Local STT | 16 kHz mono |
+| Transcript | Gemma | Backend quota |
+| Local model bind | HF cache path | Repo + quant exact |
+| Gemma text | Piper + Opus | Playback ACK |
+
+The public robot endpoints remain the single OTA/WSS funnel. A Local route is
+opened only after Backend authentication, provider resolution, and Local voice
+readiness; Cloud and Local processes reject a provider/runtime mismatch.
+The optional `AI_SERVER_GATEWAY_LOCAL_*` deployment settings select explicit
+device UIDs and ask Backend to resolve the configured Local provider/model;
+unlisted devices continue to use their Backend profile unchanged.
+
+## H-01 - PA-09 intent understanding
+
+| From | Via | Note |
+|---|---|---|
+| Local internal analyze | Local bearer auth | Analysis only |
+| user + session | LocalChatSessions | Bounded RAM locks |
+| IntentUnderstanding | LlamaServerAdapter | Same Gemma runtime |
+| Adapter stream | JSON schema grammar | Complete only |
+| Interpretation | proposal guards | No business writes |
+| Temporal raw date | calendar validation | D/M/YYYY or ISO |
+| validated Analysis | H-02/H-03 caller | No execution |
+
+`POST /internal/personal-assistant/analyze` exists only in Local runtime.
+It accepts user_id, session_id, content and an IANA timezone. Reference time
+comes from the server. H-02 now retains pending dialogue using the existing
+session implementation for isolation, TTL and busy locks in a separate
+namespace. No Backend method is called. PA-05's definition arrived
+in H-06 and is now handled as read-only personalization; PA-09 and PA-23 are
+capabilities, never invented Backend APIs. The Group II amendment
+takes precedence for plan end-date changes: preserve the existing schedule.
+
+## H-03 - Proposed PA contracts
+
+| From | Via | Note |
+|---|---|---|
+| validated Analysis | `plan_tools` | Proposal only |
+| operation + action | Tool registry | Allowlist |
+| tool arguments | Pydantic contracts | Strict schema |
+| application identity | TrustedToolContext | Never LLM-owned |
+| WRITE approval | Bound call hash | User/session scoped |
+| execution boundary | Availability gate | NOT_IMPLEMENTED |
+
+The analyze route now uses these contracts for workflow planning; tool
+execution remains separate from HTTP/voice integration.
+All Backend tool contracts are NOT_IMPLEMENTED without endpoint bindings.
+PA-05/09/23 have separate DISABLED capability descriptors. ToolPlan reports
+READY for trusted H-02 readiness, and a context without trusted dialogue readiness
+cannot execute. The boundary makes no HTTP/SQL call for an unimplemented tool.
+The existing device/config/quota Backend credentials are not repurposed for PA.
+
+### H-03 PA-04 contract extension
+
+| From | Via | Note |
+|---|---|---|
+| Memory proposal | ToolPlan.proposals | No executable step |
+| Approved proposal | exact call key | Context consent |
+| Record/topic scope | MemoryAuthorization | Owner + revision |
+| Memory query | response use gates | Consent + expiry |
+| Management lookup | trusted proof | Never profile use |
+| Memory workflow | versioned arguments | Existing lifecycle |
+| Memory WRITE ACK | owner/revision check | No false success |
+
+Five memory contracts remain NOT_IMPLEMENTED; memory.propose is a local-only
+proposal descriptor and cannot dispatch or become an executable workflow step.
+Revision/target/mode and consent are supplied by trusted application context,
+never LLM entities. Update content is the new text with append/replace mode;
+readback still shows complete before/after. Writes retain the existing stable
+call-key/idempotency mechanism; no retry guarantee is invented without Backend
+support. Record revisions absent from legacy reads cannot authorize mutations.
+
+## H-04 - PA-23 workflow core
+
+| From | Via | Note |
+|---|---|---|
+| ToolPlan | WorkflowOrchestrator | Direct caller only |
+| dependency graph | topological check | Reject cycles |
+| event interval | conflict READ step | Before event WRITE |
+| user/session/correlation | WorkflowStore | Owner + busy gate |
+| exact step arguments | approval hash | Invalidate on edit |
+| succeeded parent | dependency record ID | Backend receipt only |
+| ready step | ToolExecutionBoundary | Existing allowlist |
+| unknown WRITE outcome | retry gate | Real idempotency |
+
+Workflow state is bounded RAM with TTL, not a new conversation runtime.
+No route/startup/voice integration is added. H-02 is still absent, and the
+trusted dialogue_ready default remains false. All PA Backend tools remain
+NOT_IMPLEMENTED. A workflow cannot succeed through the unavailable adapter.
+Successful steps are retained on partial failure; no automatic rollback or
+WRITE retry is performed. Memory payloads require trusted sensitive-data
+review before workflow retention and separate readback/consent before WRITE.
+Only test adapters advertise AVAILABLE/idempotent successful Backend behavior.
+
+## H-05 - Backend execution safety
+
+| From | Via | Note |
+|---|---|---|
+| tool metadata | availability gate | Four API states |
+| verified adapter | endpoint/auth/schema | No PA bindings yet |
+| Backend invocation | AudioContext | Deadline + cancel |
+| Backend acknowledgement | scoped receipt | Validate identity |
+| ambiguous WRITE | UNKNOWN outcome | Reconcile first |
+| explicit WRITE retry | verified idempotency | Retain original key |
+
+The Backend source audit found no registered PA controllers/modules. No PA
+endpoint or authentication credential is configured. BackendClient remains
+the existing HTTP/auth transport with zero automatic retries; H-05 adds no
+second HTTP client and does not repurpose device/config/quota credentials.
+The adapter protocol accepts the existing cancellation scope and operation ID
+for future verified Backend methods. AVAILABLE requires verified endpoint,
+contract and authentication as well as an enabled registry entry.
+Success requires a real scoped Backend receipt and validated output. Unknown
+WRITE results carry PENDING_RECONCILIATION at both step and workflow levels;
+an adapter's boolean idempotency claim alone cannot enable retry. RAM state
+is not a durable Backend deduplication or reconciliation ledger.
+
+### H-05 PA-04 safety completion
+
+| From | Via | Note |
+|---|---|---|
+| Memory WRITE | verified idempotency | Before first send |
+| Memory update/delete | verified CAS | No stale overwrite |
+| Adapter input | call snapshot | Immutable payload |
+| Memory explicit retry | existing workflow | Same key + consent |
+| Lost ACK | pending reconciliation | Until valid ACK |
+| Dialogue result | receipt validation | No false failure |
+| Confirmed step | notification event | Stable per-write ID |
+| Optional channel hook | scoped ACK | No default sender |
+
+Memory retries now use the existing memory lifecycle; completed steps are never
+replayed. Unknown state survives retry preparation, capability changes and
+subsequent non-confirming attempts. Known Backend rejection requires fresh
+scope/review rather than an automatic revision change. New revision_verified
+capability means atomic Backend compare-and-swap, not just a response version.
+The optional notification hook has no production bindings: Website/Xiaozhi
+remain NOT_CONNECTED until authenticated ACK/idempotency contracts are verified.
+Channel failures do not undo a confirmed Backend change. No Backend API, URL,
+database table, new HTTP runtime or notification outbox is created.
+
+## H-06 - PA-05 read-only personalization
+
+| From | Via | Note |
+|---|---|---|
+| Local chat opt-in | PA-09 understanding | Same Gemma adapter |
+| scoped memory query | H-05 read boundary | PA-04 unavailable |
+| receipt + ownership | consent/expiry filter | No default profile |
+| query relevance | bounded context | Up to 3 records |
+| current user facts | category override | No memory update |
+| memory context | user-role JSON data | Never system rules |
+| PA-04 proposal/answer | handoff status | No WRITE call |
+
+`/local/chat` accepts personalize=true. The default text/voice/Cloud paths are
+unchanged. PA-05 has no memory cache, database, WRITE API or workflow creation.
+Its reader uses the existing memory.query contract/boundary; missing PA-04
+returns MEMORY_UNAVAILABLE and Gemma answers without memory. Request-specific
+enable_thinking=false is used for PA-05 response generation and ordinary
+Local text chat, without changing the runtime/model or voice/Cloud paths.
+Backend search must return a query digest and relevance scores alongside
+ownership, consent, sensitivity review and validity metadata. Invalid/mixed
+owner responses fail closed. Prior assistant memory claims are not reused
+as current authorization. Full H-02 dialogue state and live PA-04 integration
+remain blocked; memory save/forget requests are proposals/handoffs only.
+
+## H-07 - PA integration checks
+
+| From | Via | Note |
+|---|---|---|
+| all workflow steps | availability preflight | Block missing APIs |
+| PA-04 storage refusal | deferred operation | Preserve event plan |
+| PA-04 unsaved status | safe history status | No false delete |
+| live readiness probe | Local 8002 + Gemma | No success doubles |
+
+H-07 adds component integration tests and a stdout-only live probe, not a new
+dialogue manager or automatic workflow hook. PA-04 cancel of a storage proposal
+is deferred as MEMORY_STORAGE_DECLINED, never a nonexistent Backend cancel API.
+Every unavailable workflow step is marked BLOCKED without dispatch. Fixed
+application handoff statuses can remain in prompt history; arbitrary old
+assistant memory facts still cannot provide current authorization.
+
+## H-02 - Pending dialogue integration
+
+| From | Via | Note |
+|---|---|---|
+| Analyze route | LocalChatSessions | Claimed owner pair |
+| Pending + new turn | Gemma structured turn | Patch one intent |
+| Entity patch | proposal guards | Preserve old dates |
+| Conflicting patch | clarification state | Consent required |
+| Complete dialogue | plan_tools | Trusted readiness |
+| Changed proposal | workflow.revise | Same workflow ID |
+| Confirm/reject | dialogue + workflow | No execution call |
+| Session cleanup | pending cleanup | Bounded RAM TTL |
+| Memory update | dialogue.memory_modes | Replace or append |
+| Memory mutation | verified lookup gate | No invented before |
+| Uncertain data | clarification state | Restatement needed |
+
+The analyze route now retains H-02 state; older H-03/H-04/H-07 notes about
+missing pending integration describe those stages before this change.
+User/session ownership is supplied by the authenticated internal caller and
+bound server-side, never chosen by Gemma. A dialogue revision and correlation
+persist across follow-ups; optional expected_revision rejects stale turns.
+Corrections revoke old confirmation. No Backend execution is wired here;
+unimplemented tools remain BLOCKED/NOT_IMPLEMENTED with executed=false.
+Local chat personalization and voice are separate callers, not automatically
+connected to this pending dialogue namespace.
+
+## H-01 - Group III memory interpretation
+
+| From | Via | Note |
+|---|---|---|
+| PA-04 utterance | Gemma memory metadata | Intent distinction |
+| Memory evidence | original_text | Verbatim only |
+| Classified risks | memory guards | Block storage |
+| Uncertain facts | missing information | H-02 clarification |
+| Other PA intents | existing guards | Dates/deps unchanged |
+
+Memory metadata distinguishes statements, proposals, explicit save/update,
+query/delete, refusal and confirmation. Statement action=propose is retained
+for compatibility and is not consent to store. Seven prohibited categories
+block storage even after consent; query/delete remain distinct from storage.
+Original evidence is preserved and no free summary is generated. Uncertainty,
+unusual facts and possible STT errors are flagged without silently repairing
+the content. This is H-01 interpretation only; no PA-04 API or persistence.
+
+## H-04 - Group III memory workflows
+
+| From | Via | Note |
+|---|---|---|
+| Memory-only dialogue | sync_memory | Stable workflow ID |
+| Memory proposal | policy guards | No prohibited data |
+| Update/delete | memory.query | Verified scope only |
+| Verified records | select_memory | Item/group + mode |
+| Before/after preview | memory_readback | Revision bound |
+| Explicit consent | confirm_memory | No repeated writes |
+| run_memory | ToolExecutionBoundary | ACK required |
+| Unknown write result | reconciliation gate | No automatic retry |
+
+Group III stages are stored on the existing owner-scoped WorkflowStore. The
+analyze route syncs memory-only proposals, mode changes and consent; it never
+executes tools. Trusted callers explicitly run lookup, select verified records,
+show readback, confirm the same revision and run writes. Missing PA-04 APIs keep
+workflows BLOCKED. Schedule/reminder algorithms and their existing guards are
+unchanged. Focused fixture tests do not prove live Backend availability.
+
+## H-06 - Group III personalization additions
+
+| From | Via | Note |
+|---|---|---|
+| Scoped memory receipt | consent/owner gates | Backend read only |
+| Memory content | Group III policy | Censored categories |
+| Expiry/configured age | clarification | No stale reuse |
+| Eligible records | Gemma use review | Conflict/uncertainty |
+| Record category | memory_groups | Existing schema only |
+| Local update/delete | H-02/H-04 pending | Same user/session |
+| Verified write ACK | workflow_reply | Exact change text |
+| Notification envelope | delivery status | No transport send |
+
+PA-05 still never writes memory or grants tool permission. Local chat now stores
+update/delete dialogue in its own claimed session namespace; analyze sessions
+remain independent. Optional LOCAL_PA05_MAX_AGE_SECONDS controls read freshness;
+no default business lifetime, repetition threshold or arbitrary topic schema is
+invented. Website/Xiaozhi integration is a prepared envelope only, sent=false.
+Group III undecided items 10, 13 and 23 receive no additional business rules.

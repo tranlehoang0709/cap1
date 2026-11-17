@@ -1,0 +1,17 @@
+THÔNG TIN NGHIỆP VỤ CÒN THIẾU CHO PA-09 H-01
+
+1. PA-05 — đã được bổ sung định nghĩa trong yêu cầu H-06
+- Cá nhân hóa cách giao tiếp và đề xuất, chỉ đọc trí nhớ PA-04 hợp lệ.
+- Phần thiếu định nghĩa PA-05 đã được giải quyết; không còn giới hạn nhận diện mã tường minh.
+- Còn chờ API đọc PA-04, metadata ownership/consent/hiệu lực và hợp đồng relevance theo query.
+- Chưa có API đọc/ghi trí nhớ thật; H-06 không thay thế nghiệp vụ PA-04.
+
+2. Tài liệu Nhóm III
+- Nhiều mục chỉ ghi lựa chọn a/b/c hoặc “suy nghĩ thêm”, thiếu câu hỏi và phương án gốc.
+- Chưa xác minh được ý nghĩa đầy đủ các lựa chọn, thời gian hết hạn dữ liệu, cấu hình
+  lưu/sử dụng trí nhớ và các trường hợp cập nhật thay thế hay bổ sung.
+- H-01 áp dụng các quy tắc đã nêu rõ: không tự lưu thông tin cá nhân/sở thích;
+  chuẩn bị đọc lại và xác nhận; không dùng trí nhớ để tự điền dữ liệu bắt buộc;
+  không đề xuất lưu các nhóm thông tin nhạy cảm bị cấm.
+
+Các phần thiếu này không được tự suy đoán. Tiếp tục các phần H-01 đã đủ thông tin.

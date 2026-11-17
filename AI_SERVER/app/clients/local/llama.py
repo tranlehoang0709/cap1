@@ -1,6 +1,7 @@
 """llama.cpp OpenAI-compatible adapter; never imports or contacts cloud SDKs."""
 import asyncio
 import json
+import re
 import httpx
 
 from app.core.runtime_config import LocalLLMSettings
@@ -69,7 +70,21 @@ class LlamaServerAdapter:
             except (httpx.HTTPError, ValueError, KeyError, TypeError):
                 raise LocalLLMError("unavailable_or_invalid_models") from None
 
-    async def stream(self, request, context):
+    @staticmethod
+    def matches_model(expected: str, discovered: str) -> bool:
+        """Match an exact alias or its Hugging Face cache GGUF path."""
+        if discovered == expected:
+            return True
+        match = re.fullmatch(r"([^/\s]+)/([^:\s]+):([A-Za-z0-9_.-]+)", expected)
+        if match is None:
+            return False
+        owner, repository, variant = (part.lower() for part in match.groups())
+        path = discovered.replace("\\", "/").lower()
+        filename = path.rsplit("/", 1)[-1]
+        return (f"/models--{owner}--{repository}/" in path
+                and filename.endswith(".gguf") and variant in filename[:-5])
+
+    async def stream(self, request, context, *, response_schema=None, enable_thinking=None):
         response = None
         try:
             context.check()
@@ -86,8 +101,18 @@ class LlamaServerAdapter:
                        "stream_options": {"include_usage": True},
                        "max_tokens": min(request.config.max_output_tokens,
                                          self.settings.max_output_tokens)}
+            if enable_thinking is not None:
+                payload['chat_template_kwargs'] = {'enable_thinking': enable_thinking}
+            if response_schema is not None:
+                payload['chat_template_kwargs'] = {'enable_thinking': False}
+                payload['temperature'] = 0
+                payload["response_format"] = {"type": "json_schema", "json_schema": {
+                    "name": "pa_interpretation", "schema": response_schema}}
+                payload["max_tokens"] = min(request.config.max_output_tokens, 4096)
             outgoing = client.build_request("POST", self.settings.base_url + "/chat/completions",
                                             headers=self._headers(), json=payload)
+            if response_schema is not None:
+                outgoing.extensions['timeout']['read'] = 300
             for attempt in range(self.settings.max_retries + 1):
                 try:
                     response = await context.run(lambda: client.send(outgoing, stream=True))

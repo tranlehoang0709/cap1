@@ -7,6 +7,7 @@ from starlette.websockets import WebSocketDisconnect
 from app.api.lan_robot import resolved_execution_runtime
 from app.core.backend_config import BackendSettings
 from app.main import create_app
+from app.core.gateway_routing_config import GatewayRoutingSettings
 from tests.test_lan_bootstrap import Backend, PROOF
 
 
@@ -27,7 +28,14 @@ def test_other_provider_is_rejected_for_robot_voice():
         resolved_execution_runtime(config("OPENAI"))
 
 
-def test_backend_selected_local_fails_closed_before_cloud_pipeline(monkeypatch):
+def test_only_selected_device_gets_local_override():
+    routing = GatewayRoutingSettings(_env_file=None, local_device_uids="robot-local",
+        local_provider_id="1", local_model_id="2")
+    assert routing.target_for("robot-local") == ("1", "2")
+    assert routing.target_for("robot-cloud") == (None, None)
+
+
+def test_backend_selected_local_is_rejected_by_cloud_process(monkeypatch):
     monkeypatch.setenv("AI_SERVER_BACKEND_MODE", "integrated")
     for name, char in (("DEVICE", "A"), ("CONFIG", "B"), ("QUOTA", "C")):
         monkeypatch.setenv("AI_SERVER_BACKEND_" + name + "_TOKEN", char * 43)
@@ -38,19 +46,10 @@ def test_backend_selected_local_fails_closed_before_cloud_pipeline(monkeypatch):
         "credentialReference": None, "credential": None,
     })
     monkeypatch.setattr(BackendSettings, "create_client", lambda self: backend)
-    from app.api import lan_robot
-    cloud_pipeline = SimpleNamespace(called=False)
-    def forbidden(*args, **kwargs):
-        cloud_pipeline.called = True
-        raise AssertionError("LOCAL device entered Cloud pipeline")
-    monkeypatch.setattr(lan_robot, "create_live_robot", forbidden)
     app = create_app()
     with TestClient(app, base_url="https://testserver") as client:
         with pytest.raises(WebSocketDisconnect) as closed:
-            with client.websocket_connect("wss://testserver/ws/robot", headers=PROOF) as ws:
-                assert ws.receive_json() == {"type": "error",
-                    "code": "LOCAL_RUNTIME_NOT_READY", "retryable": True}
-                ws.receive_json()
-        assert closed.value.code == 1013
-    assert cloud_pipeline.called is False
+            with client.websocket_connect("wss://testserver/ws/robot", headers=PROOF):
+                pytest.fail("Cloud process accepted a Local device")
+        assert closed.value.code == 1008
     assert backend.calls == [("authorize", "provisioned-sd2"), ("resolve", "42")]

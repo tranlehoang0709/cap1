@@ -16,7 +16,8 @@ class RecordingLocalLLM:
     async def discover_model(self):
         return "ggml-org/gemma-4-e4b-it-GGUF:Q4_0"
 
-    async def stream(self, request, context):
+    async def stream(self, request, context, *, enable_thinking=None):
+        assert enable_thinking is False
         self.requests.append(request)
         yield ProviderDelta(f"Lượt {len(request.history) // 2 + 1}: {request.transcript}")
         yield ProviderDone(True, "completed", Usage(10, 4, 14))
@@ -66,6 +67,29 @@ def test_local_chat_sse_stream(monkeypatch):
             assert response.headers["content-type"].startswith("text/event-stream")
             assert "event: delta" in response.text and "event: done" in response.text
     asyncio.run(run())
+
+
+def test_incomplete_generation_logs_reason_without_private_content(monkeypatch, caplog):
+    app, fake = local_app(monkeypatch)
+
+    async def incomplete(request, context, *, enable_thinking=None):
+        assert enable_thinking is False
+        yield ProviderDone(False, 'token_limit', Usage(56, 256, 312))
+
+    fake.stream = incomplete
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test') as client:
+            response = await client.post('/local/chat', headers={'Authorization': 'Bearer ' + TOKEN},
+                json={'user_id': 'u', 'session_id': 's', 'content': 'private-content'})
+            assert response.status_code == 503
+            assert response.json() == {'detail': 'provider_error'}
+
+    asyncio.run(run())
+    records = [r for r in caplog.records if getattr(r, 'event', None) == 'local_chat_incomplete']
+    assert len(records) == 1 and records[0].reason == 'token_limit'
+    assert records[0].status == 'empty'
+    assert 'private-content' not in caplog.text and TOKEN not in caplog.text
 
 
 def test_llama_openai_compatible_sse_contract(monkeypatch):

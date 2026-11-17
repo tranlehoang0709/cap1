@@ -9,7 +9,6 @@ import logging
 from app.models.audio import AudioFrame, AudioMetadata
 from app.models.tts import AudioFormat, PlaybackEvidence, TTSConfig, TTSAudioChunk, TTSRequest, TTSError, TTSErrorCode
 from app.protocol.audio_framing import FramingConfig, encode_audio_frame
-from app.clients.gemini_tts import PCM_FORMAT as GEMINI_PCM_FORMAT
 from app.services.opus_codec import CodecError, OpusCodec, PCMOpusFrames, resample_pcm16
 from app.core.logging import get_logger, log_event
 
@@ -17,6 +16,7 @@ logger = get_logger("robot_transport")
 
 OPUS_FORMAT = AudioFormat(AudioMetadata("opus", 16000, 1, 60), "raw")
 PCM_FORMAT = AudioFormat(AudioMetadata("pcm", 16000, 1, 60, "s16le"), "raw")
+GEMINI_PCM_FORMAT = AudioFormat(AudioMetadata("pcm", 24000, 1, 20, "s16le"), "s16le")
 
 
 class OpusTTSAdapter:

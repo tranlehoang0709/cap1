@@ -1,5 +1,6 @@
 """Authenticated LAN control plane. Media remains closed until contract readiness."""
 import asyncio
+import ipaddress
 import logging
 import time
 from uuid import uuid4
@@ -11,7 +12,6 @@ from app.clients.backend import BackendError
 from app.models.backend import Telemetry
 from app.services.audio_context import AudioContext
 from app.services.device_auth import authorize_device
-from app.services.live_robot import create_live_robot
 from app.services.orchestrator import Control, SessionState
 from app.models.audio import AudioFrame
 from app.protocol.audio_framing import FramingConfig, validate_audio_frame
@@ -25,6 +25,17 @@ IDLE_TIMEOUT_SECONDS = 45
 logger = get_logger("lan_robot")
 
 
+def create_live_robot(*args, **kwargs):
+    """Lazy Cloud factory; keeps Cloud SDK modules out of the Local process."""
+    from app.services.live_robot import create_live_robot as factory
+    return factory(*args, **kwargs)
+
+
+def create_local_robot(*args, **kwargs):
+    from app.services.live_local import create_local_robot as factory
+    return factory(*args, **kwargs)
+
+
 def resolved_execution_runtime(config) -> str:
     code = config.provider.code
     if code == "GEMINI":
@@ -36,7 +47,14 @@ def resolved_execution_runtime(config) -> str:
 
 @router.websocket("/ws/robot")
 async def robot(ws: WebSocket):
-    if ws.scope.get("scheme") != "wss":
+    loopback_local_proxy = False
+    try:
+        loopback_local_proxy = (ws.app.state.runtime == "local"
+            and ws.scope.get("scheme") == "ws" and ws.client is not None
+            and ipaddress.ip_address(ws.client.host).is_loopback)
+    except (ValueError, AttributeError):
+        pass
+    if ws.scope.get("scheme") != "wss" and not loopback_local_proxy:
         await ws.close(1008)
         return
     state = ws.app.state
@@ -67,9 +85,13 @@ async def robot(ws: WebSocket):
         await state.robot_slots.acquire()
         acquired = True
         session = await authorize_device(state.backend_client, proof, context())
-        await session.resolve(context())
+        provider_id, model_id = state.gateway_routing.target_for(proof.deviceUid)
+        await session.resolve(context(), provider_id=provider_id, model_id=model_id)
         initial_config = session.config
         execution_runtime = resolved_execution_runtime(initial_config)
+        if ((state.runtime == "local" and execution_runtime != "local")
+                or (state.runtime == "cloud" and execution_runtime != "cloud")):
+            raise ValueError("Resolved provider does not match process runtime")
         log_event(logger, logging.INFO, "robot.config.resolved",
                   "Resolved Backend robot configuration",
                   credential_id=(initial_config.credentialReference.id
@@ -79,14 +101,6 @@ async def robot(ws: WebSocket):
                   provider=initial_config.provider.code,
                   model=initial_config.model.modelCode)
         await ws.accept()
-        if execution_runtime == "local":
-            log_event(logger, logging.WARNING, "robot.local_route.unavailable",
-                      "Local robot voice runtime is not ready",
-                      provider="LOCAL", error_code="LOCAL_RUNTIME_NOT_READY")
-            await ws.send_json({"type": "error", "code": "LOCAL_RUNTIME_NOT_READY",
-                                "retryable": True})
-            await ws.close(1013)
-            return
         incoming = await asyncio.wait_for(ws.receive(), HELLO_TIMEOUT_SECONDS)
         text = incoming.get("text")
         if not isinstance(text, str) or len(text.encode()) > 4096:
@@ -102,7 +116,10 @@ async def robot(ws: WebSocket):
                 or hello["features"].get("aiva_lan_v1") is not True):
             raise ValueError("Unsupported hello")
         session_id = uuid4().hex
-        orch, codec, llm, output = create_live_robot(state, ws, session, session_id, version)
+        if execution_runtime == "local":
+            orch, codec, llm, output = create_local_robot(state, ws, session, session_id, version)
+        else:
+            orch, codec, llm, output = create_live_robot(state, ws, session, session_id, version)
         framing = FramingConfig(version, 4096-framing_header(version))
         last_timestamp = None
         await ws.send_json({"type": "hello", "version": version, "transport": "websocket",
@@ -172,7 +189,8 @@ async def robot(ws: WebSocket):
                     await orch.task
                 if orch.state != SessionState.LISTENING or (orch.task is not None and not orch.task.done()):
                     raise ValueError('Busy turn')
-                await session.resolve(context(), include_credential=True)
+                await session.resolve(context(), include_credential=True,
+                                      provider_id=provider_id, model_id=model_id)
                 if session.config != initial_config:
                     raise ValueError('Configuration changed; reconnect required')
                 turn_id = uuid4().hex

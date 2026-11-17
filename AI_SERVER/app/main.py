@@ -8,6 +8,7 @@ from app.api.device_profiles import router as device_profiles_router
 from app.api.health import router
 from app.api.websocket import router as websocket_router
 from app.core.runtime_config import RuntimeSettings
+from app.core.gateway_routing_config import GatewayRoutingSettings
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, get_logger
 
@@ -44,13 +45,32 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application = FastAPI(title="AIVA-IoT AI Server", lifespan=lifespan)
     runtime = RuntimeSettings()
     application.state.runtime = runtime.runtime
+    application.state.gateway_routing = GatewayRoutingSettings()
     if runtime.runtime == "local":
+        import asyncio
         from app.api.local_runtime import install_local_routes
+        from app.api.lan_robot import router as lan_robot_router
+        from app.core.backend_config import BackendSettings
+        from app.core.robot_config import RobotSettings
+        from app.services.backend_execution import UsageReporter
+        from app.core.llm_config import LLMSettings
         application.state.settings = settings if settings is not None else Settings(
             _env_file=None, host="127.0.0.1", port=8002, reload=False)
+        application.state.backend_settings = BackendSettings()
+        application.state.backend_client = (
+            application.state.backend_settings.create_client()
+            if application.state.backend_settings.mode == "integrated" else None)
+        application.state.robot_settings = RobotSettings()
+        application.state.live_usage_reporter = UsageReporter(
+            application.state.backend_client, max_entries=10000)
+        application.state.live_execution_slots = asyncio.Semaphore(
+            LLMSettings().max_concurrent_requests)
+        application.state.robot_slots = asyncio.Semaphore(
+            application.state.robot_settings.max_sessions)
         application.include_router(router)
         application.include_router(device_profiles_router)
         install_local_routes(application)
+        application.include_router(lan_robot_router)
         return application
     from app.core.robot_config import RobotSettings
     from app.core.lan_config import LanSettings

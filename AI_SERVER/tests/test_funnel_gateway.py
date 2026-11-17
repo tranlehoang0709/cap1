@@ -108,7 +108,11 @@ def test_real_tcp_upgrade_and_binary_both_directions():
     listener = socket.socket()
     listener.bind(('127.0.0.1', 0))
     port = listener.getsockname()[1]
-    server = uvicorn.Server(uvicorn.Config(RobotGateway(echo), lifespan='off',
+    gateway = RobotGateway(echo)
+    async def gemini_route(scope):
+        return "GEMINI"
+    gateway._provider = gemini_route
+    server = uvicorn.Server(uvicorn.Config(gateway, lifespan='off',
                             proxy_headers=False, log_level='error', ws_max_size=4096))
     worker = threading.Thread(target=server.run, kwargs={'sockets': [listener]}, daemon=True)
     worker.start()

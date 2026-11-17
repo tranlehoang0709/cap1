@@ -10,3 +10,4 @@ opuslib-next-bundled==0.1.1; platform_system == "Windows"
 pyserial==3.5
 faster-whisper==1.2.1
 piper-tts==1.8.0
+tzdata==2025.2

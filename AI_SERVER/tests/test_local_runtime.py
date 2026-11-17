@@ -15,7 +15,7 @@ import sys
 from app.main import app
 assert app.state.runtime == "local"
 assert app.state.settings.port == 8002
-assert not hasattr(app.state, "backend_client")
+assert hasattr(app.state, "backend_client")
 assert not any(name.startswith(("app.clients.gemini", "app.clients.openai", "google.genai", "openai")) for name in sys.modules)
 assert "app.services.live_robot" not in sys.modules
 '''
@@ -76,3 +76,15 @@ def test_llama_metadata(monkeypatch, case, expected):
     else:
         with pytest.raises(LocalLLMError, match=expected):
             asyncio.run(adapter.discover_model())
+
+
+def test_local_model_binding_accepts_only_matching_huggingface_cache_path():
+    from app.clients.local.llama import LlamaServerAdapter
+    expected = "ggml-org/gemma-4-e4b-it-GGUF:Q4_0"
+    actual = ("C:/cache/models--ggml-org--gemma-4-e4b-it-GGUF/snapshots/abc/"
+              "gemma-4-E4B-it-Q4_0.gguf")
+    assert LlamaServerAdapter.matches_model(expected, expected)
+    assert LlamaServerAdapter.matches_model(expected, actual)
+    assert not LlamaServerAdapter.matches_model(expected, actual.replace("Q4_0", "Q8_0"))
+    assert not LlamaServerAdapter.matches_model(
+        expected, actual.replace("models--ggml-org", "models--other-org"))
