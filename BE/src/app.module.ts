@@ -25,6 +25,7 @@ import { WebChatModule } from './modules/web-chat/web-chat.module';
 import { InternalApiModule } from './modules/internal-api/internal-api.module';
 import { PairingModule } from './modules/pairing/pairing.module';
 import { RecoveryModule } from './modules/device-recovery/recovery.module';
+import { CalendarModule } from './modules/calendar/calendar.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { RecoveryModule } from './modules/device-recovery/recovery.module';
     DatabaseModule,
     AuthModule,
     UsersModule,
+    PairingModule,
     DevicesModule,
     ConversationsModule,
     WebChatModule,
@@ -51,8 +53,8 @@ import { RecoveryModule } from './modules/device-recovery/recovery.module';
     MonitoringModule,
     SystemSettingsModule,
     InternalApiModule,
-    PairingModule,
     RecoveryModule,
+    CalendarModule,
   ],
   controllers: [HealthController],
   providers: [

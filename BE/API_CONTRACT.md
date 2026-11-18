@@ -877,3 +877,47 @@ The currently active application routes include `/auth/register`, `/auth/login`,
 Registration returns a one-time `verification_token` for development delivery;
 the token is signed for 15 minutes and is consumed by `POST /auth/verify-email`.
 Production deployments should deliver that token through the configured email provider.
+
+## Reset bắt buộc trước khi bàn giao robot — 2026-11-05
+
+Phần này cập nhật quy tắc của cả hai nhóm API ghép nối nêu ở các phần trước.
+
+- `DELETE /devices/{id}/assignment` không còn hỗ trợ tự gỡ liên kết. Mọi caller
+  đã xác thực nhận HTTP 403 `ADMIN_RECOVERY_REQUIRED`; không thay đổi assignment,
+  credential hoặc lifecycle. Caller cũ phải chuyển sang luồng Admin, không retry
+  DELETE và không tự coi robot là available.
+- Admin dùng `POST /admin/devices/{id}/revoke`, body `{reason}`, header
+  `Idempotency-Key` 16–128 ký tự chữ/số/`_`/`-`. Giữ nguyên key/body khi retry cùng
+  thao tác. Recovery hiện có khóa robot, xóa đúng assignment của robot, thu hồi
+  credential/session/code, hủy pending request và tạo reset job trong transaction.
+  Không xóa User, các robot khác, messages hoặc conversations.
+- `reset_pending` chỉ trở lại `available` qua ACK thành công của job mới nhất,
+  đúng operation/device/attempt/challenge, xác nhận cả session invalidation và
+  firmware reset. ACK sai, stale hoặc failed không mở cấp mã. Claim/send/offline
+  không phải bằng chứng reset hoàn tất.
+- `POST /devices/admin/{id}/pairing-codes` vẫn nhận `{ttl_minutes}` (1–60) và trả
+  `{pairing_code,expires_at}`. Phải available, không owner/pending và qua reset
+  confirmation gate. Mã trả trong registration cũng dùng cùng gate.
+- `/devices/pairing-requests` (snake_case payload/response mà FE đang dùng) và
+  `/user/devices/pairing-requests` (camelCase payload, uppercase status) dùng chung
+  service và **tiêu thụ mã trong transaction tạo yêu cầu**. Duyệt qua cả hai nhóm
+  Admin kiểm tra reset gate và reservation; không tiêu thụ lại reservation hợp lệ.
+  Reject không khôi phục mã đã dùng. Đường reject quay về available cũng kiểm tra
+  owner/pending/reset ở repository, không dùng để lách reset của lịch sử cũ.
+- Revoke/reset không xóa hoặc chuyển owner của conversations/messages. Chính sách
+  đọc hiện tại của repo vẫn yêu cầu current approved assignment cho lịch sử robot:
+  User cũ mất quyền đọc lịch sử robot sau revoke, dù dữ liệu còn nguyên; User mới
+  không được đọc dữ liệu User cũ. Web history vẫn theo tài khoản. Đây là chính sách
+  được cập nhật đồng thời trong working tree, không mở lại quyền đọc trong bản vá reset.
+
+## PA-01 / PA-02 / PA-14 Calendar and reminders
+
+All routes require the normal user JWT. A user can only read or mutate their own events and reminders.
+
+- `GET /user/calendar/events?from=<ISO>&to=<ISO>` lists events in the optional time window.
+- `POST /user/calendar/events` creates an event with `title`, `starts_at`, `ends_at`, optional `description`, `timezone`, and RFC 5545 `recurrence_rule`. An overlapping event returns `409` with `code=CALENDAR_CONFLICT`; retry with `confirm_conflict=true` to explicitly accept the overlap.
+- `GET/PATCH/DELETE /user/calendar/events/:id` reads, updates, or deletes an owned event. PATCH follows the same conflict confirmation rule.
+- `GET /user/reminders` and `POST /user/reminders` list/create reminders. A reminder may reference an owned calendar event and an owned device. `delivery_key` prevents duplicate scheduling.
+- `GET /internal/reminders/due?limit=20` claims due reminders and `POST /internal/reminders/:id/ack` acknowledges `delivered` or `failed` delivery. These internal routes currently use the existing Admin JWT guard; a dedicated AI Server service-token contract is still required before production Xiaozhi delivery.
+
+Apply the additive schema with `npm run migration:calendar` after the baseline migration. No existing tables or rows are deleted.
