@@ -51,6 +51,28 @@ export class PersonalAssistantController {
     return this.pa.listTasks(user.id, query);
   }
 
+  @Get('user/tasks/incomplete')
+  @Roles('USER')
+  @ApiOperation({ summary: 'List unfinished personal tasks (PA-15)' })
+  listIncompleteTasks(@CurrentUser() user: AuthenticatedUser, @Query() query: ListTasksQueryDto) {
+    return this.pa.listIncompleteTasks(user.id, query);
+  }
+
+  @Get('user/tasks/report')
+  @Roles('USER')
+  @ApiOperation({ summary: 'Report personal task completion by day, week or month (PA-18)' })
+  taskReport(@CurrentUser() user: AuthenticatedUser, @Query('period') period: string, @Query('date') date: string,
+    @Query('timezone') timezone = 'UTC') {
+    return this.pa.taskReport(user.id, period, date, timezone);
+  }
+
+  @Get('user/tasks/deadlines')
+  @Roles('USER')
+  @ApiOperation({ summary: 'List upcoming and overdue unfinished tasks (PA-22)' })
+  taskDeadlines(@CurrentUser() user: AuthenticatedUser) {
+    return this.pa.taskDeadlines(user.id);
+  }
+
   @Post('user/tasks/resolve')
   @Roles('USER')
   @HttpCode(HttpStatus.OK)

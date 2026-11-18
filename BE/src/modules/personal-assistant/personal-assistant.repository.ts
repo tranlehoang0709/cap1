@@ -402,6 +402,146 @@ export class PersonalAssistantRepository {
     };
   }
 
+  async listIncompleteTasks(userId: string, page: number, limit: number) {
+    const where = "t.user_id = ? AND t.deleted_at IS NULL AND t.status IN ('pending', 'in_progress', 'partial')";
+    const [counts] = await this.pool.execute<RowDataPacket[]>(
+      `SELECT COUNT(*) AS total FROM personal_tasks t WHERE ${where}`, [userId]
+    );
+    const [rows] = await this.pool.execute<RowDataPacket[]>(
+      `SELECT t.*, p.title AS plan_title, ev.title AS event_title
+       FROM personal_tasks t
+       LEFT JOIN personal_plans p ON p.id = t.plan_id AND p.deleted_at IS NULL
+       LEFT JOIN personal_events ev ON ev.id = t.event_id
+       WHERE ${where}
+       ORDER BY t.due_at IS NULL, t.due_at, t.id DESC LIMIT ? OFFSET ?`,
+      [userId, limit, (page - 1) * limit]
+    );
+    return { items: rows.map(mapTaskRow), total: Number(counts[0]?.total ?? 0) };
+  }
+
+  async getMissedPlanSessions(userId: string, now: Date, conn?: PoolConnection) {
+    const [rows] = await (conn ?? this.pool).execute<RowDataPacket[]>(
+      `SELECT t.id, t.plan_id, t.session_number, t.status, t.due_at
+       FROM personal_tasks t
+       JOIN personal_plans p ON p.id = t.plan_id AND p.user_id = t.user_id AND p.deleted_at IS NULL
+       WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.session_number IS NOT NULL
+         AND t.due_at < ?
+       ORDER BY t.plan_id, t.session_number, t.id`, [userId, now]
+    );
+    const warnings: { plan_id: string; consecutive_missed_sessions: number; first_missed_task_id: string }[] = [];
+    let planId = '', streak = 0, lastSession = 0, firstTaskId = '';
+    const flush = () => {
+      if (streak >= 3) warnings.push({ plan_id: planId, consecutive_missed_sessions: streak, first_missed_task_id: firstTaskId });
+    };
+    for (const row of rows) {
+      const currentPlan = String(row.plan_id);
+      if (currentPlan !== planId) { flush(); planId = currentPlan; streak = 0; lastSession = 0; }
+      const session = Number(row.session_number);
+      const missed = ['pending', 'in_progress', 'partial'].includes(String(row.status));
+      if (!missed || session !== lastSession + 1) { streak = 0; firstTaskId = ''; }
+      if (missed) { if (streak === 0) firstTaskId = String(row.id); streak += 1; }
+      lastSession = session;
+    }
+    flush();
+    return warnings;
+  }
+
+  async getTaskReport(userId: string, start: Date, end: Date) {
+    const [rows] = await this.pool.execute<RowDataPacket[]>(
+      `SELECT COUNT(*) AS total_tasks,
+              COALESCE(SUM(status = 'completed' AND completed_at < ?), 0) AS completed_tasks,
+              COALESCE(SUM(status <> 'completed' OR completed_at >= ? OR completed_at IS NULL), 0) AS incomplete_tasks
+       FROM personal_tasks
+       WHERE user_id = ? AND deleted_at IS NULL AND status <> 'cancelled'
+         AND due_at >= ? AND due_at < ?`, [end, end, userId, start, end]
+    );
+    const total = Number(rows[0]?.total_tasks ?? 0);
+    const completed = Number(rows[0]?.completed_tasks ?? 0);
+    return { total_tasks: total, completed_tasks: completed,
+      incomplete_tasks: Number(rows[0]?.incomplete_tasks ?? 0),
+      completion_percent: total ? Math.round(completed * 100 / total) : 0 };
+  }
+
+  async getTaskDeadlines(userId: string, now: Date) {
+    const [rows] = await this.pool.execute<RowDataPacket[]>(
+      `SELECT t.*, p.title AS plan_title, ev.title AS event_title
+       FROM personal_tasks t
+       LEFT JOIN personal_plans p ON p.id = t.plan_id AND p.deleted_at IS NULL
+       LEFT JOIN personal_events ev ON ev.id = t.event_id
+       WHERE t.user_id = ? AND t.deleted_at IS NULL
+         AND t.status IN ('pending', 'in_progress', 'partial') AND t.due_at IS NOT NULL
+         AND t.due_at < DATE_ADD(?, INTERVAL 3 DAY)
+       ORDER BY t.due_at, t.id`, [userId, now]
+    );
+    return rows.map((row) => ({ ...mapTaskRow(row), deadline_state:
+      new Date(row.due_at).getTime() < now.getTime() ? 'overdue' :
+      new Date(row.due_at).getTime() < now.getTime() + 86400000 ? 'within_1_day' : 'within_3_days' }));
+  }
+
+  async sweepTaskAlerts(now: Date): Promise<void> {
+    const [users] = await this.pool.execute<RowDataPacket[]>(
+      `SELECT DISTINCT user_id FROM personal_tasks WHERE deleted_at IS NULL AND due_at IS NOT NULL`
+    );
+    for (const user of users) {
+      const userId = String(user.user_id);
+      await this.withTransaction(async (conn) => {
+        // Serializes reminder creation across Backend instances without changing the schema.
+        const [owners] = await conn.execute<RowDataPacket[]>(
+          `SELECT id FROM users WHERE id = ? FOR UPDATE`, [userId]
+        );
+        if (!owners[0]) return;
+        const [tasks] = await conn.execute<RowDataPacket[]>(
+          `SELECT id, title, due_at FROM personal_tasks
+           WHERE user_id = ? AND deleted_at IS NULL
+             AND status IN ('pending', 'in_progress', 'partial') AND due_at IS NOT NULL
+             AND due_at <= DATE_ADD(?, INTERVAL 3 DAY)`, [userId, now]
+        );
+        const missedPlans = await this.getMissedPlanSessions(userId, now, conn);
+        const activeMisses = new Set(missedPlans.map(item => item.first_missed_task_id));
+        const [oldAlerts] = await conn.execute<RowDataPacket[]>(
+          `SELECT r.id, r.task_id, r.message, t.status, t.deleted_at, t.due_at
+           FROM personal_reminders r LEFT JOIN personal_tasks t ON t.id = r.task_id
+           WHERE r.user_id = ? AND r.status = 'pending'
+             AND (r.message LIKE '%[PA-22:%' OR r.message LIKE '%[PA-15:%')`, [userId]
+        );
+        for (const alert of oldAlerts) {
+          const message = String(alert.message);
+          const active = !alert.deleted_at && ['pending', 'in_progress', 'partial'].includes(String(alert.status));
+          const dueMatches = alert.due_at && message.endsWith(`:${new Date(alert.due_at).toISOString()}]`);
+          const keep = active && (message.includes('[PA-15:')
+            ? activeMisses.has(String(alert.task_id)) : Boolean(dueMatches));
+          if (!keep) {
+            await conn.execute(`UPDATE personal_reminders SET status = 'cancelled', updated_at = UTC_TIMESTAMP() WHERE id = ?`, [alert.id]);
+            await conn.execute(`UPDATE reminder_deliveries SET status = 'cancelled' WHERE reminder_id = ? AND status = 'pending'`, [alert.id]);
+          }
+        }
+        for (const task of tasks) {
+          const due = new Date(task.due_at);
+          const remaining = due.getTime() - now.getTime();
+          const stage = remaining <= 0 ? 'overdue' : remaining <= 86400000 ? '1d' : '3d';
+          const message = `Task ${String(task.title).slice(0, 180)}: ${stage} [PA-22:${stage}:${due.toISOString()}]`;
+          await this.insertTaskAlertIfAbsent(conn, userId, String(task.id), message, now);
+        }
+        for (const missed of missedPlans) {
+          const message = `Plan ${missed.plan_id}: 3 consecutive sessions missed [PA-15:${missed.first_missed_task_id}]`;
+          await this.insertTaskAlertIfAbsent(conn, userId, missed.first_missed_task_id, message, now);
+        }
+      });
+    }
+  }
+
+  private async insertTaskAlertIfAbsent(conn: PoolConnection, userId: string, taskId: string,
+    message: string, now: Date): Promise<void> {
+    const [existing] = await conn.execute<RowDataPacket[]>(
+      `SELECT id FROM personal_reminders WHERE user_id = ? AND task_id = ? AND message = ? LIMIT 1`,
+      [userId, taskId, message]
+    );
+    if (!existing[0]) await this.insertReminder(conn, {
+      user_id: userId, task_id: taskId, event_id: null, remind_at: now,
+      message, channel: 'WEB',
+    });
+  }
+
   async findPlanByIdRaw(
     planId: string,
     conn?: PoolConnection,

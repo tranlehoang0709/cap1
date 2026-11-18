@@ -3,7 +3,10 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnApplicationBootstrap,
+  OnApplicationShutdown,
 } from '@nestjs/common';
 import {
   AcknowledgeReminderDto,
@@ -71,6 +74,22 @@ function parseOptionalDateOnly(raw: string | null | undefined, label: string): s
   return trimmed;
 }
 
+function localMidnightUtc(date: Date, timezone: string): Date {
+  const desired = date.getTime();
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  });
+  let instant = desired;
+  for (let i = 0; i < 3; i++) {
+    const fields = Object.fromEntries(formatter.formatToParts(new Date(instant)).map(p => [p.type, p.value]));
+    const local = Date.UTC(Number(fields.year), Number(fields.month) - 1, Number(fields.day),
+      Number(fields.hour), Number(fields.minute));
+    instant += desired - local;
+  }
+  return new Date(instant);
+}
+
 function timestampsMatch(expectedIso: string, actualIso: string): boolean {
   const expectedMs = Date.parse(expectedIso);
   const actualMs = Date.parse(actualIso);
@@ -81,8 +100,28 @@ function timestampsMatch(expectedIso: string, actualIso: string): boolean {
 }
 
 @Injectable()
-export class PersonalAssistantService {
+export class PersonalAssistantService implements OnApplicationBootstrap, OnApplicationShutdown {
   constructor(private readonly repo: PersonalAssistantRepository) {}
+  private timer?: ReturnType<typeof setInterval>;
+  private running: Promise<void> | null = null;
+  private readonly logger = new Logger(PersonalAssistantService.name);
+
+  onApplicationBootstrap() {
+    if (process.env.NODE_ENV === 'test') return;
+    const sweep = () => {
+      if (!this.running) this.running = this.repo.sweepTaskAlerts(new Date())
+        .catch(() => this.logger.error('Personal task alert sweep failed; will retry'))
+        .finally(() => { this.running = null; });
+    };
+    sweep();
+    this.timer = setInterval(sweep, 60000);
+    this.timer.unref();
+  }
+
+  async onApplicationShutdown() {
+    if (this.timer) clearInterval(this.timer);
+    if (this.running) await this.running;
+  }
 
   async listTasks(userId: string, query: ListTasksQueryDto) {
     const page = Math.max(1, Number(query.page ?? 1));
@@ -106,6 +145,37 @@ export class PersonalAssistantService {
       total_pages: Math.ceil(result.total / limit),
       allowed_priorities: [...ALLOWED_TASK_PRIORITIES],
     };
+  }
+
+  async listIncompleteTasks(userId: string, query: ListTasksQueryDto) {
+    const page = Math.max(1, Number(query.page ?? 1));
+    const limit = Math.min(100, Math.max(1, Number(query.limit ?? 20)));
+    const result = await this.repo.listIncompleteTasks(userId, page, limit);
+    const missed_plans = await this.repo.getMissedPlanSessions(userId, new Date());
+    return { ...result, page, limit, total_pages: Math.ceil(result.total / limit), missed_plans };
+  }
+
+  async taskReport(userId: string, period: string, date: string, timezone = 'UTC') {
+    if (!['day', 'week', 'month'].includes(period)) throw new BadRequestException('Invalid period');
+    try { new Intl.DateTimeFormat('en-US', { timeZone: timezone }); }
+    catch { throw new BadRequestException('Invalid timezone'); }
+    const parsed = parseOptionalDateOnly(date, 'date');
+    if (!parsed) throw new BadRequestException('date is required');
+    const start = new Date(`${parsed}T00:00:00.000Z`);
+    if (period === 'week') start.setUTCDate(start.getUTCDate() - ((start.getUTCDay() + 6) % 7));
+    if (period === 'month') start.setUTCDate(1);
+    const end = new Date(start);
+    if (period === 'day') end.setUTCDate(end.getUTCDate() + 1);
+    if (period === 'week') end.setUTCDate(end.getUTCDate() + 7);
+    if (period === 'month') end.setUTCMonth(end.getUTCMonth() + 1);
+    const startUtc = localMidnightUtc(start, timezone);
+    const endUtc = localMidnightUtc(end, timezone);
+    const counts = await this.repo.getTaskReport(userId, startUtc, endUtc);
+    return { period, timezone, start_at: startUtc.toISOString(), end_at: endUtc.toISOString(), ...counts };
+  }
+
+  async taskDeadlines(userId: string) {
+    return this.repo.getTaskDeadlines(userId, new Date());
   }
 
   private async resolveValidParentTaskId(
