@@ -2381,3 +2381,50 @@
 {"timestamp":"2026-11-19T17:42:58.509128+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
 {"timestamp":"2026-11-19T17:42:58.532266+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
 {"timestamp":"2026-11-19T17:43:02.309907+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0","provider":"LOCAL"}
+{"timestamp":"2026-11-19T17:47:19.366070+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"01db0e4579885cc6"}
+{"timestamp":"2026-11-19T17:47:26.077524+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"PROCESSING","turn_ref":"01db0e4579885cc6"}
+{"timestamp":"2026-11-19T17:47:26.078523+00:00","level":"INFO","event":"stt.start","message":"STT started","stage":"stt","turn_ref":"01db0e4579885cc6"}
+{"timestamp":"2026-11-19T17:47:26.581855+00:00","level":"INFO","event":"stt.success","message":"STT completed","stage":"stt","turn_ref":"01db0e4579885cc6","latency_ms":7214.819300000045}
+{"timestamp":"2026-11-19T17:47:27.050126+00:00","level":"INFO","event":"llm.first_token","message":"LLM first token received","stage":"llm","turn_ref":"01db0e4579885cc6","latency_ms":467.64660000008007}
+{"timestamp":"2026-11-19T17:47:27.338672+00:00","level":"INFO","event":"tts.first_audio","message":"TTS first audio received","stage":"tts","turn_ref":"01db0e4579885cc6","latency_ms":63.915899999983594,"audio_bytes":122}
+{"timestamp":"2026-11-19T17:47:27.340407+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"SPEAKING","turn_ref":"01db0e4579885cc6"}
+{"timestamp":"2026-11-19T17:47:27.650823+00:00","level":"INFO","event":"playback.ack","message":"Playback ready acknowledgement accepted","ack_state":"ready","session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:47:27.651995+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":1,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:47:29.743225+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":25,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:47:31.348323+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":50,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:47:32.956563+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":75,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:47:34.547034+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":100,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:47:36.163338+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":125,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:47:37.756406+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":150,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:47:38.267103+00:00","level":"WARNING","event":"history.assistant_persist_failed","message":"Assistant message persistence failed; continuing voice pipeline","stage":"history","error_code":"backend_http_denied","http_status":400}
+{"timestamp":"2026-11-19T17:47:39.358874+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":175,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:47:40.638149+00:00","level":"INFO","event":"playback.ready","message":"Playback stream finished sending","ack_state":"ready","session_ref":"03f4466020f30df0","audio_frames":195}
+{"timestamp":"2026-11-19T17:47:41.513547+00:00","level":"INFO","event":"playback.ack","message":"Playback complete acknowledgement accepted","ack_state":"complete","session_ref":"03f4466020f30df0","audio_frames":195}
+{"timestamp":"2026-11-19T17:47:41.521151+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"01db0e4579885cc6"}
+{"timestamp":"2026-11-19T17:47:41.521538+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","stage":"stt_ms","state":"LISTENING","turn_ref":"01db0e4579885cc6","latency_ms":7214.819300000045}
+{"timestamp":"2026-11-19T17:47:41.521798+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","stage":"llm_first_token_ms","state":"LISTENING","turn_ref":"01db0e4579885cc6","latency_ms":467.64660000008007}
+{"timestamp":"2026-11-19T17:47:41.522055+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","stage":"tts_first_audio_ms","state":"LISTENING","turn_ref":"01db0e4579885cc6","latency_ms":63.915899999983594}
+{"timestamp":"2026-11-19T17:47:41.522301+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","stage":"total_ms","state":"LISTENING","turn_ref":"01db0e4579885cc6","latency_ms":22155.531800000063}
+{"timestamp":"2026-11-19T17:47:54.603643+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"ef3e741a34536d0c"}
+{"timestamp":"2026-11-19T17:48:02.360546+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"PROCESSING","turn_ref":"ef3e741a34536d0c"}
+{"timestamp":"2026-11-19T17:48:02.361352+00:00","level":"INFO","event":"stt.start","message":"STT started","stage":"stt","turn_ref":"ef3e741a34536d0c"}
+{"timestamp":"2026-11-19T17:48:02.957050+00:00","level":"INFO","event":"stt.success","message":"STT completed","stage":"stt","turn_ref":"ef3e741a34536d0c","latency_ms":8352.34330000003}
+{"timestamp":"2026-11-19T17:48:04.645344+00:00","level":"INFO","event":"llm.first_token","message":"LLM first token received","stage":"llm","turn_ref":"ef3e741a34536d0c","latency_ms":1687.7051999999821}
+{"timestamp":"2026-11-19T17:48:04.918374+00:00","level":"INFO","event":"tts.first_audio","message":"TTS first audio received","stage":"tts","turn_ref":"ef3e741a34536d0c","latency_ms":43.726399999968635,"audio_bytes":126}
+{"timestamp":"2026-11-19T17:48:04.919194+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"SPEAKING","turn_ref":"ef3e741a34536d0c"}
+{"timestamp":"2026-11-19T17:48:05.123280+00:00","level":"INFO","event":"playback.ack","message":"Playback ready acknowledgement accepted","ack_state":"ready","session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:48:05.124946+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":1,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:48:08.836146+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":25,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:48:10.446075+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":50,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:48:12.054948+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":75,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:48:13.665054+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":100,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:48:15.274524+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":125,"session_ref":"03f4466020f30df0"}
+{"timestamp":"2026-11-19T17:48:16.366247+00:00","level":"WARNING","event":"history.assistant_persist_failed","message":"Assistant message persistence failed; continuing voice pipeline","stage":"history","error_code":"backend_http_denied","http_status":400}
+{"timestamp":"2026-11-19T17:48:16.372458+00:00","level":"WARNING","event":"tts.pipeline_error","message":"TTS pipeline failed","stage":"playback","error_type":"unsafe_text"}
+{"timestamp":"2026-11-19T17:48:16.372747+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"ERROR","turn_ref":"ef3e741a34536d0c"}
+{"timestamp":"2026-11-19T17:48:16.373050+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","stage":"stt_ms","state":"ERROR","turn_ref":"ef3e741a34536d0c","latency_ms":8352.34330000003}
+{"timestamp":"2026-11-19T17:48:16.373303+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","stage":"llm_first_token_ms","state":"ERROR","turn_ref":"ef3e741a34536d0c","latency_ms":1687.7051999999821}
+{"timestamp":"2026-11-19T17:48:16.373554+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","stage":"tts_first_audio_ms","state":"ERROR","turn_ref":"ef3e741a34536d0c","latency_ms":43.726399999968635}
+{"timestamp":"2026-11-19T17:48:16.373800+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","stage":"total_ms","state":"ERROR","turn_ref":"ef3e741a34536d0c","latency_ms":21769.448799999962}
+{"timestamp":"2026-11-19T17:48:16.374037+00:00","level":"WARNING","event":"orchestrator.error","message":"Pipeline failed","state":"ERROR","turn_ref":"ef3e741a34536d0c","reason":"unsafe_text"}
+{"timestamp":"2026-11-19T17:48:17.246090+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"7f1615cb418c9fcc"}
