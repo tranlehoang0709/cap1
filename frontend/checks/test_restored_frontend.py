@@ -212,7 +212,14 @@ class RestoredAuthenticationTests(unittest.TestCase):
         element(app.button, "Lưu cấu hình").click().run()
         self.assert_clean(app)
         writes = [c for c in self.fixture.calls if c[:2] == ("/ai/profile", "PATCH")]
-        self.assertEqual(writes[-1][2], {"preferred_provider_id": None, "preferred_llm_model_id": None})
+        self.assertEqual(writes[-1][2], {
+            "assistant_name": "Fixture AIVA",
+            "language_code": "vi",
+            "voice_code": None,
+            "system_prompt": "Fixture prompt",
+            "preferred_provider_id": None,
+            "preferred_llm_model_id": None,
+        })
 
     def test_saved_chat_is_read_only_and_new_chat_never_creates_a_fake_turn(self):
         self.fixture.conversations = [{"id": "90", "user_id": "7", "title": "Saved fixture"}]

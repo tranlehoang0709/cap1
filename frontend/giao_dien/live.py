@@ -358,7 +358,14 @@ def dashboard_admin():
 
 
 def user_devices():
+    notice = st.session_state.pop("pairing_notice", None)
+    if st.session_state.pop("clear_pairing_code", False):
+        st.session_state["pairing_code_input"] = ""
+    if st.session_state.pop("clear_device_uid", False):
+        st.session_state["device_uid_input"] = ""
     devices = collection("/devices")
+    if notice:
+        st.success(notice)
     if devices is not None:
         st.subheader("Robot đã ghép")
         robot_rows = rows(devices)
@@ -439,13 +446,15 @@ def user_devices():
     st.subheader("Ghép nối thiết bị")
     st.caption("Nhập pairing code do hệ thống cấp; không có mã demo trong giao diện.")
     with st.form("pair_device"):
-        pairing_code = st.text_input("Pairing code", type="password")
+        pairing_code = st.text_input("Pairing code", type="password", key="pairing_code_input")
         send = st.form_submit_button("Gửi yêu cầu ghép nối")
     if send:
         result = call("/devices/pairing-requests", "POST", {"pairing_code": pairing_code.strip()})
         if result is not None:
-            st.success("Backend đã nhận yêu cầu ghép nối.")
+            st.session_state.pairing_notice = "Backend đã nhận yêu cầu ghép nối."
             st.json(result)
+            st.session_state.clear_pairing_code = True
+            st.rerun()
     requests = collection("/devices/pairing-requests/mine")
     if requests is not None:
         st.subheader("Yêu cầu của bạn")
@@ -690,7 +699,15 @@ def users_admin():
 
 
 def devices_admin():
+    if st.session_state.pop("clear_device_uid", False):
+        st.session_state["device_uid_input"] = ""
     devices = collection("/devices/admin/all")
+    requests = collection("/devices/admin/pairing-requests")
+    pending_device_ids = {
+        str(item.get("device_id")) for item in rows(requests)
+        if str(item.get("status", "")).lower() == "pending"
+    } if requests is not None else set()
+    requests_unavailable = requests is None
     if devices is not None:
         st.subheader("Thiết bị đã đăng ký")
         shown_devices = table(devices, key="admin_devices", filters=("connection_status", "lifecycle_status"))
@@ -699,14 +716,17 @@ def devices_admin():
             with st.expander(f"Thiết bị {device.get('device_uid', ident)}"):
                 st.json(device)
                 ttl = st.number_input("Pairing code hết hạn (phút)", 1, 60, 10, key=f"ttl_{ident}")
-                if st.button("Tạo pairing code", key=f"paircode_{ident}"):
+                blocked = (requests_unavailable
+                           or str(device.get("lifecycle_status", "")).lower() in {"assigned", "reset_pending"}
+                           or ident in pending_device_ids)
+                if st.button("Tạo pairing code", key=f"paircode_{ident}", disabled=blocked):
                     code = call(f"/devices/admin/{ident}/pairing-codes", "POST", {"ttl_minutes": int(ttl)})
                     if code is not None:
                         st.warning("Mã chỉ hiển thị theo phản hồi một lần từ Backend. Hãy chuyển mã an toàn cho người dùng.")
                         st.code(json.dumps(code, ensure_ascii=False))
     with panel(), st.form("register_device"):
         st.subheader("Đăng ký thiết bị vật lý")
-        device_uid = st.text_input("Device UID")
+        device_uid = st.text_input("Device UID", key="device_uid_input")
         display_name = st.text_input("Tên thiết bị")
         hardware = st.text_input("Hardware model")
         submit = st.form_submit_button("Đăng ký thiết bị")
@@ -715,7 +735,8 @@ def devices_admin():
         if result is not None:
             st.success("Đã đăng ký thiết bị.")
             st.json(result)
-    requests = collection("/devices/admin/pairing-requests")
+            st.session_state.clear_device_uid = True
+            st.rerun()
     if requests is not None:
         st.subheader("Yêu cầu ghép nối")
         shown_requests = table(requests, key="admin_pairing_requests", filters=("status",))
@@ -890,6 +911,7 @@ def render_page(page, account):
         "AI Chat": chat_page,
         "Robot của tôi": user_devices,
         "Trợ lý AI": assistant_settings,
+        "API Key cá nhân": personal_keys,
         "Lịch sử hội thoại": history_page,
         "Quyền riêng tư": privacy_page,
         "Tài khoản": lambda: account_page(account),
