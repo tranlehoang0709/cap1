@@ -3,7 +3,6 @@ import { authenticate, BackendError, checkOrigin, destroySession, errorResponse,
 import { resolveOperation } from '@/lib/operations';
 import { chatReply, object } from '@/lib/contracts';
 import { validateBody, sanitizeResponse, assertAcknowledged, filterSystemSettings } from '@/lib/validation';
-import { providerForChat, requireSystemScope } from '@/lib/chat-policy';
 export const runtime = 'nodejs';
 export async function POST(req: Request) {
     try {
@@ -28,31 +27,14 @@ export async function POST(req: Request) {
         }
         if (input.operation === 'chat' || input.operation === 'chatReadiness') {
             try {
-                const catalogue = await upstream('/ai/providers', 'GET', undefined, session.access);
-                let profile: unknown = {};
-                try {
-                    profile = await upstream('/user/ai/profile', 'GET', undefined, session.access);
-                }
-                catch (profileErr) {
-                    if (!(profileErr instanceof BackendError && profileErr.status === 403))
-                        throw profileErr;
-                }
-                const preferredId = typeof object(profile).preferredProviderId === 'string' && object(profile).preferredProviderId
-                    ? String(object(profile).preferredProviderId)
-                    : undefined;
-                const configuredId = process.env.AIVA_CHAT_PROVIDER_ID?.trim() || preferredId;
-                const selected = providerForChat(catalogue, configuredId);
-                if (selected.code !== 'LOCAL')
-                    requireSystemScope(selected, profile);
                 if (input.operation === 'chatReadiness')
-                    return Response.json({ configured: true, provider: { id: String(selected.id), code: selected.code, name: selected.name } }, { headers: { 'Cache-Control': 'no-store' } });
+                    return Response.json({ configured: true, provider: { code: 'LOCAL', name: 'AIVA Local' } }, { headers: { 'Cache-Control': 'no-store' } });
                 const rawConvId = body?.conversation_id;
                 const conversationId = rawConvId !== undefined && rawConvId !== null && String(rawConvId).trim() !== ''
                     ? z.string().regex(/^[1-9]\d{0,18}$/).parse(String(rawConvId).trim())
                     : undefined;
                 body = {
                     content: z.string().trim().min(1).max(16000).parse(body?.content),
-                    provider_id: String(selected.id),
                     ...(conversationId ? { conversation_id: conversationId } : {}),
                 };
             }

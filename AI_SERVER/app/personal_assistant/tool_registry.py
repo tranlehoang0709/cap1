@@ -77,12 +77,12 @@ _VERBS = {'create': 'Đề nghị tạo', 'query': 'Truy vấn', 'update': 'Đ�
           'generate': 'Tổng hợp'}
 
 
-def _spec(tool_id, pa, model, *, read=False, output=None, prerequisites=()):
+def _spec(tool_id, pa, model, *, read=False, output=None, prerequisites=(), status='NOT_IMPLEMENTED'):
     subject, action = tool_id.split('.', 1)
     return ToolSpec(tool_id, (pa,) if isinstance(pa, str) else pa,
                     action, _VERBS[action] + ' ' + _SUBJECTS[subject], model,
                     output or (c.QueryOutput if read else c.RecordOutput),
-                    'READ' if read else 'WRITE', prerequisites, _RULES.get(model, ()))
+                    'READ' if read else 'WRITE', prerequisites, _RULES.get(model, ()), status)
 
 
 _specs = [

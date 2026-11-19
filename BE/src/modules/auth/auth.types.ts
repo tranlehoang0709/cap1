@@ -18,6 +18,14 @@ export interface RefreshTokenPayload {
   jti: string;
 }
 
+export interface ToolDelegationPayload {
+  sub: string;
+  typ: 'tool_delegation';
+  scope: 'schedule.query';
+  sid: string;
+  aud: string;
+}
+
 export interface TokenPair {
   access_token: string;
   refresh_token: string;

@@ -15,7 +15,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { AuthRepository, OtpPurpose } from './auth.repository';
-import { AccessTokenPayload, RefreshTokenPayload, TokenPair } from './auth.types';
+import { AccessTokenPayload, RefreshTokenPayload, ToolDelegationPayload, TokenPair } from './auth.types';
 import { SmtpMailerService } from './smtp-mailer.service';
 
 const OTP_TTL_MS = 5 * 60 * 1000;
@@ -359,6 +359,26 @@ export class AuthService {
     if (currentPassword === newPassword) throw new BadRequestException('New password must differ from current password');
     await this.repository.changePassword(userId, await bcrypt.hash(newPassword, 12));
     return { success: true };
+  }
+
+  async issueToolDelegation(userId: string, scope: 'schedule.query', sessionId: string) {
+    const canLogin = await this.users.canLogin(userId);
+    if (!canLogin.allowed) throw new UnauthorizedException('Account cannot use tool delegation');
+    const ttl = 60;
+    const payload: ToolDelegationPayload = {
+      sub: userId, typ: 'tool_delegation', scope, sid: sessionId,
+      aud: 'aiva-backend-tool-execution',
+    };
+    return {
+      delegation_token: await this.jwt.signAsync(payload, {
+        secret: this.config.getOrThrow<string>('auth.accessTokenSecret'),
+        expiresIn: ttl, issuer: 'aiva-iot', audience: 'aiva-backend-tool-execution',
+      }),
+      token_type: 'Bearer' as const,
+      expires_in: ttl,
+      scope,
+      session_id: sessionId,
+    };
   }
 
   private async issueTokens(userId: string): Promise<TokenPair> {

@@ -4,7 +4,10 @@ import hmac
 import json
 import logging
 import time
+import os
 from uuid import uuid4
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -25,9 +28,18 @@ class LocalChatRequest(BaseModel):
     content: str = Field(min_length=1, max_length=16000, repr=False)
     stream: bool = False
     personalize: bool = False
+    delegation: str | None = Field(default=None, min_length=1, max_length=4096, repr=False)
+    timezone: str = Field(default='Asia/Bangkok', max_length=100)
 
 
 def _authorize(request: Request) -> None:
+    if request.url.path == '/internal/pa08-chat':
+        configured = os.getenv('AI_SERVER_BACKEND_TOOL_SERVICE_TOKEN', '')
+        supplied = request.headers.getlist('x-ai-tool-service')
+        if (not configured or len(supplied) != 1 or not hmac.compare_digest(
+                supplied[0].encode(), configured.encode())):
+            raise HTTPException(401, 'BACKEND_TOOL_SERVICE_UNAUTHORIZED')
+        return
     configured = request.app.state.local_llm_settings.chat_token
     supplied = request.headers.getlist("authorization")
     if (configured is None or len(supplied) != 1 or not hmac.compare_digest(
@@ -65,6 +77,52 @@ async def local_chat(request: Request):
     except Exception:
         raise HTTPException(400, "INVALID_REQUEST") from None
 
+    # Delegated PA-08 requests use the existing structured understanding and
+    # workflow boundary. The delegation is opaque here and is only forwarded
+    # to the Backend; the Backend remains authoritative for subject/ownership.
+    if data.delegation:
+        from app.personal_assistant.understanding import IntentUnderstanding
+        from app.personal_assistant.tool_boundary import TrustedToolContext
+        from app.personal_assistant.config import UnderstandingSettings
+        settings = UnderstandingSettings()
+        context = AudioContext(deadline=time.monotonic() + settings.timeout_seconds)
+        understanding = IntentUnderstanding(request.app.state.local_llm,
+            timeout_seconds=settings.timeout_seconds, max_output_tokens=settings.max_output_tokens)
+        # User/session are correlation labels only; Backend verifies the signed
+        # delegation and binds the actual owner. They are never authorization.
+        trusted = TrustedToolContext(data.user_id, data.session_id, uuid4().hex,
+            dialogue_ready=True, allowed_tools=frozenset({'schedule.query'}),
+            delegation_token=data.delegation)
+        try:
+            analysis = await understanding.analyze(data.content,
+                key=ConversationKey(data.user_id, data.session_id, 'pa08'),
+                timezone=data.timezone, context=context)
+            op = next((item for item in analysis.operations
+                       if item.feature == 'PA-08' and item.action == 'query'), None)
+            if op is None:
+                # Authenticated Backend ingress may also carry ordinary chat.
+                # Only PA-08 enters the tool workflow; other intents continue
+                # through the existing general LLM chat below.
+                data = data.model_copy(update={'delegation': None})
+            else:
+                from app.personal_assistant.tool_planning import plan_tools
+                plan = plan_tools(analysis, trusted)
+                workflow = await request.app.state.pa_workflows.create(plan, trusted)
+                workflow = await request.app.state.pa_workflows.run(workflow.id, trusted)
+                step = workflow.steps[0] if workflow.steps else None
+                result = step.result if step else None
+                if result is None or result.status != 'SUCCESS':
+                    raise HTTPException(503, 'SCHEDULE_BACKEND_UNAVAILABLE')
+                items = (result.data or {}).get('items', [])
+                answer = ('Hôm nay bạn không có lịch nào.' if not items else
+                          'Hôm nay bạn có ' + str(len(items)) + ' lịch trong hệ thống.')
+                return JSONResponse({'content': answer, 'tool': 'schedule.query',
+                    'tool_result': {'items': items}, 'grounded': True}, headers={'Cache-Control': 'no-store'})
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(503, 'SCHEDULE_BACKEND_UNAVAILABLE') from None
+
     settings = request.app.state.local_llm_settings
     sessions = request.app.state.local_chat_sessions
     claimed = False
@@ -98,7 +156,7 @@ async def local_chat(request: Request):
                 pending = await sessions.pending(data.user_id, data.session_id)
                 reply = await service.reply(data.content,
                     context=TrustedToolContext(data.user_id, data.session_id, uuid4().hex,
-                        allowed_tools=frozenset({'memory.query'})),
+                        allowed_tools=frozenset({'memory.query'}), delegation_token=data.delegation),
                     key=llm_request.key, history=history, request_context=context, pending=pending)
                 if reply.pending is not None:
                     await sessions.save_pending(data.user_id, data.session_id, reply.pending)

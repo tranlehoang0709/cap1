@@ -471,9 +471,11 @@ export function Chat() {
       if (conversation) payload.conversation_id = conversation;
       const r = chatReply.parse(await api('chat', { body: payload }));
       setMessages((prev) => [...prev, { role: 'assistant', content: r.content }]);
-      setConversation(r.conversation_id);
-      setConversationStatus('active');
-      historyState.reload();
+      if (r.conversation_id) {
+        setConversation(r.conversation_id);
+        setConversationStatus('active');
+        historyState.reload();
+      }
     } catch (err) {
       setMessages((prev) => {
         const last = prev[prev.length - 1];

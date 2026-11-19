@@ -2334,3 +2334,50 @@
 {"timestamp":"2026-11-14T03:54:59.414981+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
 {"timestamp":"2026-11-14T04:14:03.446664+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
 {"timestamp":"2026-11-14T04:15:38.339459+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-19T16:43:29.209881+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-19T16:56:55.423810+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-19T17:15:51.283918+00:00","level":"WARNING","event":"robot.turn.protocol_failed","message":"Robot WebSocket protocol operation failed","error_type":"ValueError"}
+{"timestamp":"2026-11-19T17:16:36.621709+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-19T17:16:41.979094+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-19T17:16:41.982341+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","http_status":401,"stage":"ota"}
+{"timestamp":"2026-11-19T17:16:53.006071+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-19T17:16:53.006687+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","http_status":401,"stage":"ota"}
+{"timestamp":"2026-11-19T17:16:53.060292+00:00","level":"WARNING","event":"gateway.route.denied","message":"Gateway could not resolve an authenticated route","stage":"websocket","error_code":"ROUTE_UNAVAILABLE"}
+{"timestamp":"2026-11-19T17:31:53.744599+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-19T17:31:53.846568+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-19T17:32:18.545042+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-19T17:32:18.573979+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-19T17:32:18.719316+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-19T17:32:18.740342+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-19T17:34:29.102480+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-19T17:34:29.185757+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+{"timestamp":"2026-11-19T17:34:32.823449+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0","provider":"LOCAL"}
+{"timestamp":"2026-11-19T17:35:17.631333+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"8c0e3cb949828cc6"}
+{"timestamp":"2026-11-19T17:35:22.388120+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"PROCESSING","turn_ref":"8c0e3cb949828cc6"}
+{"timestamp":"2026-11-19T17:35:22.388912+00:00","level":"INFO","event":"stt.start","message":"STT started","stage":"stt","turn_ref":"8c0e3cb949828cc6"}
+{"timestamp":"2026-11-19T17:35:23.250556+00:00","level":"INFO","event":"stt.success","message":"STT completed","stage":"stt","turn_ref":"8c0e3cb949828cc6","latency_ms":5618.963699999995}
+{"timestamp":"2026-11-19T17:35:24.180774+00:00","level":"INFO","event":"llm.first_token","message":"LLM first token received","stage":"llm","turn_ref":"8c0e3cb949828cc6","latency_ms":929.5769000000291}
+{"timestamp":"2026-11-19T17:35:28.262231+00:00","level":"INFO","event":"tts.first_audio","message":"TTS first audio received","stage":"tts","turn_ref":"8c0e3cb949828cc6","latency_ms":3395.1955999999655,"audio_bytes":131}
+{"timestamp":"2026-11-19T17:35:28.263792+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"SPEAKING","turn_ref":"8c0e3cb949828cc6"}
+{"timestamp":"2026-11-19T17:35:28.444909+00:00","level":"INFO","event":"playback.ack","message":"Playback ready acknowledgement accepted","ack_state":"ready","session_ref":"2aaa6ecf82984727"}
+{"timestamp":"2026-11-19T17:35:28.446527+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":1,"session_ref":"2aaa6ecf82984727"}
+{"timestamp":"2026-11-19T17:35:30.288670+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":25,"session_ref":"2aaa6ecf82984727"}
+{"timestamp":"2026-11-19T17:35:31.990001+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":50,"session_ref":"2aaa6ecf82984727"}
+{"timestamp":"2026-11-19T17:35:33.691588+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":75,"session_ref":"2aaa6ecf82984727"}
+{"timestamp":"2026-11-19T17:35:35.392873+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":100,"session_ref":"2aaa6ecf82984727"}
+{"timestamp":"2026-11-19T17:35:37.094236+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":125,"session_ref":"2aaa6ecf82984727"}
+{"timestamp":"2026-11-19T17:35:38.795631+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":150,"session_ref":"2aaa6ecf82984727"}
+{"timestamp":"2026-11-19T17:35:40.480279+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":175,"session_ref":"2aaa6ecf82984727"}
+{"timestamp":"2026-11-19T17:35:42.182668+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","frame_count":200,"session_ref":"2aaa6ecf82984727"}
+{"timestamp":"2026-11-19T17:35:43.404002+00:00","level":"WARNING","event":"history.assistant_persist_failed","message":"Assistant message persistence failed; continuing voice pipeline","stage":"history","error_code":"backend_http_denied","http_status":400}
+{"timestamp":"2026-11-19T17:35:43.412488+00:00","level":"WARNING","event":"tts.pipeline_error","message":"TTS pipeline failed","stage":"playback","error_type":"unsafe_text"}
+{"timestamp":"2026-11-19T17:35:43.412797+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"ERROR","turn_ref":"8c0e3cb949828cc6"}
+{"timestamp":"2026-11-19T17:35:43.413115+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","stage":"stt_ms","state":"ERROR","turn_ref":"8c0e3cb949828cc6","latency_ms":5618.963699999995}
+{"timestamp":"2026-11-19T17:35:43.413369+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","stage":"llm_first_token_ms","state":"ERROR","turn_ref":"8c0e3cb949828cc6","latency_ms":929.5769000000291}
+{"timestamp":"2026-11-19T17:35:43.413638+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","stage":"tts_first_audio_ms","state":"ERROR","turn_ref":"8c0e3cb949828cc6","latency_ms":3395.1955999999655}
+{"timestamp":"2026-11-19T17:35:43.413880+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","stage":"total_ms","state":"ERROR","turn_ref":"8c0e3cb949828cc6","latency_ms":25782.390899999995}
+{"timestamp":"2026-11-19T17:35:43.414117+00:00","level":"WARNING","event":"orchestrator.error","message":"Pipeline failed","state":"ERROR","turn_ref":"8c0e3cb949828cc6","reason":"unsafe_text"}
+{"timestamp":"2026-11-19T17:35:43.467266+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"230ee2113900837e"}
+{"timestamp":"2026-11-19T17:42:58.509128+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-19T17:42:58.532266+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+{"timestamp":"2026-11-19T17:43:02.309907+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0","provider":"LOCAL"}

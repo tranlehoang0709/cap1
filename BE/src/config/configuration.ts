@@ -21,6 +21,7 @@ export interface RuntimeConfiguration {
     adminDisplayName: string;
   };
   crypto: { encryptionKey: string };
+  toolExecution: { serviceToken: string };
   smtp: {
     host: string;
     port: number;
@@ -97,6 +98,10 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
     ['AI_CONFIG_CONTRACT_APPROVED', 'AI_CONFIG_SERVICE_TOKEN'],
     ['AI_QUOTA_CONTRACT_APPROVED', 'AI_QUOTA_SERVICE_TOKEN'],
   ];
+  if (environment.AI_TOOL_SERVICE_TOKEN !== undefined &&
+      (typeof environment.AI_TOOL_SERVICE_TOKEN !== 'string' || !/^[A-Za-z0-9_-]{43,128}$/.test(environment.AI_TOOL_SERVICE_TOKEN))) {
+    throw new Error('AI_TOOL_SERVICE_TOKEN must be an independent base64url service token');
+  }
   for (const [flag, token] of contracts) {
     if (environment[flag] !== undefined && !['true','false'].includes(String(environment[flag]))) throw new Error(`${flag} must be true or false`);
     if (environment[flag] === 'true' && (typeof environment[token] !== 'string' || !/^[A-Za-z0-9_-]{43,128}$/.test(environment[token] as string))) throw new Error(`${token} must be an independent base64url service token`);
@@ -164,6 +169,7 @@ export default function configuration(): RuntimeConfiguration {
       adminDisplayName: process.env.ADMIN_DISPLAY_NAME ?? '',
     },
     crypto: { encryptionKey: process.env.APP_ENCRYPTION_KEY ?? '' },
+    toolExecution: { serviceToken: process.env.AI_TOOL_SERVICE_TOKEN ?? '' },
     smtp: {
       host: (process.env.SMTP_HOST ?? '').trim(),
       port: Number(process.env.SMTP_PORT || 587),

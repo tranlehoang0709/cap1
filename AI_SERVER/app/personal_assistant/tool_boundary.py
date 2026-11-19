@@ -65,6 +65,7 @@ class TrustedToolContext:
     user_id: str = field(repr=False)
     session_id: str = field(repr=False)
     correlation_id: str = field(repr=False)
+    delegation_token: str | None = field(default=None, repr=False)
     dialogue_ready: bool = False
     allowed_tools: frozenset[str] = field(default_factory=frozenset, repr=False)
     confirmed_call_keys: frozenset[str] = field(default_factory=frozenset, repr=False)

@@ -248,7 +248,7 @@ def api_chat(api):
     if identity is None or identity.role != "USER":
         raise ApiError("forbidden", 403)
     profile = api.ai_profile()
-    configured = profile.get("preferred_provider_id") is not None
+    configured = True  # Backend BFF selects the trusted Local runtime for PA-08.
     uid = identity.id
     result_key = "api_chat_result_" + uid
     selected_key = "chat_selected_" + uid
@@ -308,7 +308,7 @@ def api_chat(api):
             st.caption("Danh sách gồm các hội thoại đã được Backend lưu.")
         with main, st.container(key="chat_main"):
             st.subheader(profile.get("assistant_name") or "Trợ lý AI")
-            provider = "Chưa chọn provider"
+            provider = "AIVA Local"
             if configured:
                 provider = "Provider " + profile["preferred_provider_id"]
                 try:
@@ -319,8 +319,6 @@ def api_chat(api):
                 except ApiError:
                     pass
             st.caption(f"{provider} · Nhà cung cấp và model theo cấu hình trợ lý đã lưu trên Backend.")
-            if not configured:
-                st.info("Chưa có nhà cung cấp trong cấu hình trợ lý. Cần lưu AI Profile trước khi trò chuyện.")
             viewing = st.session_state.get(selected_key) is not None
             if viewing:
                 st.info("Đang xem lịch sử. Chọn Đoạn chat mới để gửi câu hỏi mới.")

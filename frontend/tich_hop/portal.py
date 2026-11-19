@@ -195,6 +195,14 @@ class PortalService(AuthService):
             raise ApiError("validation", 400)
         value = object_response(self.request("POST", "/web-chat/messages",
             body={"content": content}, timeout=self.config.chat_timeout))
+        if (isinstance(value.get("content"), str) and value["content"].strip()
+                and value.get("grounded") in (True, False)):
+            if value.get("tool") not in (None, "schedule.query"):
+                raise ApiError("response")
+            return {"id": "live", "messages": [
+                {"role": "user", "content": content},
+                {"role": "assistant", "content": value["content"]},
+            ]}
         try:
             identifier(value.get("id"))
             if value.get("user_id") != user.id or not isinstance(value.get("messages"), list):

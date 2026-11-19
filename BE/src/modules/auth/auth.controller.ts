@@ -13,6 +13,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { ToolDelegationDto } from './dto/tool-delegation.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -81,6 +82,14 @@ export class AuthController {
   @ApiOperation({ summary: 'Return the authenticated account' })
   me(@CurrentUser() user: AuthenticatedUser) {
     return user;
+  }
+
+  @Post('tool-delegations')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Issue a short-lived scoped PA tool delegation' })
+  issueToolDelegation(@CurrentUser() user: AuthenticatedUser, @Body() dto: ToolDelegationDto) {
+    return this.auth.issueToolDelegation(user.id, dto.scope, dto.session_id);
   }
 
   @Patch('password')

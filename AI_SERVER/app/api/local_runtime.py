@@ -65,6 +65,9 @@ def install_local_routes(application: FastAPI) -> None:
     from app.clients.stt_factory import create_local_stt_adapter
     from app.clients.tts_factory import create_local_tts_adapter
     from app.services.local_chat import LocalChatSessions
+    from app.personal_assistant.backend_schedule import BackendScheduleAdapter
+    from app.personal_assistant.tool_boundary import ToolExecutionBoundary
+    import os
 
     settings = LocalLLMSettings()
     application.state.local_llm_settings = settings
@@ -82,11 +85,16 @@ def install_local_routes(application: FastAPI) -> None:
         return JSONResponse(result, status_code=200 if result["status"] == "READY" else 503)
 
     application.add_api_route("/local/chat", local_chat, methods=["POST"])
+    application.add_api_route('/internal/pa08-chat', local_chat, methods=['POST'])
 
     from app.personal_assistant.api import analyze_intent
     from app.personal_assistant.workflow import WorkflowOrchestrator
     from app.personal_assistant.workflow_store import WorkflowStore
-    application.state.pa_workflows = WorkflowOrchestrator(store=WorkflowStore(
+    backend_url = os.getenv('AI_SERVER_BACKEND_URL', 'http://127.0.0.1:3000')
+    backend_tool_token = os.getenv('AI_SERVER_BACKEND_TOOL_SERVICE_TOKEN', '')
+    application.state.pa_workflows = WorkflowOrchestrator(
+        boundary=ToolExecutionBoundary(BackendScheduleAdapter(backend_url, backend_tool_token)),
+        store=WorkflowStore(
         max_workflows=settings.max_sessions, ttl_seconds=settings.session_ttl_seconds))
     application.state.pa_analysis_sessions = LocalChatSessions(
         max_sessions=settings.max_sessions, max_turns=settings.max_turns,

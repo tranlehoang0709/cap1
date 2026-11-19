@@ -3,11 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { AiRepository, ProfileInput } from './ai.repository';
 import { AiServiceError } from './ai.errors';
 import { SecretCipherService } from '../../common/crypto/secret-cipher.service';
+import { AuthService } from '../auth/auth.service';
+import { randomUUID } from 'node:crypto';
 
 @Injectable()
 export class AiService {
   constructor(private readonly repo: AiRepository, private readonly cipher: SecretCipherService,
-    private readonly config: ConfigService = new ConfigService()) {}
+    private readonly config: ConfigService = new ConfigService(), private readonly auth?: AuthService) {}
   providers(){return this.repo.providers();}
   models(providerId:string){return this.repo.models(providerId);}
   adminModels(){return this.repo.allModels();}
@@ -24,40 +26,22 @@ export class AiService {
   async revokeSystemKey(id:string){if(!await this.repo.revokeSystemCredential(id))throw new AiServiceError('API_KEY_NOT_FOUND','System API key was not found');return {success:true};}
   async revokeKey(userId:string,id:string){if(!await this.repo.revokeCredential(id,userId))throw new AiServiceError('API_KEY_NOT_FOUND','API key was not found');return {success:true};}
   async chat(userId:string,content:string,providerId?:string,conversationId?:string) {
-    let resolvedProviderId=providerId;
-    if(!resolvedProviderId && typeof this.repo.providers==='function'){
-      const enabled=(await this.repo.providers()).filter(p=>p.is_enabled);
-      if(enabled.length>0)resolvedProviderId=String(enabled[0].id);
-    }
-    if(!resolvedProviderId)throw new AiServiceError('PROVIDER_UNAVAILABLE','No enabled AI provider is configured');
-    const token=this.config.get<string>('AI_SERVER_WEB_TOKEN');
-    const origin=this.config.get<string>('AI_SERVER_URL');
-    if(!origin||!token||token.length<43)throw new AiServiceError('AI_PIPELINE_UNAVAILABLE','AI Server is not configured');
-    const url=new URL(origin);
-    const isPrivateOrLocalHttp=url.protocol==='http:'&&(['127.0.0.1','localhost','[::1]'].includes(url.hostname)||url.hostname.endsWith('.local')||
-      /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3})$/.test(url.hostname));
-    if(url.username||url.password||url.search||url.hash||url.pathname!=='/'||(url.protocol!=='https:'&&!isPrivateOrLocalHttp))throw new AiServiceError('AI_PIPELINE_UNAVAILABLE','Invalid AI Server origin');
-    try {
-      const payload:Record<string,string>={userId,providerId:resolvedProviderId,content};
-      if(conversationId)payload.conversationId=conversationId;
-      const result=await fetch(new URL('/internal/web-chat',url),{method:'POST',redirect:'error',
-        headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},
-        body:JSON.stringify(payload),signal:AbortSignal.timeout(95000)});
-      if(!result.ok) {await result.body?.cancel();throw new HttpException('AI_REQUEST_FAILED', [400,403,404,409,429].includes(result.status)?result.status:503);}
-      if(!result.headers.get('content-type')?.startsWith('application/json')||!result.body)throw new Error();
-      const reader=result.body.getReader();const chunks:Uint8Array[]=[];let size=0;
-      try {while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>65536)throw new Error();chunks.push(value);}}
-      finally {await reader.cancel();}
-      const text=Buffer.concat(chunks).toString('utf8');
-      const data=JSON.parse(text) as {content?:unknown;conversation_id?:unknown;usage?:unknown};
-      const usage=data.usage as {input_tokens?:unknown;output_tokens?:unknown}|undefined;
-      if(typeof data.content!=='string'||[...data.content].length>500||typeof data.conversation_id!=='string'||!/^[1-9][0-9]*$/.test(data.conversation_id)||!usage||
-        !Number.isSafeInteger(usage.input_tokens)||!Number.isSafeInteger(usage.output_tokens)||Number(usage.input_tokens)<0||Number(usage.output_tokens)<0)throw new Error();
-      return {content:data.content,conversation_id:data.conversation_id,usage:{input_tokens:usage.input_tokens,output_tokens:usage.output_tokens}};
-    } catch(e) {
-      if(e instanceof HttpException)throw e;
-      throw new AiServiceError('AI_PIPELINE_UNAVAILABLE','AI Server could not complete the request');
-    }
+    if(!this.auth)throw new AiServiceError('AI_PIPELINE_UNAVAILABLE','Authentication service is unavailable');
+    const serviceToken=this.config.get<string>('toolExecution.serviceToken');
+    const origin=this.config.get<string>('AI_SERVER_LOCAL_URL')||'http://127.0.0.1:8002';
+    if(!serviceToken||serviceToken.length<43)throw new AiServiceError('AI_PIPELINE_UNAVAILABLE','AI tool service authentication is not configured');
+    const sessionId='web_'+randomUUID().replaceAll('-','');
+    const delegation=await this.auth.issueToolDelegation(userId,'schedule.query',sessionId);
+    try{
+      const result=await fetch(new URL('/internal/pa08-chat',origin),{method:'POST',redirect:'error',
+        headers:{'X-AI-Tool-Service':serviceToken,'Content-Type':'application/json'},
+        body:JSON.stringify({user_id:userId,session_id:sessionId,content,timezone:'Asia/Bangkok',
+          delegation:delegation.delegation_token,stream:false,personalize:false}),signal:AbortSignal.timeout(120000)});
+      if(!result.ok){await result.body?.cancel();throw new HttpException('AI_REQUEST_FAILED',[400,401,403,404,409,422,429].includes(result.status)?result.status:503)}
+      const data=await result.json() as {content?:unknown;tool?:unknown;grounded?:unknown};
+      if(typeof data.content!=='string'||data.content.length>8000)throw new Error();
+      return {content:data.content,tool:data.tool??null,grounded:data.grounded===true};
+    }catch(error){if(error instanceof HttpException)throw error;throw new AiServiceError('AI_PIPELINE_UNAVAILABLE','Local AI Server could not complete the request')}
   }
   conversations(userId:string,page:number,limit:number){return this.repo.conversations(userId,page,limit);}
   quotas(userId:string|null){return this.repo.quotas(userId);}

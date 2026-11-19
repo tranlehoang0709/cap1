@@ -4,4 +4,5 @@ import { SecretCipherService } from '../../common/crypto/secret-cipher.service';
 import { AiController } from './ai.controller';
 import { AiRepository } from './ai.repository';
 import { AiService } from './ai.service';
-@Module({imports:[DatabaseModule],controllers:[AiController],providers:[AiRepository,AiService,SecretCipherService],exports:[AiService]}) export class AiModule {}
+import { AuthModule } from '../auth/auth.module';
+@Module({imports:[DatabaseModule,AuthModule],controllers:[AiController],providers:[AiRepository,AiService,SecretCipherService],exports:[AiService]}) export class AiModule {}
