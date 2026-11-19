@@ -33,7 +33,7 @@ def _load_opus_library():
 def resample_pcm16(pcm: bytes, source_rate: int, target_rate: int) -> bytes:
     """Linear fixed-frame conversion, mono s16le; not a quality claim for speech."""
     if (type(source_rate) is not int or type(target_rate) is not int
-        or source_rate not in (8000, 12000, 16000, 24000, 48000)
+        or source_rate not in (8000, 12000, 16000, 22050, 24000, 48000)
         or target_rate not in (8000, 12000, 16000, 24000, 48000)):
         raise CodecError("Unsupported sample rate")
     if not isinstance(pcm, bytes) or not pcm or len(pcm) % 2 or len(pcm) > source_rate * 120 // 1000 * 2:
@@ -109,7 +109,7 @@ class OpusCodec:
 class PCMOpusFrames:
     """Streaming rebuffer at 60ms source frames, bounded feed, zero-pad last frame."""
     def __init__(self, source_rate: int, target_rate: int, *, max_chunk_bytes: int):
-        if type(source_rate) is not int or source_rate not in (8000, 12000, 16000, 24000, 48000):
+        if type(source_rate) is not int or source_rate not in (8000, 12000, 16000, 22050, 24000, 48000):
             raise CodecError("Unsupported source rate")
         if type(max_chunk_bytes) is not int or not 0 < max_chunk_bytes <= 65536:
             raise CodecError("Bounded PCM chunk size required")

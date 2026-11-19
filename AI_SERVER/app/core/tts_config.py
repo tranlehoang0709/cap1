@@ -15,3 +15,4 @@ class GeminiTTSSettings(BaseSettings):
     timeout_seconds: float = Field(default=30, gt=0, le=120, allow_inf_nan=False,
                                    validation_alias="GEMINI_TTS_TIMEOUT_SECONDS")
     max_text_chars: int = Field(default=2000, gt=0, le=10000, validation_alias="GEMINI_TTS_MAX_TEXT_CHARS")
+    stream_enabled: bool = Field(default=False, validation_alias="GEMINI_TTS_STREAM_ENABLE")

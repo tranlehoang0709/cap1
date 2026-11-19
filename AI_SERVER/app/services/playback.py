@@ -5,6 +5,7 @@ the session blocked pending an explicitly approved recovery/drain policy.
 """
 
 import asyncio
+import logging
 from collections import deque
 from collections.abc import AsyncIterator
 from uuid import uuid4
@@ -15,6 +16,9 @@ from app.models.tts import (
     PlaybackEvidence, PlaybackLimits, PlaybackReceipt, PlaybackScope, ScheduledAudio,
     TTSAudioChunk, TTSConfig, TTSError, TTSErrorCode, TTSRequest,
 )
+from app.core.logging import get_logger, log_event
+
+logger = get_logger("playback")
 from app.services.tts import AudioOutput, TTSAdapter
 from app.services.turn_input import HalfDuplexTurn, TurnPhase
 
@@ -123,7 +127,9 @@ class PlaybackScheduler:
             raise
         except AudioError as error:
             raise TTSError(TTSErrorCode.CANCELLED if error.code == ErrorCode.CANCELLED else TTSErrorCode.TIMEOUT) from None
-        except Exception:
+        except Exception as error:
+            log_event(logger, logging.WARNING, "playback.pipeline_error", "Playback pipeline raised an unexpected error",
+                      error_type=type(error).__name__, stage="playback")
             raise TTSError(TTSErrorCode.PROVIDER_ERROR) from None
         finally:
             queue.abort()
@@ -219,5 +225,7 @@ class PlaybackScheduler:
             return await output.wait_playback_complete(scope, context)
         except (TTSError, AudioError):
             raise
-        except Exception:
+        except Exception as error:
+            log_event(logger, logging.WARNING, "playback.output_error", "Playback output raised an unexpected error",
+                      error_type=type(error).__name__, stage="output")
             raise TTSError(TTSErrorCode.OUTPUT_ERROR) from None

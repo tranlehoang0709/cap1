@@ -621,3 +621,516 @@ The standalone `scripts/gemini_voice_demo.py` streams text through `LLMRunner`, 
 
 See [SD2 Gemini LAN setup and test results](docs/sd2-gemini-lan.md) for the local
 `.env`, Windows native audio, USB configuration and observed quota limitation.
+
+
+### Local AI foundation (Prompt 01)
+
+Cloud startup scripts remain unchanged (default runtime `cloud`, port 8000).
+Run `run_local.cmd` for a separate Local process on 127.0.0.1:8002.
+Copy `.env.local.example` to `.env.local` and supply `LOCAL_LLM_API_KEY`
+matching the separately managed llama-server on port 8001. Local startup reads
+`.env.local`, never cloud `.env`. It does not launch or alter llama-server.
+`/health` retains `status: ok` and adds runtime/readiness; local `/ready` returns
+503 until generation and voice are implemented. See
+[Prompt 01 audit and validation](docs/local-foundation-prompt01.md).
+
+### Local Gemma text chat (Prompt 02)
+
+Local text chat is available at `POST /local/chat` after configuring
+`LOCAL_LLM_API_KEY` and a separate `LOCAL_LLM_CHAT_TOKEN` (at least 43
+characters) in `.env.local`. The runtime discovers the exact model ID from
+llama-server `/v1/models`; it does not hardcode or select a cloud model.
+Send `user_id`, `session_id`, `content`, and `stream`. With `stream: true`,
+the response is Server-Sent Events containing `delta`, then `done`.
+Conversation history is bounded, process-local, and isolated by user/session.
+Voice remains unavailable.
+
+### Local Vietnamese STT (Prompt 03)
+
+Local runtime loads `Systran/faster-whisper-small` once per process with
+CTranslate2 CUDA/float16. Model files stay in the configured Hugging Face cache
+outside this repository. The adapter accepts mono PCM16 or raw Opus, converts
+to 16 kHz PCM in memory, applies silence/VAD handling, and emits the existing
+`TranscriptionResult` contract. Local TTS and robot routing remain disabled.
+See [Prompt 03 report](docs/local-stt-prompt03.md).
+
+### PA-09 H-01: analysis only
+
+Local runtime exposes `POST /internal/personal-assistant/analyze` for internal
+testing, using the same `Authorization: Bearer LOCAL_LLM_CHAT_TOKEN` as Local
+chat. Send `user_id`, `session_id`, `content` and optionally `timezone` (default
+`Asia/Bangkok`). The service token authenticates a trusted internal caller;
+user/session identifiers are supplied by that caller, not public user auth.
+The server supplies the current reference time and returns a validated
+`Analysis` with operations, entities, missing fields, questions, confirmations
+and topologically ordered dependencies. `mode` is always `analysis_only` and
+`executed` is always false. No Backend or MySQL access occurs.
+
+The existing Gemma adapter streams internally with a JSON schema grammar;
+only a complete validated result is returned. Structured analysis uses a
+separate bounded 2048-token output budget without changing ordinary chat or
+voice generation limits. `LOCAL_PA_TIMEOUT_SECONDS` (default 300, maximum 300)
+and `LOCAL_PA_MAX_OUTPUT_TOKENS` (default 2048, maximum 4096) control analysis
+budgets. Structured requests allow up to 300 seconds for transport reads;
+the cancellation scope enforces the configured total analysis deadline.
+Invalid/truncated output fails closed with HTTP 502.
+Windows requires the included `tzdata` dependency for IANA timezones.
+Pending dialogue is now supplied by H-02 below. Backend target lookup, conflict
+detection and execution remain unavailable. H-06 defines and implements PA-05's
+read-only personalization core without adding a Backend operation.
+
+Unit checks: `python -m pytest tests/test_pa_understanding.py`.
+Real Gemma checks: `python scripts/test_pa_gemma_live.py` with Local AI_SERVER
+running on 8002 and llama-server on 8001. The probe prints each result, never
+creates a report or business data, and must be run separately from unit tests.
+
+### PA-09 H-03: proposed tool contracts
+
+`app.personal_assistant.tool_registry.TOOLS` is an immutable allowlist of
+proposed Backend operations. `ToolSpec.contract()` exposes READ/WRITE access,
+confirmation/preconditions, required fields, validation rules and Pydantic
+input/output schemas. Every Backend entry is `NOT_IMPLEMENTED`; no endpoint
+is assigned. PA-05/09/23 are separate disabled capability descriptors, rather
+than fabricated Backend operations.
+
+`plan_tools(analysis, trusted_context)` maps validated H-01 operations to tool
+proposals and preserves dependency IDs. Missing arguments and unresolved
+targets remain validation errors. Target IDs can only come from the trusted
+caller; they are never invented from a target query. An operation reference
+such as `op1` is not a Backend record ID. H-03 does not resolve references or
+execute a multi-step workflow.
+
+`ToolExecutionBoundary` accepts one allowlisted call with a `TrustedToolContext`
+provided by application code. Identity, permissions, resolved targets,
+confirmation keys and dependency evidence are separate from LLM arguments.
+Confirmation/idempotency keys bind the exact arguments, dependencies, user,
+session and proposal correlation ID. Correlation IDs must be retained for a
+proposal's confirmation/retry and changed for a new proposal. READ calls do
+not carry write idempotency keys. Backend ownership/transaction checks remain
+authoritative. No PA tool dispatches until a real binding is available.
+
+H-02 connects the authenticated analyze route to pending state and workflow
+planning. The readiness flag in other callers' trusted contexts still defaults
+to false. Production uses the explicit unavailable
+adapter and never synthesizes Backend success. The adapter protocol is a seam
+for real authenticated PA methods after their routes, credentials and response
+contracts are agreed; existing device/config/quota methods are unchanged.
+
+Verify these contracts with `python -m pytest tests/test_pa_tools.py`.
+
+### PA-23 H-04: workflow core
+
+`WorkflowOrchestrator` accepts an H-03 `ToolPlan` and a trusted application
+context. It validates the graph, inserts a conflict check before event creation
+or time changes, and runs through the existing `ToolExecutionBoundary`. It has
+no endpoint and does not replace the conversation, voice or Cloud pipeline.
+H-02 supplies `dialogue_ready` from validated server state; other callers default
+to false. It is never supplied by LLM JSON. No Backend tool is enabled.
+
+Workflow states are PLANNED, WAITING_FOR_INFORMATION,
+WAITING_FOR_CONFIRMATION, READY, RUNNING, PARTIALLY_COMPLETED, COMPLETED,
+FAILED, CANCELLED and BLOCKED. Steps use PENDING, READY, RUNNING, SUCCEEDED,
+FAILED, SKIPPED and BLOCKED. SUCCEEDED requires a validated H-03 Backend ACK.
+An unavailable API produces BLOCKED/UNAVAILABLE rather than a synthetic result.
+
+Use `create`, `confirm(revision=...)`, `run`, `revise`, `retry`, `cancel` and
+`decide_conflict` from authenticated application code. `confirm` records user
+approval of the current snapshot; it does not execute a tool. Revisions reset
+affected approvals, checks and downstream steps. Completed or uncertain writes
+cannot be edited into a fresh attempt. Snapshots are copies, and user/session/
+correlation ownership is checked on every operation. Old snapshot revisions
+cannot confirm a changed plan.
+
+A reminder's logical `linked_operation_id` is resolved only from a SUCCEEDED
+parent's validated record ID. The boundary verifies the resulting
+`linked_record_id` against trusted dependency receipts. Approval/idempotency
+remain bound to the logical call; an arbitrary substituted record ID fails
+authorization. Conflict lists retain their full time details. Recurring
+overlaps above 30% carry a warning, and every affected occurrence needs an
+explicit decision. Existing events are never automatically overwritten.
+
+Partial failure retains successful receipts and asks how to continue. `retry`
+only requeues failed/blocked steps; it does not execute or replay successful
+steps. Unknown WRITE outcomes require reconciliation unless the actual Backend
+adapter advertises real idempotency support. Retry retains the original key.
+Cancellation stops subsequent steps, preserves completed receipts, and keeps
+uncertain outcomes visible. An in-flight request may still finish before the
+cancellation takes effect; it is not rolled back.
+
+`WorkflowStore` defaults to 32 workflows, a 3600-second idle TTL and a bounded
+state budget. Active leases are not expired or executed concurrently. State
+is process-local and does not survive restart; durable recovery/idempotency
+must come from Backend. Reuse the same correlation ID for retry of a proposal,
+and use a new one for a new proposal. Memory arguments require a trusted
+`sensitive_data_checked` proof before retention; workflow code does not invent
+a privacy classification, consent, readback or Backend credentials.
+
+Run `python -m pytest tests/test_pa_workflow.py tests/test_pa_tools.py` for the
+workflow contracts. Success adapters exist only in tests. Natural-language
+multi-turn planning is now connected through the H-02 analyze route. Real PA
+writes and Xiaozhi E2E remain blocked by missing Backend APIs and hardware
+verification. Plan creation still needs real Backend scheduling
+and conflict evidence; changing only a plan end date adds no rescheduling steps.
+
+### PA-23 H-05: execution safety boundary
+
+The source audit of Backend controllers and `AppModule` found no PA API
+bindings. All 36 proposed Backend tools remain NOT_IMPLEMENTED; actual
+integration is BLOCKED. No endpoint, PA token or new HTTP client is configured.
+Existing `BackendClient` HTTPS/origin checks, private service credentials,
+bounded responses, zero retries and error types remain unchanged.
+
+The existing `BackendToolAdapter` interface now accepts a validated argument
+model, trusted context, operation ID, idempotency key and the shared
+`AudioContext` cancellation/deadline scope. A future adapter must delegate to
+verified methods of the existing Backend transport after endpoint, wire
+contract and authentication have been checked. The unavailable production
+adapter makes no HTTP request. Do not fill this gap with guessed routes or a
+success double.
+
+Availability is AVAILABLE, NOT_IMPLEMENTED, DISABLED or UNAVAILABLE. A contract
+declaration is not evidence of an endpoint. Dispatch requires both an enabled
+registry entry and adapter evidence that endpoint, contract and authentication
+were verified. Temporary outages remain distinct from disabled/missing APIs.
+
+`BackendReceipt` describes a normalized real Backend acknowledgement; its
+tool/operation, user/session, correlation and idempotency key must match the
+invocation. Actual wire fields remain subject to the real API contract.
+Copying request identity into an invented receipt is not Backend evidence.
+Boolean success without this acknowledgement, wrong output schema or a
+mismatched receipt cannot produce SUCCESS. Receipt identity is excluded from
+public result/workflow JSON.
+
+Execution outcomes are NOT_EXECUTED, CONFIRMED, REJECTED and UNKNOWN. Ambiguous
+WRITE timeouts, cancelled requests and invalid/unbound acknowledgements carry
+UNKNOWN/PENDING_RECONCILIATION. A deadline that expires before dispatch remains
+NOT_EXECUTED. Step/workflow state retains reconciliation status separately
+from FAILED/PARTIALLY_COMPLETED so uncertainty is not hidden.
+
+There is no automatic WRITE retry. Explicit retry of an uncertain write needs
+verified Backend idempotency support and retains the original key. Successful
+steps are not replayed and failed dependencies are not skipped. The local RAM
+lease only prevents concurrent execution in this process; durable exactly-once
+effects, deduplication and outcome reconciliation require Backend support.
+No live Backend integration PASS is claimed while API bindings are absent.
+
+Changed-path checks: `python -m pytest tests/test_pa_execution.py
+tests/test_pa_tools.py tests/test_pa_workflow.py` (run as a single command).
+Available/acknowledging adapters in these tests are unit doubles only.
+
+### PA-05 H-06: read-only personalization
+
+Opt in with `personalize: true` on the existing authenticated `POST /local/chat`.
+The normal request/response fields remain, with `personalization` metadata:
+memory_status, used_memory_ids, memory_action, intent_status and executed=false.
+PA-09 understanding and the existing Gemma adapter are reused. There is no new
+LLM runtime, memory database, training step, Backend credential or endpoint.
+The existing bounded user/session history is reused. This personalization path
+does not consume the H-02 pending state of the separate analyze endpoint.
+
+`PersonalizationEngine` has a stateless `MemoryReader` interface. Its production
+`BackendMemoryReader` only proposes a READ through H-05's `memory.query` boundary.
+The real PA-04 API is missing, so the default result is MEMORY_UNAVAILABLE,
+with no fabricated profile. Gemma continues without stored-memory context.
+Actual integration additionally needs authenticated caller/readiness wiring;
+PA-05 does not set dialogue_ready or grant tool permissions itself.
+
+The proposed PA-04 search contract now contains query_digest (SHA-256 of the
+exact UTF-8 query) and up to eight records. Each record includes id, owner,
+category, content, consent_to_store/use, active, sensitivity_reviewed,
+query-specific relevance and optional timezone-aware updated_at/expires_at.
+Categories are addressing, communication_style, preference, habit and
+personal_information. This is a proposed contract, not an existing API.
+
+Before prompt construction, the engine verifies the Backend receipt, query
+digest and every record's owner. It excludes missing consent, inactive/expired
+or unreviewed records, low relevance and recognized injection/sensitive content.
+At most three qualifying records enter the response request. Memories are
+quoted JSON in the user message, never system instructions or execution rights.
+Memory relevance must come from a scoped query response; the engine does not
+send an entire profile to an additional LLM selector. Missing consent/validity
+metadata fails validation rather than being assumed true.
+
+Current-turn facts identified by PA-09 suppress related old memory categories.
+User conversation remains higher priority, and prior assistant memory claims
+are replaced in the prompt history to avoid reusing expired/revoked context.
+Only proposal questions grounded in the previous user's own text are retained.
+Recognized sensitive current input is not appended to personalized RAM history.
+Memory contents and retrieval exceptions are not logged.
+
+PA-04 proposals ask whether to save; refusal saves nothing; agreement currently
+returns SAVE_UNAVAILABLE. Save/update/forget requests are not executed by PA-05.
+The service never calls memory WRITE tools or PA-23. Existing authoritative
+PA-04/H-02 flows must perform any future confirmation and persistence.
+
+Personalized generation requests disable thinking per request to fit the
+existing response-token budget. Model/server configuration and ordinary chat
+defaults are unchanged. Opt-in SSE returns a validated buffered response as a
+delta followed by done. Usage is null for this multi-generation path rather
+than presenting response-only usage as a full total.
+
+Unit checks: `python -m pytest tests/test_personalization.py`.
+Explicit real Gemma/no-memory probe: `python scripts/test_personalization_live.py`.
+The probe reads `.env.local`, creates no memory rows or report files, and prints
+PASS/FAIL separately. Live PA-04 success must not be claimed without its API.
+
+### H-07: integration readiness checks
+
+`tests/test_pa_integration.py` joins parsed intent fixtures, H-03 planning,
+PA-04 consent handoff and H-04's production unavailable boundary. It does not
+simulate successful Backend execution. API availability is checked for every
+workflow step, including independent branches. Storage refusal is recorded as
+a deferred decision without turning the remaining event/reminder intents into
+unsupported business operations. Safe, fixed application notices that a memory
+was not saved remain available to subsequent consent/refusal understanding.
+
+Run the PA-specific test files for intent, tools, execution, workflow,
+personalization and component integration. For real Gemma checks, start the
+existing Local AI_SERVER on 8002 and run `python scripts/test_pa_readiness_live.py`.
+Use `--case` to repeat an affected case. The probe verifies extracted content,
+relative dates, mapping, blocked workflow planning, Local chat behavior and
+consent/refusal. It creates no memory rows, uses no successful Backend double,
+and prints statuses without writing a report. Infrastructure failures are
+BLOCKED; schema/semantic mismatches are FAIL. The log probe uses a synthetic
+per-run canary, not personal data.
+
+The H-07 live workflow probe composes components directly. The H-02 analyze
+route now retains pending dialogue and plans workflows as described below;
+neither probe is evidence of Backend/hardware E2E.
+Real memory retrieval, Backend partial execution and durable idempotency remain
+blocked by the absent PA APIs. Hardware E2E is separate from these probes.
+
+### PA-09 H-02: pending dialogue and workflow planning
+
+Reuse the same internal analyze endpoint and bearer authentication. Send the
+same trusted `user_id`, `session_id` and timezone on follow-up turns. The added
+`dialogue` object returns status, questions, confirmation, correlation ID,
+dialogue revision and workflow ID/revision/status/code. `raw_input` retains
+bounded conversation evidence, while operations preserve entity ownership and
+dependencies. Corrections invalidate prior consent; implicit conflicting values
+require clarification. A confirmed dialogue is not a completed business action.
+Omitting timezone on follow-ups inherits the pending timezone. Clients may send
+`expected_revision` to reject stale replies with HTTP 409 before calling Gemma.
+
+Pending state shares `LocalChatSessions` isolation, busy locks and configured
+session TTL/capacity. It is retained only in this process's RAM and disappears
+on expiry/restart. Cleanup is lazy on access and available through `cleanup()`;
+in-flight sessions remain locked until their deadline/cancellation finishes.
+The maximum turn count and retained character budget also apply to pending
+dialogue. Workflow storage uses the same configured TTL/capacity. Expired
+workflow handles and timezone changes return HTTP 409; concurrent turns for
+the same user/session return HTTP 409 `session_busy`.
+
+Gemma classifies each follow-up and extracts only a patch for the selected
+intent, using the existing adapter/structured transport. The server merges and
+revalidates it, anchors supplied dates and checks event intervals. A complete
+proposal maps through `plan_tools` into the existing orchestrator. Corrections
+revise the same workflow; repeated confirmation preserves its identity.
+This endpoint never calls workflow execution or Backend APIs. Missing APIs
+produce `BLOCKED`/`NOT_IMPLEMENTED`, always `executed=false`. Memory WRITE
+planning additionally awaits trusted privacy review. `/local/chat` and voice
+are not wired to this pending-state endpoint by this change.
+
+Focused checks: `python -m pytest tests/test_pa_dialogue.py` (Gemma doubles in
+unit tests; live Gemma verification must be reported separately).
+
+### H-01 Group III: memory interpretation metadata
+
+PA-04 operations add `memory.interaction`: statement, proposal, save_request,
+update_request, query_request, delete_request, decline or confirmation. The
+existing action mapping remains; a statement uses propose as a candidate,
+never as implied consent. Preference/habit/personal_information remain in
+entities.category, including when another intent creates a schedule/reminder.
+
+`memory.original_text` quotes the exact source clause. `summary` is null:
+this path does not generate a paraphrase whose meaning cannot be verified.
+New-memory content is kept verbatim; update extraction retains its existing
+new-value fields and original evidence for readback rather than replacing it.
+`prohibited_categories` covers OTP, passwords, payment, identity documents,
+medical, business secrets and other sensitive data. Gemma's semantic labels
+are reinforced by conservative server guards. Such storage operations are
+unsupported and cannot be approved into a save; viewing/deleting is still
+recognized separately. No Backend capability is granted by metadata.
+
+`issues` can contain ambiguous, unusual, possible_stt_error or
+update_mode_unclear. `requires_clarification`, `storage_policy` and questions
+are derived by the server for H-02. Numbers, negation and uncertain content are
+not silently corrected. This adds no memory writer, database or PA-04 API.
+Check `tests/test_memory_understanding.py` separately from live Gemma tests.
+
+### H-03 PA-04 registry contracts
+
+The existing registry now describes five memory phases; no HTTP binding or
+database schema is added. Backend source currently has no PA-04 controller/API.
+
+| Contract | Scope and safety |
+|---|---|
+| memory.query | Eligible owner-scoped memories for personalization by default |
+| memory.propose | Local proposal only; ToolPlan.proposals, deferred until consent |
+| memory.create | Confirmed content and proposal_revision; trusted storage consent |
+| memory.update | One memory_id or topic_group, expected_revision, append/replace, new content |
+| memory.delete | One memory_id or topic_group, expected_revision and exact confirmation |
+
+`MemoryAuthorization` is immutable application context bound to authenticated
+user/session/correlation, proposal revision, verified target revision, consent
+and the exact confirmed call hash. LLM entities cannot supply these authorities.
+Unconfirmed proposals never enter executable calls. Exact consent can promote
+a proposal to memory.create; explicit create/update/delete calls still cross
+the same boundary. Confirmation of an old payload or revision cannot approve
+changed arguments. Proposal revision may remain absent while drafting, but is
+mandatory and trusted before a WRITE. Unknown IDs or revisions are not filled.
+
+Query results retain the existing MemoryRecord schema, with optional revision
+and topic_group for compatibility. Missing revision cannot authorize a write.
+Personalization rejects foreign, unconsented, inactive, expired or unreviewed
+rows. Management lookup is separate in purpose, requires an application-issued
+proof and never grants consent to use its contents for personalization.
+
+Write arguments contain no user ID, token, URL or LLM-supplied consent flags.
+The existing context call hash is the stable idempotency key, reused on retry;
+safe WRITE retry still requires verified Backend idempotency. Responses must
+match owner, proposal revision and target, and advance the record/group revision.
+Invalid write acknowledgements are UNKNOWN/PENDING_RECONCILIATION, not success.
+
+`topic_group` is a proposed opaque Backend scope, not a new table or an automatic
+alias for category. Bulk group writes need a verified group revision and Backend
+authorization/transaction checks over every member. The existing memory workflow
+can still delete selected verified records individually with their own revisions.
+Its lookup/readback/confirmation stages are reused; routing/sync never execute.
+Append sends only new text; Backend applies it atomically against expected_revision.
+
+All five contracts advertise NOT_IMPLEMENTED until real endpoints, authentication
+and request/response mappings are verified. Proposal rendering needs no Backend;
+attempting to execute its descriptor returns PROPOSAL_ONLY_NO_EXECUTION. These
+schemas are proposed integration contracts, not assertions that PA-04 APIs exist.
+Focused checks: `tests/test_memory_tool_contracts.py` plus memory/workflow regressions.
+
+Memory proposals read back the exact proposed content before consent. Memory
+updates ask whether to replace or append and retain that choice per operation.
+Update/delete dialogue asks for an item or topic and shows the proposed after
+content. Because Backend memory lookup is absent, the actual before content and
+target cannot be verified: these requests remain BLOCKED with
+`MEMORY_LOOKUP_NOT_IMPLEMENTED`; a yes reply cannot authorize an unverified
+mutation. No user-supplied description is treated as an actual stored record.
+Uncertain important information requires a restatement before confirmation.
+Run `python scripts/test_h02_gemma_live.py` to exercise the current route source
+in-process using the real configured Gemma, without restarting a shared server.
+
+### H-04: Group III memory workflow stages
+
+Memory-only analyze dialogues now retain a workflow ID even while preparing a
+proposal or awaiting unavailable lookup. `Workflow.memory_operations` records
+the policy result, verified candidates, selected scope, replace/append choice,
+readback revision and ACK stage. Repeated habits remain proposals until an
+explicit consent turn. Prohibited storage is blocked before content retention.
+
+The trusted application API is `sync_memory(analysis, context, workflow_id=...,
+modes=...)` on `WorkflowOrchestrator`. It preserves the ID and dependencies;
+changes increment revision and invalidate readback/consent. `run()` reads current
+records through `memory.query` for updates/deletes. The caller uses
+`select_memory(..., revision=..., operation_id=..., record_ids=..., mode=...)`
+to select verified records (one for update, one or more for delete).
+`memory_readback(..., revision=...)` returns the exact proposed save content or
+before/after and deletion scope. Show this preview before calling
+`confirm(..., revision=...)`; `run()` then dispatches through the existing tool
+boundary and checks the scoped Backend receipt. Append combines the verified
+old content and the explicit new content; replace uses the new content alone.
+
+Successful steps are retained and skipped on repeated confirmation/run. Missing
+ACK, cancellation during a write or mismatched ACK target requires
+reconciliation and cannot trigger automatic replay. Tool permissions, ownership,
+dependencies and availability gates remain in force. The production registry
+still has no PA-04 HTTP binding: these workflows remain `BLOCKED` and no Backend
+mutation executes. `/analyze` performs preparation only. Mixed schedule/memory
+execution and the existing schedule/reminder workflows are not changed here.
+
+Focused tests: `python -m pytest tests/test_pa_memory_workflow.py`.
+
+### H-06: Group III personalization additions
+
+PA-05 keeps the existing MEMORY_UNAVAILABLE fallback and read-only behavior.
+Only scoped Backend reads with a matching query receipt, correct owner,
+store/use consent, active state and sensitivity review can supply memory.
+Group III's existing prohibited-data policy also filters records and proposals.
+Current prohibited input is not retained in personalized session history or
+new pending dialogue. Habit statements produce a content readback and proposal;
+explicit consent still cannot save anything while PA-04 is unavailable.
+
+`expires_at` is always enforced. Optional `LOCAL_PA05_MAX_AGE_SECONDS` requires
+an `updated_at` within that age; missing, old or future timestamps prompt for
+restatement. The unset setting imposes no invented maximum age. Expired values
+are withheld from both model review and answer generation. Eligible records
+undergo a bounded Gemma review for conflicts, uncertainty and prohibited meaning
+before use; failed review asks for clarification. Confirmation does not renew a
+record's Backend expiry or consent. Existing category values provide
+`memory_groups`; arbitrary topic hierarchies are not supported by this schema.
+
+Personalized `/local/chat` update/delete turns now use H-02/H-04 pending state
+in the local-chat session store, preserving workflow ID and mode selection.
+They ask for replace/append and exact item/group scope. Real before/after
+confirmation remains blocked until verified current Backend records exist.
+For a trusted H-04 caller, `PersonalizedAssistant.workflow_reply(workflow,
+context)` formats readback questions before execution and concise exact changes
+after matching ACKs, including accurately reported partial changes. It does not
+confirm or execute the workflow. Missing ACK never produces success text.
+
+That formatter prepares a stable `memory.changed` notification identity.
+`delivery.website` and `delivery.xiaozhi_voice` remain NOT_CONNECTED with
+`sent=false` by default; no real notification/audio transport is bound. The
+optional H-05 hook below does not claim delivery without a verified channel ACK.
+Group III items 10, 13 and 23 remain undecided; no new rules, DB tables, proactive
+notification schedules or repetition thresholds are supplied for them.
+
+Tests: `tests/test_personalization_group3.py`. Real-Gemma probe:
+`python scripts/test_h06_group3_gemma_live.py` (optional `--case consent`).
+The probe explicitly labels synthetic expiry/conflict/consent read fixtures;
+they validate Gemma interaction and selection safety, not live PA-04 reads or
+persistence. Production PA-04 remains unavailable and all mutation attempts
+remain `executed=false`.
+
+### H-05 PA-04 adapter hardening
+
+PA-04 endpoints are still absent from Backend source. The existing unavailable
+adapter and registry keep these contracts BLOCKED/NOT_IMPLEMENTED; no routes,
+authentication fields or database tables are guessed. Real API integration
+requires supplied and verified create/read/update/delete wire contracts,
+authentication/ownership rules, idempotency and atomic revision enforcement.
+
+Memory writes require verified Backend idempotency before their first dispatch.
+Update/delete additionally require `ToolAvailability.revision_verified`, meaning
+Backend atomically checks expected_revision before changing the selected record
+or group. A version in a response alone does not prove this capability. Input
+calls are copied before asynchronous dispatch; ownership, exact consent, target
+snapshot and proposal revision remain bound by the existing H-03 guards.
+
+Explicit memory retry reuses the same workflow, confirmed arguments and
+idempotency key, preserving completed steps. An UNKNOWN write remains
+PENDING_RECONCILIATION during retry preparation and until a valid authenticated
+ACK resolves it. No automatic retry is added. Retry rechecks current capabilities;
+missing idempotency prevents dispatch. A rejected stale-version/permission
+request requires renewed lookup/review/confirmation, never an automatic rebase.
+Safe read retry does not create a write. RAM state is not proof of exactly-once
+Backend execution; real reconciliation/idempotency support remains a dependency.
+
+`workflow_reply` now exposes actual step outcomes, codes, workflow state and
+reconciliation state. It never says a write did not happen when its ACK is lost,
+nor declares COMPLETED from a corrupt/unverified snapshot. Partial replies and
+notifications describe only steps with matching confirmed Backend receipts.
+Adapter payloads, replies and exceptions are not logged; sensitive data is
+hidden from their normal representations as an additional safeguard.
+
+`PersonalizedAssistant.workflow_notification` / `deliver_memory_notification`
+extend the existing notification envelope. Application code may explicitly
+supply a Website or Xiaozhi voice binding with verified authenticated transport,
+owner/session/correlation scope, positive ACK and persistent idempotency support.
+No binding is installed by default, no endpoint is introduced, and LLM output
+cannot choose a destination/token. Each confirmed write has a stable event key;
+partial retries do not create new event keys for already confirmed changes.
+No notification is sent for unconfirmed/UNKNOWN-only results. Wrong/missing
+channel ACK or timeout leaves sent=false/UNKNOWN; Backend success is unchanged.
+Transport ACK is not a claim that the user read/heard a message. Delivery tests
+use unit-only fixtures; real Website/Xiaozhi integration remains BLOCKED.
+
+Focused checks: `tests/test_memory_execution_safety.py` and the existing execution,
+memory workflow, notification formatter and contract regression tests. These are
+not live Backend persistence or hardware E2E evidence.

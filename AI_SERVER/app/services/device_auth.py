@@ -51,11 +51,14 @@ class AuthorizedSession:
         if self.orchestrator is not None and self.orchestrator.turn is not None:
             await self.orchestrator.control(command, key=self.key, turn_id=self.orchestrator.turn.turn_id)
 
-    async def resolve(self, context, *, include_credential=False):
+    async def resolve(self, context, *, include_credential=False,
+                      provider_id: str | None = None, model_id: str | None = None):
         if not self.valid:
             raise BackendError(BackendCode.BINDING)
         try:
-            self.config = await self.client.resolve_config(dto.ConfigRequest(userId=self.key.user_id, deviceId=self.key.device_id,
+            self.config = await self.client.resolve_config(dto.ConfigRequest(
+                userId=self.key.user_id, deviceId=self.key.device_id,
+                providerId=provider_id, modelId=model_id,
                 includeCredential=True if include_credential else None), context)
             return self.config
         except BackendError:

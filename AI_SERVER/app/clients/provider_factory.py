@@ -5,6 +5,8 @@ from app.models.llm import LLMError, LLMErrorCode
 
 
 def create_llm_adapter(settings: LLMProviderSettings | None = None, *, reuse_client: bool = False):
+    from app.core.runtime_config import require_cloud_runtime
+    require_cloud_runtime()
     settings = settings or LLMProviderSettings()
     if settings.provider == "gemini":
         if settings.gemini_api_key is None or not settings.gemini_api_key.get_secret_value().strip():
@@ -23,3 +25,11 @@ def create_llm_adapter(settings: LLMProviderSettings | None = None, *, reuse_cli
         from app.clients.openai_llm import OpenAILLMAdapter
         return OpenAILLMAdapter(api_key=settings.openai_api_key.get_secret_value()), settings.openai_model
     raise LLMError(LLMErrorCode.INVALID_INPUT)
+
+
+async def create_local_llm_adapter(settings=None):
+    """Discover the real model ID; never consult cloud provider configuration."""
+    from app.core.runtime_config import LocalLLMSettings
+    from app.clients.local.llama import LlamaServerAdapter
+    adapter = LlamaServerAdapter(settings or LocalLLMSettings())
+    return adapter, await adapter.discover_model()

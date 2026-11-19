@@ -54,7 +54,6 @@ descriptions = {
     "AI Chat": "Trò chuyện cùng AIVA và quản lý các phiên hội thoại.",
     "Robot của tôi": "Theo dõi trạng thái và quản lý robot đã ghép nối.",
     "Trợ lý AI": "Tùy chỉnh trợ lý, model và giọng nói.",
-    "API Key cá nhân": "Quản lý khóa kết nối AI của bạn.",
     "Lịch sử hội thoại": "Xem và quản lý các hội thoại đã lưu.",
     "Quyền riêng tư": "Chọn cách lưu và quản lý dữ liệu cá nhân.",
     "Tài khoản": "Cập nhật thông tin cá nhân và mật khẩu.",

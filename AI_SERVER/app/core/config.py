@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     host: str = "127.0.0.1"
     port: int = Field(default=8000, ge=1, le=65535)
-    log_level: Literal["critical", "error", "warning", "info", "debug", "trace"] = "warning"
+    log_level: Literal["critical", "error", "warning", "info", "debug", "trace"] = "info"
     reload: bool = True
     ws_max_message_bytes: int = Field(default=4096, ge=1, le=4096)
     opus_library: Path | None = Field(default=None, repr=False)

@@ -172,10 +172,10 @@ describe('AI provider/profile/credential service',()=>{
     const a=await service.resolveAIConfiguration({userId:'7',includeCredential:true});
     const b=await service.resolveAIConfiguration({userId:'8',includeCredential:true});
     expect(a).toMatchObject({userId:'7',provider:{code:'OPENAI'},credential:'fixture-openai-user-a'});
-    expect(b).toMatchObject({userId:'8',provider:{code:'GEMINI'},credential:'fixture-gemini-user-b'});
-    expect(a.credential).not.toBe(b.credential);
+    expect(b).toMatchObject({userId:'8',provider:{code:'GEMINI'},credentialScope:'SYSTEM',credentialSource:'ENV_SYSTEM',credentialReference:null});
+    expect(b.credential).toBeUndefined();
     tx.profile.mockResolvedValue({...emptyProfile,preferredProviderId:'3',preferredLlmModelId:'31'});
-    await expect(service.resolveAIConfiguration({userId:'7',includeCredential:true})).rejects.toMatchObject({status:409});
+    await expect(service.resolveAIConfiguration({userId:'7',includeCredential:true})).resolves.toMatchObject({credentialSource:'ENV_SYSTEM'});
   });
   it('internal contract fails closed and rejects unauthorized devices/users',async()=>{
     config.set('AI_CONFIG_CONTRACT_APPROVED','false');

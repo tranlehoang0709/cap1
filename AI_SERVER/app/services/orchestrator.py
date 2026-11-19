@@ -177,6 +177,20 @@ class AIOrchestrator:
         return (self.state == SessionState.LISTENING and self.turn is not None
                 and self.task is not None and not self.task.done() and not self._input_stopped)
 
+    def recover_after_turn_error(self) -> bool:
+        """Prepare a completed failed turn for the next explicit listen.
+
+        Provider failures (for example a transient TTS 429) are turn-scoped;
+        they must not tear down the authenticated WebSocket session.  The
+        caller invokes this only after ``task`` has completed.
+        """
+        if self.state != SessionState.ERROR or self.task is None or not self.task.done():
+            return False
+        self.turn = None
+        self._error = None
+        self._state(SessionState.LISTENING)
+        return True
+
     def stop_input(self, turn_id):
         """End ingress; real file/frame STT may begin only after this boundary."""
         if self.state != SessionState.LISTENING or self.turn is None or turn_id != self.turn.turn_id:
@@ -225,6 +239,7 @@ class AIOrchestrator:
             await asyncio.sleep(self.limits.tick_seconds)
 
     async def _transcribe(self, turn):
+        log_event(get_logger("orchestrator"), logging.INFO, "stt.start", "STT started", turn_ref=self._ref(), stage="stt")
         final = None
         async for result in stream_transcription(self.stt, _InputLease(turn.audio), turn.audio.context):
             turn.audio.context.check()
@@ -237,6 +252,7 @@ class AIOrchestrator:
                 self._metrics.stt_ms = (time.monotonic() - self._started) * 1000
         if final is None or not final.text.strip():
             raise _Failure("empty_transcript")
+        log_event(get_logger("orchestrator"), logging.INFO, "stt.success", "STT completed", turn_ref=self._ref(), stage="stt", latency_ms=self._metrics.stt_ms)
         return final
 
     async def _run(self, turn):
@@ -272,6 +288,7 @@ class AIOrchestrator:
                             context.check()
                             if isinstance(event, ProviderDelta) and event.text and owner._metrics.llm_first_token_ms is None:
                                 owner._metrics.llm_first_token_ms = (time.monotonic() - llm_started) * 1000
+                                log_event(get_logger("orchestrator"), logging.INFO, "llm.first_token", "LLM first token received", turn_ref=owner._ref(), stage="llm", latency_ms=owner._metrics.llm_first_token_ms)
                             yield event
                     finally:
                         await stream.aclose()
@@ -285,7 +302,12 @@ class AIOrchestrator:
                             context.check()
                             if owner._metrics.tts_first_audio_ms is None:
                                 owner._metrics.tts_first_audio_ms = (time.monotonic() - started) * 1000
+                                log_event(get_logger("orchestrator"), logging.INFO, "tts.first_audio", "TTS first audio received", turn_ref=owner._ref(), stage="tts", latency_ms=owner._metrics.tts_first_audio_ms, audio_bytes=len(event.payload))
                             yield event
+                    except TTSError as error:
+                        log_event(get_logger("orchestrator"), logging.WARNING, "tts.failure", "TTS failed before audio output",
+                                  error_code=error.code.value, model=request.config.model, stage="tts")
+                        raise
                     finally:
                         await stream.aclose()
 
@@ -315,6 +337,9 @@ class AIOrchestrator:
                 self._state(SessionState.ERROR)
         except (AudioError, LLMError, TTSError) as error:
             self._error = self._error or error.code.value
+            if isinstance(error, TTSError):
+                log_event(get_logger("orchestrator"), logging.WARNING, "tts.pipeline_error", "TTS pipeline failed",
+                          error_type=error.code.value, stage="playback")
             if self.state != SessionState.CLOSED:
                 self._state(SessionState.ERROR)
         except _Failure as error:

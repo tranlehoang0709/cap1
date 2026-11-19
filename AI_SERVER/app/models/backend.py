@@ -159,6 +159,7 @@ class ResolvedConfig(ContractModel):
     model: Model
     profile: Profile
     credentialScope: Literal["USER", "SYSTEM", "NONE"]
+    credentialSource: Literal["ENV_SYSTEM", "BACKEND", "NONE"] = "BACKEND"
     credentialReference: CredentialReference | None
     credential: SecretStr | None = Field(default=None, repr=False, exclude=True)
 
@@ -168,6 +169,9 @@ class ResolvedConfig(ContractModel):
         if self.provider.code == "LOCAL":
             if ref is not None or self.credentialScope != "NONE":
                 raise ValueError("Invalid LOCAL credential context")
+        elif self.provider.code == "GEMINI" and self.credentialSource == "ENV_SYSTEM":
+            if self.credentialScope != "SYSTEM" or ref is not None or self.credential is not None:
+                raise ValueError("Invalid ENV_SYSTEM credential context")
         elif ref is None or ref.providerId != self.provider.id or self.credentialScope == "NONE":
             raise ValueError("Invalid Cloud credential reference")
         return self
@@ -251,10 +255,27 @@ class TurnStart(ContractModel):
     deviceId: str | None = None
     channel: Literal["web", "robot"]
 
+class TurnUserMessage(ContractModel):
+    userId: str
+    sessionId: str
+    content: str = Field(min_length=1, max_length=16000, repr=False)
+
+class TurnAssistantMessage(ContractModel):
+    userId: str
+    sessionId: str
+    content: str = Field(min_length=1, max_length=500, repr=False)
+    providerId: str
+
 
 class TurnResult(ContractModel):
     conversationId: str
     sessionId: str
+
+class TurnMessageSaved(ContractModel):
+    conversationId: str
+    sessionId: str
+    saved: bool
+    recorded: bool
 
 
 class TurnComplete(ContractModel):

@@ -1,5 +1,6 @@
 """Authenticated LAN control plane. Media remains closed until contract readiness."""
 import asyncio
+import ipaddress
 import logging
 import time
 from uuid import uuid4
@@ -11,7 +12,6 @@ from app.clients.backend import BackendError
 from app.models.backend import Telemetry
 from app.services.audio_context import AudioContext
 from app.services.device_auth import authorize_device
-from app.services.live_robot import create_live_robot
 from app.services.orchestrator import Control, SessionState
 from app.models.audio import AudioFrame
 from app.protocol.audio_framing import FramingConfig, validate_audio_frame
@@ -25,9 +25,36 @@ IDLE_TIMEOUT_SECONDS = 45
 logger = get_logger("lan_robot")
 
 
+def create_live_robot(*args, **kwargs):
+    """Lazy Cloud factory; keeps Cloud SDK modules out of the Local process."""
+    from app.services.live_robot import create_live_robot as factory
+    return factory(*args, **kwargs)
+
+
+def create_local_robot(*args, **kwargs):
+    from app.services.live_local import create_local_robot as factory
+    return factory(*args, **kwargs)
+
+
+def resolved_execution_runtime(config) -> str:
+    code = config.provider.code
+    if code == "GEMINI":
+        return "cloud"
+    if code == "LOCAL":
+        return "local"
+    raise ValueError("Unsupported robot AI provider")
+
+
 @router.websocket("/ws/robot")
 async def robot(ws: WebSocket):
-    if ws.scope.get("scheme") != "wss":
+    loopback_local_proxy = False
+    try:
+        loopback_local_proxy = (ws.app.state.runtime == "local"
+            and ws.scope.get("scheme") == "ws" and ws.client is not None
+            and ipaddress.ip_address(ws.client.host).is_loopback)
+    except (ValueError, AttributeError):
+        pass
+    if ws.scope.get("scheme") != "wss" and not loopback_local_proxy:
         await ws.close(1008)
         return
     state = ws.app.state
@@ -58,8 +85,21 @@ async def robot(ws: WebSocket):
         await state.robot_slots.acquire()
         acquired = True
         session = await authorize_device(state.backend_client, proof, context())
-        await session.resolve(context(), include_credential=True)
+        provider_id, model_id = state.gateway_routing.target_for(proof.deviceUid)
+        await session.resolve(context(), provider_id=provider_id, model_id=model_id)
         initial_config = session.config
+        execution_runtime = resolved_execution_runtime(initial_config)
+        if ((state.runtime == "local" and execution_runtime != "local")
+                or (state.runtime == "cloud" and execution_runtime != "cloud")):
+            raise ValueError("Resolved provider does not match process runtime")
+        log_event(logger, logging.INFO, "robot.config.resolved",
+                  "Resolved Backend robot configuration",
+                  credential_id=(initial_config.credentialReference.id
+                                 if initial_config.credentialReference else None),
+                  credential_scope=initial_config.credentialScope,
+                  credential_source=initial_config.credentialSource,
+                  provider=initial_config.provider.code,
+                  model=initial_config.model.modelCode)
         await ws.accept()
         incoming = await asyncio.wait_for(ws.receive(), HELLO_TIMEOUT_SECONDS)
         text = incoming.get("text")
@@ -76,7 +116,10 @@ async def robot(ws: WebSocket):
                 or hello["features"].get("aiva_lan_v1") is not True):
             raise ValueError("Unsupported hello")
         session_id = uuid4().hex
-        orch, codec, llm, output = create_live_robot(state, ws, session, session_id, version)
+        if execution_runtime == "local":
+            orch, codec, llm, output = create_local_robot(state, ws, session, session_id, version)
+        else:
+            orch, codec, llm, output = create_live_robot(state, ws, session, session_id, version)
         framing = FramingConfig(version, 4096-framing_header(version))
         last_timestamp = None
         await ws.send_json({"type": "hello", "version": version, "transport": "websocket",
@@ -86,16 +129,34 @@ async def robot(ws: WebSocket):
         # heartbeat events invoke BE and revalidate the credential/owner.
         last_received = time.monotonic()
         while True:
-            if orch.state in (SessionState.ERROR, SessionState.CLOSED):
-                if orch.turn is not None:
-                    await ws.send_json({"type": "status", "state": "failed",
-                        "session_id": session_id, "turn_id": orch.turn.turn_id})
-                await ws.send_json({'type':'error','session_id':session_id,'code':'AI_TURN_FAILED'})
+            if orch.state == SessionState.ERROR:
+                failed_turn_id = orch.turn.turn_id if orch.turn is not None else None
+                if orch.task is not None and not orch.task.done():
+                    await orch.task
+                if orch.recover_after_turn_error():
+                    # Do not send a session-level error frame here.  SD2
+                    # treats that frame as a fatal protocol error and closes
+                    # the socket.  The failed turn is already represented by
+                    # the scoped status above; keep the authenticated session
+                    # alive and advertise readiness for the next wake word.
+                    await ws.send_json({"type": "status", "state": "listening",
+                        "session_id": session_id, "turn_id": failed_turn_id,
+                        "retryable": True})
+                    continue
                 await ws.close(1013)
                 return
+            if orch.state == SessionState.CLOSED:
+                break
             try:
                 message = await asyncio.wait_for(ws.receive(), min(1, IDLE_TIMEOUT_SECONDS))
             except TimeoutError:
+                # An admitted manual turn may legitimately remain quiet while
+                # the user is thinking or pausing.  VAD/explicit listen.stop
+                # owns turn completion; the session idle timeout must not
+                # disconnect an authenticated robot in LISTENING.
+                if orch.state == SessionState.LISTENING:
+                    last_received = time.monotonic()
+                    continue
                 if time.monotonic()-last_received >= IDLE_TIMEOUT_SECONDS:
                     raise
                 continue
@@ -128,7 +189,8 @@ async def robot(ws: WebSocket):
                     await orch.task
                 if orch.state != SessionState.LISTENING or (orch.task is not None and not orch.task.done()):
                     raise ValueError('Busy turn')
-                await session.resolve(context(), include_credential=True)
+                await session.resolve(context(), include_credential=True,
+                                      provider_id=provider_id, model_id=model_id)
                 if session.config != initial_config:
                     raise ValueError('Configuration changed; reconnect required')
                 turn_id = uuid4().hex

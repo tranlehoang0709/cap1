@@ -9,6 +9,7 @@ import json
 import math
 import struct
 import time
+import logging
 from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -29,8 +30,10 @@ from app.services.audio_context import AudioContext
 from app.services.device_auth import authorize_device, validate_local_device_credential
 from app.clients.backend import BackendError
 from pydantic import ValidationError
+from app.core.logging import get_logger, log_event
 
 router = APIRouter()
+logger = get_logger("robot_websocket")
 
 
 def parse_message(text):
@@ -63,6 +66,8 @@ def validate_timestamp_order(version, frame, previous):
 
 @router.websocket("/ws/dev-robot")
 async def robot_endpoint(ws: WebSocket):
+    connection_ref = ws.headers.get("x-connection-id") or f"{ws.client.host if ws.client else 'unknown'}:{ws.client.port if ws.client else 0}"
+    log_event(logger, logging.INFO, "robot.websocket.connect", "Robot WebSocket request received", session_id=connection_ref)
     if ws.app.state.backend_settings.mode == "integrated":
         # Authenticate and resolve policy before accepting or reading any audio.
         # No mock fallback is reachable in this branch.
@@ -117,6 +122,7 @@ async def robot_endpoint(ws: WebSocket):
     codec = orch = None
     try:
         await ws.accept()
+        log_event(logger, logging.INFO, "robot.websocket.accepted", "Robot WebSocket handshake accepted", session_id=connection_ref)
         versions = ws.headers.getlist("protocol-version")
         if len(versions) != 1 or versions[0] not in ("1", "2", "3"):
             raise ValueError("Explicit version required")
@@ -139,8 +145,10 @@ async def robot_endpoint(ws: WebSocket):
         if any(len(ws.headers.getlist(n)) != 1 or not 1 <= len(ws.headers[n]) <= 128 for n in ("device-id", "client-id")):
             raise ValueError("Missing device metadata")
         session_id = uuid4().hex
+        log_event(logger, logging.INFO, "robot.session.started", "Robot audio session started", session_id=session_id, device_ref=local_device_uid)
         codec = OpusCodec(16000, 60)
         output = RobotAudioOutput(ws, session_id, version)
+        audio_frames = 0
         def energy(frame):
             samples = struct.unpack("<960h", frame.payload)
             return sum(v*v for v in samples) / len(samples) > settings.energy_threshold ** 2
@@ -247,7 +255,20 @@ async def robot_endpoint(ws: WebSocket):
         framing = FramingConfig(version, 4096 - framing_header(version))
         last_audio_timestamp = None
         while True:
-            if orch.state in (SessionState.ERROR, SessionState.CLOSED):
+            if orch.state == SessionState.ERROR:
+                # A provider failure belongs to this turn, not the
+                # authenticated WebSocket session.  Recover to idle/listening
+                # so the robot can try the next wake-word without reconnecting.
+                if settings.ai_mode == "mock":
+                    break
+                if orch.task is not None and not orch.task.done():
+                    await orch.task
+                if orch.recover_after_turn_error():
+                    await ws.send_json({"type": "status", "state": "listening",
+                        "session_id": session_id, "reason": "turn_failed_retry_allowed"})
+                    continue
+                break
+            if orch.state == SessionState.CLOSED:
                 break
             try:
                 message = await asyncio.wait_for(ws.receive(), 1)
@@ -262,6 +283,9 @@ async def robot_endpoint(ws: WebSocket):
                 if not orch.accepting_input:
                     continue
                 audio = validate_audio_frame(message["bytes"], framing)
+                audio_frames += 1
+                if audio_frames == 1 or audio_frames % 50 == 0:
+                    log_event(logger, logging.INFO, "robot.audio.opus_input", "Opus audio input received", session_id=session_id, frame_count=audio_frames)
                 last_audio_timestamp = validate_timestamp_order(version, audio, last_audio_timestamp)
                 orch.microphone(orch.turn.turn_id, AudioFrame(codec.decode(audio.payload)))
                 continue
@@ -272,6 +296,7 @@ async def robot_endpoint(ws: WebSocket):
             if kind == "heartbeat":
                 await ws.send_json({"type": "heartbeat", "session_id": session_id, "accepted": True})
             elif kind == "playback":
+                log_event(logger, logging.INFO, "robot.playback.ack", "Playback acknowledgement received", session_id=session_id, ack_state=control.get("state"))
                 output.acknowledge(control)
             elif kind == "listen" and control.get("state") == "start":
                 if control.get("mode") not in ("auto", "manual"):
@@ -288,17 +313,20 @@ async def robot_endpoint(ws: WebSocket):
                     raise ValueError("Busy turn")
                 turn_id = uuid4().hex
                 orch.start_turn(turn_id)
+                log_event(logger, logging.INFO, "robot.listen.start", "Listening turn started", session_id=session_id, turn_ref=turn_id)
                 last_audio_timestamp = None
-                if standalone_lan:
-                    # The LAN firmware gates microphone transmission on this
-                    # scoped admission ACK. Without it the UI shows listening
-                    # while the device sends no audio frames.
-                    await ws.send_json({"type": "status", "state": "listening",
-                        "session_id": session_id, "turn_id": turn_id})
+                # SD2 half-duplex firmware gates microphone transmission on
+                # this scoped admission ACK in both LAN and WIFI_INTERNET
+                # modes.  Previously this was restricted to standalone_lan,
+                # leaving integrated/Funnel sessions stuck in LISTENING with
+                # zero audio frames.
+                await ws.send_json({"type": "status", "state": "listening",
+                    "session_id": session_id, "turn_id": turn_id})
             elif kind == "listen" and control.get("state") == "stop":
                 if orch.turn is not None:
                     turn_id = orch.turn.turn_id
-                    if orch.stop_input(turn_id) and standalone_lan:
+                    if orch.stop_input(turn_id):
+                        log_event(logger, logging.INFO, "robot.listen.stop", "Listening turn stopped", session_id=session_id, turn_ref=turn_id)
                         await ws.send_json({"type": "status", "state": "processing",
                             "session_id": session_id, "turn_id": turn_id})
             elif kind == "listen" and control.get("state") == "detect":
@@ -314,19 +342,22 @@ async def robot_endpoint(ws: WebSocket):
                 raise ValueError("Unsupported control")
         await ws.close(code=1000)
     except WebSocketDisconnect:
-        pass
+        log_event(logger, logging.INFO, "robot.websocket.disconnect", "Robot WebSocket disconnected", session_id=connection_ref)
     except CodecError as error:
+        log_event(logger, logging.ERROR, "robot.opus.error", "Opus codec failure", session_id=connection_ref, error_code="OPUS_CODEC_ERROR", stage="opus")
         try:
             await ws.send_json({"type": "error", "code": "OPUS_CODEC_UNAVAILABLE" if "libopus unavailable" in str(error) else "OPUS_CODEC_ERROR"})
             await ws.close(code=1013)
         except Exception:
             pass
     except (AudioError, ValueError, TimeoutError):
+        log_event(logger, logging.WARNING, "robot.protocol.error", "Robot protocol operation failed", session_id=connection_ref, error_code="PROTOCOL_ERROR", stage="websocket")
         try:
             await ws.close(code=1008)
         except RuntimeError:
             pass
     except Exception:
+        log_event(logger, logging.ERROR, "robot.websocket.error", "Unexpected robot WebSocket failure", session_id=connection_ref, error_code="INTERNAL_ERROR", stage="websocket", exc_info=True)
         # Normalize unexpected transport/native errors without logging payloads.
         try:
             await ws.close(code=1011)
@@ -341,6 +372,7 @@ async def robot_endpoint(ws: WebSocket):
             if codec is not None:
                 codec.close()
             ws.app.state.robot_slots.release()
+            log_event(logger, logging.INFO, "robot.websocket.closed", "Robot WebSocket handler finished", session_id=connection_ref)
 
 
 def framing_header(version):

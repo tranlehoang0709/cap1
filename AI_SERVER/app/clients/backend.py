@@ -186,6 +186,16 @@ class BackendClient:
     async def start_turn(self, request: dto.TurnStart, context: AudioContext):
         return await self._post('/internal/ai/turns/start', request, self._tokens.config, dto.TurnResult, context)
 
+    async def record_user_message(self, user_id: str, session_id: str, content: str, context: AudioContext):
+        return await self._post('/internal/ai/turns/user-message',
+            dto.TurnUserMessage(userId=user_id, sessionId=session_id, content=content),
+            self._tokens.config, dto.TurnMessageSaved, context)
+
+    async def record_assistant_message(self, user_id: str, session_id: str, content: str, provider_id: str, context: AudioContext):
+        return await self._post('/internal/ai/turns/assistant-message',
+            dto.TurnAssistantMessage(userId=user_id, sessionId=session_id, content=content, providerId=provider_id),
+            self._tokens.config, dto.TurnMessageSaved, context)
+
     async def complete_turn(self, request: dto.TurnComplete, context: AudioContext):
         result = await self._post('/internal/ai/turns/complete', request, self._tokens.config, dto.TurnSaved, context)
         if result.sessionId != request.sessionId:

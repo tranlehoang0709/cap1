@@ -26,7 +26,9 @@ export async function requireApprovedRobot(pool: Pool, connection: PoolConnectio
 }
 
 // Robot history and live context both require the current open assignment.
-// Legacy robot rows without an assignment ID fail closed; web rows stay user-scoped.
+// The deployed database may predate assignment_history_id on conversations, so
+// ownership is anchored to the current open history row by device/user instead
+// of referencing a column that is not present in that deployment.
 export const visibleConversation = `(c.device_id IS NULL AND LOWER(c.channel)='web'
   OR c.device_id IS NOT NULL AND EXISTS (
     SELECT 1 FROM device_assignment_history h
@@ -34,7 +36,7 @@ export const visibleConversation = `(c.device_id IS NULL AND LOWER(c.channel)='w
       AND a.pairing_request_id=h.pairing_request_id AND a.assigned_at=h.assigned_at
     JOIN devices d ON d.id=a.device_id
     JOIN device_pairing_requests p ON p.id=a.pairing_request_id AND p.device_id=a.device_id AND p.user_id=a.user_id
-    WHERE h.id=c.assignment_history_id AND h.device_id=c.device_id AND h.user_id=c.user_id
+    WHERE h.device_id=c.device_id AND h.user_id=c.user_id
       AND h.unlinked_at IS NULL AND p.status='approved' AND d.lifecycle_status='assigned'
       AND NOT EXISTS (SELECT 1 FROM device_unlink_operations o WHERE o.device_id=d.id
         AND (o.status<>'completed' OR o.revoked_at IS NULL OR o.completed_at IS NULL))

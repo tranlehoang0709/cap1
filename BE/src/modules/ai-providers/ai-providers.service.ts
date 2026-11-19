@@ -30,6 +30,9 @@ export class AiProvidersService {
     const allowed = (this.config.get<string>('AI_SYSTEM_CREDENTIAL_ALLOWED_USER_IDS') ?? '').split(',').map(v=>v.trim()).filter(Boolean);
     if (!allowed.includes('*') && !allowed.includes(userId)) throw new ForbiddenException('SYSTEM_SCOPE_NOT_ALLOWED');
   }
+  private effectiveScope(userId: string, stored: Scope): Scope {
+    return stored;
+  }
   private async provider(tx: AITransaction, providerId: string) {
     const p = await tx.provider(providerId);
     if (!p) throw new NotFoundException('PROVIDER_UNAVAILABLE');
@@ -67,14 +70,20 @@ export class AiProvidersService {
   }
   async checkProviderPermission(tx: AITransaction, userId: string, providerId: string, modelId: string | null, scope?: Scope) {
     const provider = await this.provider(tx,providerId), model = await this.model(tx,providerId,modelId);
-    if (provider.code === 'LOCAL') return {provider,model,credentialScope:'NONE' as const,credentialReference:null};
-    scope = scope ?? await tx.scope(userId);
+    if (provider.code === 'LOCAL') return {provider,model,credentialScope:'NONE' as const,credentialSource:'NONE' as const,credentialReference:null};
+    // Gemini runtime credentials are owned by AI_SERVER's environment.  The
+    // Backend still validates provider/model, ownership and admission, but it
+    // must never require or decrypt a MySQL credential for this path.
+    if (provider.code === 'GEMINI') {
+      return {provider,model,credentialScope:'SYSTEM' as const,credentialSource:'ENV_SYSTEM' as const,credentialReference:null};
+    }
+    scope = this.effectiveScope(userId, scope ?? await tx.scope(userId));
     if (scope === 'SYSTEM') this.systemAllowed(userId);
     const owner: Owner = {scope,userId:scope === 'USER' ? userId : null};
     const credential = await tx.activeCredential(owner,providerId);
     if (!credential) throw new ConflictException('CREDENTIAL_REQUIRED');
     this.decryptSecret(credential.secretCiphertext,owner,providerId);
-    return {provider,model,credentialScope:scope,credentialReference:{id:credential.id,providerId}};
+    return {provider,model,credentialScope:scope,credentialSource:'BACKEND' as const,credentialReference:{id:credential.id,providerId}};
   }
   async resolveAIConfiguration(body: unknown) {
     if (this.config.get<string>('AI_CONFIG_CONTRACT_APPROVED') !== 'true') throw new ForbiddenException({allowed:false,reason:'CONTRACT_NOT_APPROVED'});
@@ -96,7 +105,7 @@ export class AiProvidersService {
       const selectedProvider = providerId ?? profile?.preferredProviderId ?? null;
       const selectedModel = modelId ?? (providerId && providerId !== profile?.preferredProviderId ? null : profile?.preferredLlmModelId) ?? null;
       if (!selectedProvider) throw new ConflictException('PROVIDER_REQUIRED');
-      const p = await this.checkProviderPermission(tx,userId,selectedProvider,selectedModel);
+      const p = await this.checkProviderPermission(tx,userId,selectedProvider,selectedModel,await tx.scope(userId));
       let credential: string | null = null;
       if (input.includeCredential === true && p.credentialReference) {
         const scope = p.credentialScope as Scope;
@@ -107,7 +116,7 @@ export class AiProvidersService {
       }
       return {userId,provider:{id:p.provider.id,code:p.provider.code,name:p.provider.name},
         model:{id:p.model.id,modelCode:p.model.modelCode,capability:p.model.capability},profile,
-        credentialScope:p.credentialScope,credentialReference:p.credentialReference,...(input.includeCredential === true ? {credential} : {})};
+        credentialScope:p.credentialScope,credentialSource:p.credentialSource ?? 'BACKEND',credentialReference:p.credentialReference,...(input.includeCredential === true && p.credentialSource !== 'ENV_SYSTEM' ? {credential} : {})};
     });
   }
   async listAvailableProviders(actor: CurrentUser) {
@@ -181,15 +190,42 @@ export class AiProvidersService {
         return {conversationId:s.conversationId,sessionId,saved};
       }
       if(s.status!=='active')throw new ConflictException('INVALID_AI_CONTEXT');
-      if(saved)await tx.rows("INSERT INTO messages(conversation_id,role,content,provider_id,created_at) VALUES(?,'user',?,?,UTC_TIMESTAMP()),(?,'assistant',?,?,UTC_TIMESTAMP())",[s.conversationId,content,usage.providerId,s.conversationId,response,usage.providerId]);
+      if(saved){
+        const messages=await tx.rows<{role:string}>('SELECT role FROM messages WHERE conversation_id=? ORDER BY id',[s.conversationId]);
+        const hasUser=messages.some(m=>m.role==='user'),hasAssistant=messages.some(m=>m.role==='assistant');
+        if(!hasUser&&!hasAssistant) await tx.rows("INSERT INTO messages(conversation_id,role,content,created_at) VALUES(?,'user',?,UTC_TIMESTAMP()),(?,'assistant',?,UTC_TIMESTAMP())",[s.conversationId,content,s.conversationId,response]);
+        else {
+          if(!hasUser) await tx.rows("INSERT INTO messages(conversation_id,role,content,created_at) VALUES(?,'user',?,UTC_TIMESTAMP())",[s.conversationId,content]);
+          if(!hasAssistant) await tx.rows("INSERT INTO messages(conversation_id,role,content,provider_id,created_at) VALUES(?,'assistant',?,?,UTC_TIMESTAMP())",[s.conversationId,response,usage.providerId]);
+        }
+      }
       await tx.rows("UPDATE ai_sessions SET status='completed',ended_at=UTC_TIMESTAMP() WHERE id=?",[sessionId]);
       await tx.rows("UPDATE conversations SET status='active',ended_at=NULL,title=COALESCE(title,?) WHERE id=?",[content.slice(0,80),s.conversationId]);
       return {conversationId:s.conversationId,sessionId,saved};
     });
   }
+  async recordUserMessage(body: unknown) { return this.recordMessage(body, 'user'); }
+  async recordAssistantMessage(body: unknown) { return this.recordMessage(body, 'assistant'); }
+  private async recordMessage(body: unknown, role: 'user'|'assistant') {
+    const input=objectInput(body,['userId','sessionId','content']);
+    const userId=id(input.userId),sessionId=id(input.sessionId),content=text(input.content,role==='user'?16000:500,false,true) as string;
+    const providerId=input.providerId==null?null:id(input.providerId);
+    return this.database(async tx=>{
+      await this.activeUser(tx,userId);
+      const s=(await tx.rows<{conversationId:string;deviceId:string|null;status:string}>(`SELECT CAST(s.conversation_id AS CHAR) conversationId,CAST(s.device_id AS CHAR) deviceId,s.status FROM ai_sessions s JOIN conversations c ON c.id=s.conversation_id WHERE s.id=? AND c.user_id=? AND c.deleted_at IS NULL FOR UPDATE`,[sessionId,userId]))[0];
+      if(!s)throw new ForbiddenException('INVALID_AI_CONTEXT');
+      if(s.deviceId){await tx.ownership.devices.findDeviceById(s.deviceId);if(!await tx.ownership.verifyDeviceOwnership(userId,s.deviceId))throw new ForbiddenException('DEVICE_ACCESS_DENIED');}
+      const privacy=(await tx.rows<{save:number}>('SELECT save_history AS save FROM privacy_preferences WHERE user_id=? FOR UPDATE',[userId]))[0];
+      if(privacy?.save!==1)return {conversationId:s.conversationId,sessionId,saved:false,recorded:false};
+      const existing=(await tx.rows<{id:string}>('SELECT id FROM messages WHERE conversation_id=? AND role=? LIMIT 1',[s.conversationId,role]))[0];
+      if(existing)return {conversationId:s.conversationId,sessionId,saved:true,recorded:false};
+      await tx.rows(`INSERT INTO messages(conversation_id,role,content${role==='assistant'?',provider_id':''},created_at) VALUES(?,?,?${role==='assistant'?',?':''},UTC_TIMESTAMP())`,role==='assistant'?[s.conversationId,role,content,providerId]:[s.conversationId,role,content]);
+      return {conversationId:s.conversationId,sessionId,saved:true,recorded:true};
+    });
+  }
   async getAIProfile(actor: CurrentUser) {
     const userId=this.actor(actor,'USER');
-    return this.database(async tx=>{await tx.requireApprovedRobot(userId);await this.activeUser(tx,userId);return {...(await tx.profile(userId) ?? emptyProfile),credentialScope:await tx.scope(userId)};});
+    return this.database(async tx=>{await tx.requireApprovedRobot(userId);await this.activeUser(tx,userId);return {...(await tx.profile(userId) ?? emptyProfile),credentialScope:this.effectiveScope(userId,await tx.scope(userId))};});
   }
   async updateAIProfile(actor: CurrentUser, body: unknown) {
     const userId=this.actor(actor,'USER'),patch=profileInput(body);
@@ -197,7 +233,7 @@ export class AiProvidersService {
       await tx.requireApprovedRobot(userId);
       await this.activeUser(tx,userId);
       const {credentialScope,...fields}=patch,profile:Profile={...(await tx.profile(userId) ?? emptyProfile),...fields};
-      const scope=credentialScope ?? await tx.scope(userId);
+      const scope=this.effectiveScope(userId, credentialScope ?? await tx.scope(userId));
       if (credentialScope==='SYSTEM') this.systemAllowed(userId);
       if (profile.preferredProviderId) {const p=await this.checkProviderPermission(tx,userId,profile.preferredProviderId,profile.preferredLlmModelId,scope);profile.preferredLlmModelId=p.model.id;}
       else if (profile.preferredLlmModelId) throw new ConflictException('PROVIDER_REQUIRED');

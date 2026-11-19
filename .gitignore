@@ -13,3 +13,5 @@ AI_SERVER/.env
 BE/.env
 artifacts/
 xiaozhi-esp32/build-dual/
+/xiaozhi-esp32/build-diagnostic/
+/xiaozhi-esp32/build-wake.log

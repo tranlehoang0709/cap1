@@ -97,6 +97,7 @@ void Application::Initialize() {
         xEventGroupSetBits(event_group_, MAIN_EVENT_SEND_AUDIO);
     };
     callbacks.on_wake_word_detected = [this](const std::string& wake_word) {
+        ESP_LOGI(TAG, "Wake callback received: word=%s state=%d", wake_word.c_str(), (int)GetDeviceState());
         xEventGroupSetBits(event_group_, MAIN_EVENT_WAKE_WORD_DETECTED);
     };
     callbacks.on_vad_change = [this](bool speaking) {
@@ -320,6 +321,7 @@ void Application::Run() {
         }
 
         if (bits & MAIN_EVENT_WAKE_WORD_DETECTED) {
+            ESP_LOGI(TAG, "MAIN_EVENT_WAKE_WORD_DETECTED handled state=%d", (int)GetDeviceState());
             HandleWakeWordDetectedEvent();
         }
 
@@ -877,6 +879,7 @@ bool Application::InitializeProtocol() {
                 return;
             const std::string turn_id = turn->valuestring;
             const std::string status_name = status->valuestring;
+            ESP_LOGI(TAG, "Received server status=%s turn_present=%d state=%d", status_name.c_str(), !turn_id.empty(), (int)GetDeviceState());
             Schedule([this, turn_id, status_name]() {
                 if (status_name == "listening") {
                     active_server_turn_id_ = turn_id;
@@ -884,6 +887,7 @@ bool Application::InitializeProtocol() {
                         lan_mic_admission_pending_ = false;
                         auto display = Board::GetInstance().GetDisplay();
                         display->SetStatus(Lang::Strings::LISTENING);
+                        ESP_LOGI(TAG, "Backend admission accepted; entering Listening turn=%s", turn_id.c_str());
                         if (lan_audio_buffer_overflow_) {
                             lan_audio_buffer_overflow_ = false;
                             lan_audio_capture_pending_ = false;
@@ -1278,6 +1282,7 @@ void Application::HandleWakeWordDetectedEvent() {
 }
 
 void Application::BeginWakeWordInvoke(const std::string& wake_word) {
+    ESP_LOGI(TAG, "BeginWakeWordInvoke word=%s state=%d channel_open=%d", wake_word.c_str(), (int)GetDeviceState(), protocol_ && protocol_->IsAudioChannelOpened());
     // Must run in the main task with the device in idle state
     audio_service_.EncodeWakeWord();
 
@@ -1285,6 +1290,7 @@ void Application::BeginWakeWordInvoke(const std::string& wake_word) {
     // already opened. ContinueWakeWordInvoke() rejects any other state, so
     // skipping this transition would silently drop the wake word invocation.
     if (!SetDeviceState(kDeviceStateConnecting)) {
+        ESP_LOGW(TAG, "Wake invoke rejected: cannot enter connecting state=%d", (int)GetDeviceState());
         // Wake word detection was stopped by the detection itself; restore it
         // so the device does not become unresponsive to wake words.
         audio_service_.EnableWakeWordDetection(true);
@@ -1316,6 +1322,7 @@ void Application::BeginWakeWordInvoke(const std::string& wake_word) {
 }
 
 void Application::ContinueWakeWordInvoke(const std::string& wake_word) {
+    ESP_LOGI(TAG, "ContinueWakeWordInvoke state=%d channel_open=%d", (int)GetDeviceState(), protocol_ && protocol_->IsAudioChannelOpened());
     // Check state again in case it was changed during scheduling
     if (GetDeviceState() != kDeviceStateConnecting) {
         return;
@@ -1327,6 +1334,7 @@ void Application::ContinueWakeWordInvoke(const std::string& wake_word) {
 
     if (!protocol_->IsAudioChannelOpened()) {
         if (!protocol_->OpenAudioChannel()) {
+            ESP_LOGW(TAG, "OpenAudioChannel failed during wake invoke");
             // Return to idle so the device is not stuck in the connecting
             // state (not every failure path reports a network error), and
             // wake word detection is re-enabled by the idle state handler.
@@ -1351,6 +1359,7 @@ void Application::ContinueWakeWordInvoke(const std::string& wake_word) {
 #endif
 #if CONFIG_AIVA_LAN_BOOTSTRAP
         SetListeningMode(kListeningModeManualStop);
+        ESP_LOGI(TAG, "Wake invoke sent listen.start; awaiting backend admission");
 #else
         SetListeningMode(kListeningModeAutoStop);
 #endif

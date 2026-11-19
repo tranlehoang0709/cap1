@@ -14,7 +14,10 @@ from nen_tang.backend import BackendError, api, clear_auth
 
 
 def api_error(error):
-    st.error(error.message)
+    message = error.message or "Backend request failed"
+    st.error(message)
+    if error.status:
+        st.caption(f"HTTP {error.status}")
     if error.status == 0:
         st.caption("Kiểm tra Backend, MySQL và biến AIVA_BACKEND_URL nếu bạn dùng địa chỉ khác.")
 
@@ -580,7 +583,8 @@ def history_page():
         if selected:
             detail = call(f"/conversations/{selected}")
             if detail is not None:
-                if (detail.get("id") != selected or detail.get("user_id") != st.session_state.account["id"]
+                if (str(detail.get("id")) != str(selected)
+                        or str(detail.get("user_id")) != str(st.session_state.account["id"])
                         or not isinstance(detail.get("messages"), list)):
                     st.error("Không thể hiển thị hội thoại không thuộc tài khoản hiện tại.")
                     return
@@ -886,7 +890,6 @@ def render_page(page, account):
         "AI Chat": chat_page,
         "Robot của tôi": user_devices,
         "Trợ lý AI": assistant_settings,
-        "API Key cá nhân": personal_keys,
         "Lịch sử hội thoại": history_page,
         "Quyền riêng tư": privacy_page,
         "Tài khoản": lambda: account_page(account),

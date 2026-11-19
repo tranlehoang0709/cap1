@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class LLMSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="AI_SERVER_LLM_", extra="ignore",
                                      hide_input_in_errors=True, frozen=True)
-    model: str = Field(default="gpt-6-luna", min_length=1, pattern=r"^[A-Za-z0-9._:-]+$")
+    model: str = Field(default="gpt-6-luna", min_length=1, pattern=r"^[A-Za-z0-9._:/-]+$")
     reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = "none"
     max_output_tokens: int = Field(default=256, gt=0, strict=True)
     max_output_chars: int = Field(default=500, gt=0, strict=True)

@@ -5,10 +5,14 @@ from collections.abc import AsyncIterator, Callable
 from datetime import datetime
 import socket
 import ssl
+import logging
 
 from app.models.audio import AudioError, ErrorCode
 from app.models.llm import LLMError, LLMErrorCode, LLMRequest, ProviderDelta, ProviderDone, Usage
 from app.services.audio_context import AudioContext
+from app.core.logging import get_logger, log_event
+
+logger = get_logger("gemini_llm")
 
 
 def _google_client(api_key: str, timeout_seconds: float):
@@ -132,6 +136,10 @@ class GeminiLLMAdapter:
                     yield ProviderDelta(text)
 
             if finish_reason is None:
+                log_event(logger, logging.WARNING, "llm.invalid_stream",
+                          "Gemini stream ended without finish reason",
+                          error_code=LLMErrorCode.INVALID_STREAM.value,
+                          stage="llm", model=request.config.model)
                 raise LLMError(LLMErrorCode.INVALID_STREAM)
             usage = self._usage(usage_metadata)
             if finish_reason == "STOP":
@@ -139,7 +147,11 @@ class GeminiLLMAdapter:
             else:
                 reason = "token_limit" if finish_reason in ("MAX_TOKENS", "MAX_OUTPUT_TOKENS") else "incomplete"
                 yield ProviderDone(False, reason, usage)
-        except LLMError:
+        except LLMError as error:
+            log_event(logger, logging.WARNING, "llm.provider_error",
+                      "Gemini LLM stream failed",
+                      error_code=error.code.value, stage="llm",
+                      model=request.config.model)
             raise
         except AudioError as error:
             code = LLMErrorCode.CANCELLED if error.code == ErrorCode.CANCELLED else LLMErrorCode.TIMEOUT
@@ -147,7 +159,12 @@ class GeminiLLMAdapter:
         except (TimeoutError, asyncio.TimeoutError):
             raise LLMError(LLMErrorCode.TIMEOUT) from None
         except Exception as error:
-            raise LLMError(self._classify_error(error)) from None
+            code = self._classify_error(error)
+            log_event(logger, logging.WARNING, "llm.provider_error",
+                      "Gemini LLM provider request failed",
+                      error_code=code.value, stage="llm",
+                      model=request.config.model, error_type=type(error).__name__)
+            raise LLMError(code) from None
         finally:
             try:
                 if stream is not None:

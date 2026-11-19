@@ -1,6 +1,7 @@
 """Quota admission and usage settlement for isolated mocks or authenticated Gemini."""
 
 import asyncio
+import logging
 import sys
 import time
 from uuid import uuid4
@@ -10,8 +11,10 @@ from app.models import backend as dto
 from app.models.audio import AudioError, ErrorCode, positive_int
 from app.models.llm import LLMError, LLMErrorCode, ProviderDone
 from app.services.mock_llm import MockLLMAdapter
-from app.clients.gemini_llm import GeminiLLMAdapter
 from app.services.user_rate_limit import UserRateLimit
+from app.core.logging import get_logger, log_event
+
+logger = get_logger("backend_execution")
 
 
 class UsageReporter:
@@ -67,7 +70,8 @@ class QuotaLLMAdapter:
     """
     def __init__(self, delegate, session, reporter: UsageReporter, *, mock_only: bool,
                  max_total_tokens: str | None, report_context_factory, execution_slots=None,
-                 defer_turn_completion: bool = False, expected_system_prompt: str | None = None):
+                 defer_turn_completion: bool = False, expected_system_prompt: str | None = None,
+                 credential_source: str = "BACKEND", expected_provider_code: str = "GEMINI"):
         self.delegate, self.session, self.reporter = delegate, session, reporter
         self.mock_only, self.budget, self.report_context_factory = mock_only, max_total_tokens, report_context_factory
         if max_total_tokens is not None:
@@ -78,15 +82,37 @@ class QuotaLLMAdapter:
         self._pending_completions = {}
         self.defer_turn_completion = defer_turn_completion
         self.expected_system_prompt = expected_system_prompt
+        self.credential_source = credential_source
+        self.expected_provider_code = expected_provider_code
         self.execution_slots = execution_slots
 
     def _validate_mode(self):
         config = self.session.config
         if self.mock_only is True and isinstance(self.delegate, MockLLMAdapter):
             return
-        if (self.mock_only is not False or not isinstance(self.delegate, GeminiLLMAdapter)
-                or config is None or config.provider.code != 'GEMINI' or not config.credential
-                or not config.credential.get_secret_value().strip() or config.credentialReference is None
+        env_system = (self.credential_source == "ENV_SYSTEM" and config is not None
+                      and config.provider.code == 'GEMINI'
+                      and config.credentialScope == 'SYSTEM'
+                      and config.credentialSource == 'ENV_SYSTEM'
+                      and config.credentialReference is None and config.credential is None)
+        backend_credential = (self.credential_source != "ENV_SYSTEM" and config is not None
+                      and config.credential is not None and config.credential.get_secret_value().strip()
+                      and config.credentialReference is not None)
+        local_env = (self.credential_source == "LOCAL_ENV" and config is not None
+                     and config.provider.code == "LOCAL"
+                     and config.credentialScope == "NONE" and config.credentialSource == "NONE"
+                     and config.credentialReference is None and config.credential is None)
+        if self.expected_provider_code == "GEMINI":
+            from app.clients.gemini_llm import GeminiLLMAdapter
+            delegate_valid = isinstance(self.delegate, GeminiLLMAdapter)
+        elif self.expected_provider_code == "LOCAL":
+            from app.clients.local.llama import LlamaServerAdapter
+            delegate_valid = isinstance(self.delegate, LlamaServerAdapter)
+        else:
+            delegate_valid = False
+        if (self.mock_only is not False or not delegate_valid
+                or config is None or config.provider.code != self.expected_provider_code
+                or not (local_env or env_system or backend_credential)
                 or self.budget is None or int(self.budget) <= 0):
             raise BackendError(BackendCode.BLOCKED)
 
@@ -112,7 +138,11 @@ class QuotaLLMAdapter:
             raise BackendError(BackendCode.DUPLICATE)
         if admission.reservedTokens != self.budget:
             raise BackendError(BackendCode.BINDING)
-        if not self.mock_only and admission.credentialId != config.credentialReference.id:
+        if (not self.mock_only and self.credential_source in ("ENV_SYSTEM", "LOCAL_ENV")
+                and admission.credentialId is not None):
+            raise BackendError(BackendCode.BINDING)
+        if (not self.mock_only and self.credential_source not in ("ENV_SYSTEM", "LOCAL_ENV")
+                and (config.credentialReference is None or admission.credentialId != config.credentialReference.id)):
             # Rotation/revocation between resolve and admission must never cause
             # execution under a key different from the ledger credential.
             raise BackendError(BackendCode.BINDING)
@@ -169,6 +199,11 @@ class QuotaLLMAdapter:
         if request.turn_id not in self._prepared:
             await self.prepare(request.turn_id, context)
         request_id, persisted = self._prepared[request.turn_id]
+        if not self.mock_only and persisted:
+            # Persist the transcript as soon as STT has produced it. This is
+            # independent of TTS/playback acknowledgement.
+            await session.client.record_user_message(session.key.user_id, persisted.sessionId,
+                request.transcript, context)
         self._attempted.add(request.turn_id)
         stream = None
         acquired = False
@@ -180,11 +215,17 @@ class QuotaLLMAdapter:
             if not self.mock_only and self.execution_slots is not None:
                 await context.run(self.execution_slots.acquire)
                 acquired = True
-            if not self.mock_only:
+            if not self.mock_only and self.expected_provider_code == "LOCAL":
+                actual_model = await self.delegate.discover_model()
+                if not self.delegate.matches_model(config.model.modelCode, actual_model):
+                    raise BackendError(BackendCode.BINDING)
+            if not self.mock_only and self.expected_provider_code != "LOCAL":
                 input_tokens = await self.delegate.count_input_tokens(request, context)
                 if input_tokens + request.config.max_output_tokens > int(self.budget):
                     raise BackendError(BackendCode.LIMIT)
-            stream = self.delegate.stream(request, context)
+            stream = (self.delegate.stream(request, context, enable_thinking=False)
+                      if self.expected_provider_code == "LOCAL"
+                      else self.delegate.stream(request, context))
             async for event in stream:
                 self._provider_started.add(request.turn_id)
                 context.check()
@@ -212,6 +253,20 @@ class QuotaLLMAdapter:
             finally:
                 if acquired:
                     self.execution_slots.release()
+                if (not self.mock_only and status == 'success' and persisted
+                        and 0 < len(answer) <= 500):
+                    try:
+                        await session.client.record_assistant_message(session.key.user_id, persisted.sessionId,
+                            answer, config.provider.id, self.report_context_factory())
+                    except BackendError as error:
+                        # Message persistence is independent of the voice
+                        # playback critical path. Keep quota/usage settlement
+                        # fail-closed, but do not discard an already completed
+                        # provider response before TTS can play it.
+                        log_event(logger, logging.WARNING, "history.assistant_persist_failed",
+                                  "Assistant message persistence failed; continuing voice pipeline",
+                                  error_code=error.code.value, http_status=error.status,
+                                  stage="history")
                 # Unknown usage MUST stay pending; never invent zero actuals.
                 if usage is not None:
                     settled = await self.reporter.submit(dto.UsageReport(requestId=request_id, providerId=config.provider.id,
