@@ -1,0 +1,14 @@
+node_modules/
+.npm-cache/
+.next/
+.env*
+!.env.example
+playwright-report/
+test-results/
+test-results*/
+integration-evidence/
+integration-*.json
+coverage/
+*.log
+next-env.d.ts
+tsconfig.tsbuildinfo

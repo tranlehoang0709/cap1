@@ -27,7 +27,8 @@ export class AiProvidersService {
     return id(actor.userId);
   }
   private systemAllowed(userId: string) {
-    if (!(this.config.get<string>('AI_SYSTEM_CREDENTIAL_ALLOWED_USER_IDS') ?? '').split(',').map(v=>v.trim()).includes(userId)) throw new ForbiddenException('SYSTEM_SCOPE_NOT_ALLOWED');
+    const allowed = (this.config.get<string>('AI_SYSTEM_CREDENTIAL_ALLOWED_USER_IDS') ?? '').split(',').map(v=>v.trim()).filter(Boolean);
+    if (!allowed.includes('*') && !allowed.includes(userId)) throw new ForbiddenException('SYSTEM_SCOPE_NOT_ALLOWED');
   }
   private async provider(tx: AITransaction, providerId: string) {
     const p = await tx.provider(providerId);
@@ -38,8 +39,13 @@ export class AiProvidersService {
   private async model(tx: AITransaction, providerId: string, modelId: string | null) {
     if (!modelId) {
       const defaults = await tx.setting(`ai.provider.${providerId}.defaults`) as {defaultLlmModelId?:unknown} | null;
-      if (!defaults?.defaultLlmModelId) throw new ConflictException('MODEL_REQUIRED');
-      modelId = id(defaults.defaultLlmModelId);
+      if (defaults?.defaultLlmModelId) {
+        modelId = id(defaults.defaultLlmModelId);
+      } else if (typeof tx.models === 'function') {
+        const candidates = (await tx.models(providerId)).filter(m => m.capability === 'llm' && m.isEnabled && m.providerId === providerId);
+        if (candidates.length > 0) modelId = id(candidates[0].id);
+      }
+      if (!modelId) throw new ConflictException('MODEL_REQUIRED');
     }
     const m = await tx.model(modelId);
     if (!m || !m.isEnabled || m.providerId !== providerId || m.capability !== 'llm') throw new ConflictException('MODEL_UNAVAILABLE');
@@ -78,15 +84,15 @@ export class AiProvidersService {
     const modelId = input.modelId === undefined || input.modelId === null ? null : id(input.modelId);
     if (input.includeCredential !== undefined && typeof input.includeCredential !== 'boolean') throw new BadRequestException('INVALID_CREDENTIAL_REQUEST');
     return this.database(async tx => {
-      await tx.requireApprovedRobot(userId);
       if (deviceId) {
+        await tx.requireApprovedRobot(userId);
         const d = await tx.ownership.devices.findDeviceById(deviceId);
         const a = d ? await tx.ownership.devices.getActiveAssignment(deviceId) : null;
         if (!a || a.userId !== userId) throw new ForbiddenException('DEVICE_ACCESS_DENIED');
       }
       await this.activeUser(tx,userId);
       if (deviceId && !await tx.ownership.verifyDeviceOwnership(userId,deviceId)) throw new ForbiddenException('DEVICE_ACCESS_DENIED');
-      const profile = await tx.profile(userId);
+      const profile = (await tx.profile(userId)) ?? emptyProfile;
       const selectedProvider = providerId ?? profile?.preferredProviderId ?? null;
       const selectedModel = modelId ?? (providerId && providerId !== profile?.preferredProviderId ? null : profile?.preferredLlmModelId) ?? null;
       if (!selectedProvider) throw new ConflictException('PROVIDER_REQUIRED');
@@ -114,18 +120,41 @@ export class AiProvidersService {
     });
   }
   async startTurn(body: unknown) {
-    const input=objectInput(body,['userId','deviceId','channel']);
+    const input=objectInput(body,['userId','deviceId','channel','conversationId']);
     const userId=id(input.userId),deviceId=input.deviceId==null?null:id(input.deviceId);
+    const requestedConversationId=input.conversationId==null?null:id(input.conversationId);
     if(!['web','robot'].includes(input.channel as string) || (input.channel==='robot'&&!deviceId) || (input.channel==='web'&&deviceId)) throw new BadRequestException('INVALID_AI_CONTEXT');
     return this.database(async tx=>{
       await this.activeUser(tx,userId);
       if(deviceId)await tx.ownership.devices.findDeviceById(deviceId);
       if(deviceId&&!await tx.ownership.verifyDeviceOwnership(userId,deviceId))throw new ForbiddenException('DEVICE_ACCESS_DENIED');
-      await tx.rows("INSERT INTO conversations(user_id,device_id,channel,status,started_at) VALUES(?,?,?,'active',UTC_TIMESTAMP())",[userId,deviceId,input.channel]);
-      const conversationId=(await tx.rows<{id:string}>('SELECT CAST(LAST_INSERT_ID() AS CHAR) AS id'))[0].id;
+      let conversationId: string;
+      let history: {role: 'user' | 'assistant'; content: string}[] = [];
+      if(requestedConversationId){
+        const existing=(await tx.rows<{id:string;userId:string;deviceId:string|null;channel:string;status:string;deletedAt:Date|null}>(
+          `SELECT CAST(id AS CHAR) AS id,CAST(user_id AS CHAR) AS userId,CAST(device_id AS CHAR) AS deviceId,LOWER(channel) AS channel,status,deleted_at AS deletedAt
+           FROM conversations WHERE id=? FOR UPDATE`,
+          [requestedConversationId]
+        ))[0];
+        if(!existing || existing.deletedAt!==null)throw new NotFoundException('CONVERSATION_NOT_FOUND');
+        if(existing.userId!==userId || existing.deviceId!==deviceId || existing.channel!==input.channel)throw new ForbiddenException('CONVERSATION_ACCESS_DENIED');
+        if(existing.status==='ended')throw new ConflictException('CONVERSATION_CLOSED');
+        if(existing.status!=='active'){
+          await tx.rows("UPDATE conversations SET status='active',ended_at=NULL WHERE id=?",[requestedConversationId]);
+        }
+        conversationId=existing.id;
+        const priorMessages=await tx.rows<{role:string;content:string|null}>(
+          `SELECT role,content FROM messages WHERE conversation_id=? AND role IN ('user','assistant') AND content IS NOT NULL ORDER BY created_at ASC,id ASC LIMIT 40`,
+          [conversationId]
+        );
+        history=priorMessages.filter((m): m is {role:'user'|'assistant';content:string} => (m.role==='user'||m.role==='assistant') && typeof m.content==='string' && m.content.length>0);
+      } else {
+        await tx.rows("INSERT INTO conversations(user_id,device_id,channel,status,started_at) VALUES(?,?,?,'active',UTC_TIMESTAMP())",[userId,deviceId,input.channel]);
+        conversationId=(await tx.rows<{id:string}>('SELECT CAST(LAST_INSERT_ID() AS CHAR) AS id'))[0].id;
+      }
       await tx.rows("INSERT INTO ai_sessions(conversation_id,device_id,status,started_at) VALUES(?,?,'active',UTC_TIMESTAMP())",[conversationId,deviceId]);
       const sessionId=(await tx.rows<{id:string}>('SELECT CAST(LAST_INSERT_ID() AS CHAR) AS id'))[0].id;
-      return {conversationId,sessionId};
+      return requestedConversationId ? {conversationId,sessionId,history} : {conversationId,sessionId};
     });
   }
   async completeTurn(body: unknown) {
@@ -147,13 +176,14 @@ export class AiProvidersService {
       const saved=privacy?.save===1;
       if(s.status==='completed') {
         if(saved){const messages=await tx.rows<{role:string;content:string}>('SELECT role,content FROM messages WHERE conversation_id=? ORDER BY id',[s.conversationId]);
-          if(messages.length!==2||messages[0].content!==content||messages[1].content!==response)throw new ConflictException('TURN_COMPLETION_CONFLICT');}
+          const tail=messages.slice(-2);
+          if(tail.length!==2||tail[0].content!==content||tail[1].content!==response)throw new ConflictException('TURN_COMPLETION_CONFLICT');}
         return {conversationId:s.conversationId,sessionId,saved};
       }
       if(s.status!=='active')throw new ConflictException('INVALID_AI_CONTEXT');
       if(saved)await tx.rows("INSERT INTO messages(conversation_id,role,content,provider_id,created_at) VALUES(?,'user',?,?,UTC_TIMESTAMP()),(?,'assistant',?,?,UTC_TIMESTAMP())",[s.conversationId,content,usage.providerId,s.conversationId,response,usage.providerId]);
       await tx.rows("UPDATE ai_sessions SET status='completed',ended_at=UTC_TIMESTAMP() WHERE id=?",[sessionId]);
-      await tx.rows("UPDATE conversations SET status='completed',ended_at=UTC_TIMESTAMP() WHERE id=?",[s.conversationId]);
+      await tx.rows("UPDATE conversations SET status='active',ended_at=NULL,title=COALESCE(title,?) WHERE id=?",[content.slice(0,80),s.conversationId]);
       return {conversationId:s.conversationId,sessionId,saved};
     });
   }

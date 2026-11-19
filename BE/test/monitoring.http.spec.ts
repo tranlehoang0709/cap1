@@ -5,16 +5,17 @@ import { MonitoringService } from '../src/modules/monitoring/monitoring.service'
 
 describe('Current monitoring HTTP contract, isolated service',()=>{
   let fixture:Awaited<ReturnType<typeof contractApp>>;
-  const service={dashboard:jest.fn(),instances:jest.fn(),heartbeat:jest.fn(),metrics:jest.fn()};
+  const service={dashboard:jest.fn(),instances:jest.fn(),instanceMetrics:jest.fn(),heartbeat:jest.fn(),metrics:jest.fn()};
   beforeAll(async()=>{fixture=await contractApp(MonitoringController,[{provide:MonitoringService,useValue:service}]);});
   afterAll(async()=>{await fixture.app.close();});
   beforeEach(()=>{service.dashboard.mockResolvedValue({devices:2});service.instances.mockResolvedValue([]);
+    service.instanceMetrics.mockResolvedValue([{id:1,instance_id:9,cpu_percent:15,memory_percent:40,gpu_percent:null,gpu_memory_percent:null,active_sessions:2}]);
     service.heartbeat.mockResolvedValue({id:'9',status:'online'});service.metrics.mockResolvedValue({id:'12'});});
   const server=()=>fixture.app.getHttpServer();
-  it.each(['/admin/dashboard','/admin/monitoring/instances'])('requires authenticated ADMIN for %s',async path=>{
+  it.each(['/admin/dashboard','/admin/monitoring/instances','/admin/monitoring/instances/9/metrics'])('requires authenticated ADMIN for %s',async path=>{
     await request(server()).get(path).expect(401);
     await request(server()).get(path).auth(await fixture.token('7'),{type:'bearer'}).expect(403);
-    expect(service.dashboard).not.toHaveBeenCalled();expect(service.instances).not.toHaveBeenCalled();
+    expect(service.dashboard).not.toHaveBeenCalled();expect(service.instances).not.toHaveBeenCalled();expect(service.instanceMetrics).not.toHaveBeenCalled();
     await request(server()).get(path).auth(await fixture.token('1'),{type:'bearer'}).expect(200);
   });
   it('accepts admin instance heartbeat and metrics with correct instance ID',async()=>{

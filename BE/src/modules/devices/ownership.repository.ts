@@ -102,7 +102,7 @@ export class OwnershipTransaction {
     if(!telemetry)return;
     await this.connection.execute(`INSERT INTO device_telemetry
       (device_id,event_type,wifi_rssi,free_heap_bytes,battery_percent,payload,recorded_at)
-      VALUES (?,'heartbeat',?,?,?,?,?,?)`,[deviceId,telemetry.wifiRssi,telemetry.freeHeapBytes,
+      VALUES (?,'heartbeat',?,?,?,?,?)`,[deviceId,telemetry.wifiRssi,telemetry.freeHeapBytes,
         telemetry.batteryPercent,telemetry.payload?JSON.stringify(telemetry.payload):null,observedAt]);
   }
 }

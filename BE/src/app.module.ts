@@ -25,6 +25,7 @@ import { WebChatModule } from './modules/web-chat/web-chat.module';
 import { InternalApiModule } from './modules/internal-api/internal-api.module';
 import { PairingModule } from './modules/pairing/pairing.module';
 import { RecoveryModule } from './modules/device-recovery/recovery.module';
+import { PersonalAssistantModule } from './modules/personal-assistant/personal-assistant.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { RecoveryModule } from './modules/device-recovery/recovery.module';
     SystemSettingsModule,
     InternalApiModule,
     RecoveryModule,
+    PersonalAssistantModule,
   ],
   controllers: [HealthController],
   providers: [

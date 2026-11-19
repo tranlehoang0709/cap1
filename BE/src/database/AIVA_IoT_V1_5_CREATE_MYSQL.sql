@@ -44,6 +44,22 @@ CREATE TABLE `auth_sessions` (
   KEY `idx_auth_sessions_user_id_expires_at` (`user_id`, `expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `auth_email_otps` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT NOT NULL,
+  `purpose` VARCHAR(32) NOT NULL,
+  `code_hash` CHAR(64) NOT NULL,
+  `attempts` INT NOT NULL DEFAULT 0,
+  `max_attempts` INT NOT NULL DEFAULT 5,
+  `expires_at` DATETIME NOT NULL,
+  `consumed_at` DATETIME NULL,
+  `invalidated_at` DATETIME NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_auth_email_otps_lookup` (`user_id`, `purpose`, `consumed_at`, `invalidated_at`, `expires_at`),
+  KEY `idx_auth_email_otps_created` (`user_id`, `purpose`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `privacy_preferences` (
   `user_id` BIGINT NOT NULL,
   `save_history` TINYINT(1) NOT NULL DEFAULT 1,
@@ -392,6 +408,112 @@ CREATE TABLE `system_settings` (
   PRIMARY KEY (`setting_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `personal_plans` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `description` TEXT NULL,
+  `goal` VARCHAR(500) NULL,
+  `total_sessions` INT NOT NULL DEFAULT 1,
+  `status` VARCHAR(24) NOT NULL DEFAULT 'active',
+  `start_date` DATE NULL,
+  `end_date` DATE NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `deleted_at` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_personal_plans_user_id_status` (`user_id`, `status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `personal_events` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT NOT NULL,
+  `plan_id` BIGINT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `description` TEXT NULL,
+  `location` VARCHAR(255) NULL,
+  `start_at` DATETIME NOT NULL,
+  `end_at` DATETIME NULL,
+  `status` VARCHAR(24) NOT NULL DEFAULT 'scheduled',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_personal_events_user_id_start_at` (`user_id`, `start_at`),
+  KEY `idx_personal_events_plan_id` (`plan_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `personal_tasks` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT NOT NULL,
+  `plan_id` BIGINT NULL,
+  `event_id` BIGINT NULL,
+  `session_number` INT NULL,
+  `title` VARCHAR(500) NOT NULL,
+  `description` TEXT NULL,
+  `status` VARCHAR(24) NOT NULL DEFAULT 'pending',
+  `priority` VARCHAR(24) NOT NULL DEFAULT 'MEDIUM',
+  `progress_percent` INT NOT NULL DEFAULT 0,
+  `due_at` DATETIME NULL,
+  `completed_at` DATETIME NULL,
+  `cancelled_at` DATETIME NULL,
+  `cancel_reason` VARCHAR(500) NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `deleted_at` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_personal_tasks_user_id_status` (`user_id`, `status`),
+  KEY `idx_personal_tasks_plan_id_session_number` (`plan_id`, `session_number`),
+  KEY `idx_personal_tasks_user_id_due_at` (`user_id`, `due_at`),
+  KEY `idx_personal_tasks_event_id` (`event_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `personal_reminders` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT NOT NULL,
+  `task_id` BIGINT NULL,
+  `event_id` BIGINT NULL,
+  `remind_at` DATETIME NOT NULL,
+  `message` VARCHAR(500) NOT NULL,
+  `channel` VARCHAR(24) NOT NULL DEFAULT 'VOICE',
+  `status` VARCHAR(24) NOT NULL DEFAULT 'pending',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_personal_reminders_user_id_remind_at` (`user_id`, `remind_at`),
+  KEY `idx_personal_reminders_task_id` (`task_id`),
+  KEY `idx_personal_reminders_event_id` (`event_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `reminder_deliveries` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `reminder_id` BIGINT NOT NULL,
+  `device_id` BIGINT NULL,
+  `channel` VARCHAR(24) NOT NULL,
+  `status` VARCHAR(24) NOT NULL DEFAULT 'pending',
+  `delivered_at` DATETIME NULL,
+  `acknowledged_at` DATETIME NULL,
+  `error_message` VARCHAR(500) NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_reminder_deliveries_reminder_id` (`reminder_id`),
+  KEY `idx_reminder_deliveries_device_id` (`device_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `personal_memories` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT NOT NULL,
+  `memory_key` VARCHAR(120) NOT NULL,
+  `memory_value` TEXT NOT NULL,
+  `category` VARCHAR(60) NULL,
+  `confidence` DECIMAL(4,3) NULL,
+  `source_conversation_id` BIGINT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_personal_memories_user_id_memory_key` (`user_id`, `memory_key`),
+  KEY `idx_personal_memories_source_conversation_id` (`source_conversation_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 ALTER TABLE `user_roles` ADD CONSTRAINT `fk_user_roles_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE `user_roles` ADD CONSTRAINT `fk_user_roles_role_id` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE `auth_sessions` ADD CONSTRAINT `fk_auth_sessions_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
@@ -450,6 +572,19 @@ ALTER TABLE `system_logs` ADD CONSTRAINT `fk_system_logs_instance_id` FOREIGN KE
 ALTER TABLE `system_logs` ADD CONSTRAINT `fk_system_logs_device_id` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE `audit_logs` ADD CONSTRAINT `fk_audit_logs_actor_user_id` FOREIGN KEY (`actor_user_id`) REFERENCES `users` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE `system_settings` ADD CONSTRAINT `fk_system_settings_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE `personal_plans` ADD CONSTRAINT `fk_personal_plans_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE `personal_events` ADD CONSTRAINT `fk_personal_events_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE `personal_events` ADD CONSTRAINT `fk_personal_events_plan_id` FOREIGN KEY (`plan_id`) REFERENCES `personal_plans` (`id`) ON UPDATE RESTRICT ON DELETE SET NULL;
+ALTER TABLE `personal_tasks` ADD CONSTRAINT `fk_personal_tasks_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE `personal_tasks` ADD CONSTRAINT `fk_personal_tasks_plan_id` FOREIGN KEY (`plan_id`) REFERENCES `personal_plans` (`id`) ON UPDATE RESTRICT ON DELETE SET NULL;
+ALTER TABLE `personal_tasks` ADD CONSTRAINT `fk_personal_tasks_event_id` FOREIGN KEY (`event_id`) REFERENCES `personal_events` (`id`) ON UPDATE RESTRICT ON DELETE SET NULL;
+ALTER TABLE `personal_reminders` ADD CONSTRAINT `fk_personal_reminders_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE `personal_reminders` ADD CONSTRAINT `fk_personal_reminders_task_id` FOREIGN KEY (`task_id`) REFERENCES `personal_tasks` (`id`) ON UPDATE RESTRICT ON DELETE SET NULL;
+ALTER TABLE `personal_reminders` ADD CONSTRAINT `fk_personal_reminders_event_id` FOREIGN KEY (`event_id`) REFERENCES `personal_events` (`id`) ON UPDATE RESTRICT ON DELETE SET NULL;
+ALTER TABLE `reminder_deliveries` ADD CONSTRAINT `fk_reminder_deliveries_reminder_id` FOREIGN KEY (`reminder_id`) REFERENCES `personal_reminders` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE `reminder_deliveries` ADD CONSTRAINT `fk_reminder_deliveries_device_id` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE RESTRICT ON DELETE SET NULL;
+ALTER TABLE `personal_memories` ADD CONSTRAINT `fk_personal_memories_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE `personal_memories` ADD CONSTRAINT `fk_personal_memories_source_conversation_id` FOREIGN KEY (`source_conversation_id`) REFERENCES `conversations` (`id`) ON UPDATE RESTRICT ON DELETE SET NULL;
 -- Seed roles and providers (idempotent)
 INSERT INTO `roles` (`code`, `name`) VALUES ('ADMIN', 'Administrator'), ('USER', 'User') ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
 INSERT INTO `ai_providers` (`code`, `name`, `is_enabled`) VALUES ('LOCAL', 'Local AI', 1), ('OPENAI', 'OpenAI', 1), ('GEMINI', 'Google Gemini', 1) ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);

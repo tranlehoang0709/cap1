@@ -49,8 +49,15 @@ export class AITransaction {
   }
   async scope(userId: string): Promise<Scope> {
     const value = await this.setting(`ai.user.${userId}.credentialScope`);
-    if (value === null || value === 'USER') return 'USER';
+    if (value === 'USER') return 'USER';
     if (value === 'SYSTEM') return 'SYSTEM';
+    if (value === null) {
+      const userKey = await this.rows<{id:string}>("SELECT CAST(id AS CHAR) AS id FROM api_credentials WHERE owner_scope='USER' AND owner_user_id=? AND is_active=1 AND revoked_at IS NULL LIMIT 1", [userId]);
+      if (userKey.length > 0) return 'USER';
+      const systemKey = await this.rows<{id:string}>("SELECT CAST(id AS CHAR) AS id FROM api_credentials WHERE owner_scope='SYSTEM' AND is_active=1 AND revoked_at IS NULL LIMIT 1");
+      if (systemKey.length > 0) return 'SYSTEM';
+      return 'USER';
+    }
     throw new Error('Invalid stored credential scope');
   }
   async activeCredential(owner: Owner, providerId: string) {

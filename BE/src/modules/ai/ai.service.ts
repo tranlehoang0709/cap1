@@ -23,17 +23,26 @@ export class AiService {
   async addSystemKey(providerId:string,label:string,secret:string){const p=await this.repo.providerEnabled(providerId);if(!p)throw new AiServiceError('PROVIDER_NOT_FOUND','Provider was not found');const id=await this.repo.createSystemCredential(providerId,label.trim(),this.cipher.encrypt(secret),secret.slice(-4));return {id,label:label.trim(),provider_id:providerId,secret_hint:`****${secret.slice(-4)}`};}
   async revokeSystemKey(id:string){if(!await this.repo.revokeSystemCredential(id))throw new AiServiceError('API_KEY_NOT_FOUND','System API key was not found');return {success:true};}
   async revokeKey(userId:string,id:string){if(!await this.repo.revokeCredential(id,userId))throw new AiServiceError('API_KEY_NOT_FOUND','API key was not found');return {success:true};}
-  async chat(userId:string,content:string,providerId:string) {
+  async chat(userId:string,content:string,providerId?:string,conversationId?:string) {
+    let resolvedProviderId=providerId;
+    if(!resolvedProviderId && typeof this.repo.providers==='function'){
+      const enabled=(await this.repo.providers()).filter(p=>p.is_enabled);
+      if(enabled.length>0)resolvedProviderId=String(enabled[0].id);
+    }
+    if(!resolvedProviderId)throw new AiServiceError('PROVIDER_UNAVAILABLE','No enabled AI provider is configured');
     const token=this.config.get<string>('AI_SERVER_WEB_TOKEN');
     const origin=this.config.get<string>('AI_SERVER_URL');
     if(!origin||!token||token.length<43)throw new AiServiceError('AI_PIPELINE_UNAVAILABLE','AI Server is not configured');
     const url=new URL(origin);
-    if(url.username||url.password||url.search||url.hash||url.pathname!=='/'||
-      (url.protocol!=='https:'&&!(url.protocol==='http:'&&['127.0.0.1','localhost','[::1]'].includes(url.hostname))))throw new AiServiceError('AI_PIPELINE_UNAVAILABLE','Invalid AI Server origin');
+    const isPrivateOrLocalHttp=url.protocol==='http:'&&(['127.0.0.1','localhost','[::1]'].includes(url.hostname)||url.hostname.endsWith('.local')||
+      /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3})$/.test(url.hostname));
+    if(url.username||url.password||url.search||url.hash||url.pathname!=='/'||(url.protocol!=='https:'&&!isPrivateOrLocalHttp))throw new AiServiceError('AI_PIPELINE_UNAVAILABLE','Invalid AI Server origin');
     try {
+      const payload:Record<string,string>={userId,providerId:resolvedProviderId,content};
+      if(conversationId)payload.conversationId=conversationId;
       const result=await fetch(new URL('/internal/web-chat',url),{method:'POST',redirect:'error',
         headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},
-        body:JSON.stringify({userId,providerId,content}),signal:AbortSignal.timeout(95000)});
+        body:JSON.stringify(payload),signal:AbortSignal.timeout(95000)});
       if(!result.ok) {await result.body?.cancel();throw new HttpException('AI_REQUEST_FAILED', [400,403,404,409,429].includes(result.status)?result.status:503);}
       if(!result.headers.get('content-type')?.startsWith('application/json')||!result.body)throw new Error();
       const reader=result.body.getReader();const chunks:Uint8Array[]=[];let size=0;
@@ -56,5 +65,10 @@ export class AiService {
   setQuota(userId:string|null,providerId:string|null,rpm:number|null,rpd:number|null,monthly:string|null){return this.repo.upsertQuota(userId,providerId,rpm,rpd,monthly);}
   async deactivateQuota(id:string){if(!await this.repo.deactivateQuota(id))throw new AiServiceError('QUOTA_NOT_FOUND','Quota policy was not found');return {success:true};}
   async conversation(userId:string,id:string){const c=await this.repo.conversation(id,userId);if(!c)throw new AiServiceError('CONVERSATION_NOT_FOUND','Conversation was not found');return c;}
+  async renameConversation(userId:string,id:string,title:string){const c=await this.repo.renameConversation(id,userId,title.trim());if(!c)throw new AiServiceError('CONVERSATION_NOT_FOUND','Conversation was not found');return this.repo.conversation(id,userId);}
+  async closeConversation(userId:string,id:string){const c=await this.repo.setConversationStatus(id,userId,'ended');if(!c)throw new AiServiceError('CONVERSATION_NOT_FOUND','Conversation was not found');return this.repo.conversation(id,userId);}
+  async resumeConversation(userId:string,id:string){const c=await this.repo.setConversationStatus(id,userId,'active');if(!c)throw new AiServiceError('CONVERSATION_NOT_FOUND','Conversation was not found');return this.repo.conversation(id,userId);}
   async deleteConversation(userId:string,id:string){if(!await this.repo.deleteConversation(id,userId))throw new AiServiceError('CONVERSATION_NOT_FOUND','Conversation was not found');return {success:true};}
+  deleteAllUserAiData(userId:string){return this.repo.deleteAllUserAiData(userId);}
+  usageTimeseries(userId:string,from:Date,to:Date){return this.repo.usageTimeseries(userId,from,to);}
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { IsIn, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -24,6 +24,12 @@ export class MonitoringController {
   constructor(private readonly service: MonitoringService) {}
   @Get('dashboard') @Roles('ADMIN') dashboard() { return this.service.dashboard(); }
   @Get('monitoring/instances') @Roles('ADMIN') instances() { return this.service.instances(); }
+  @Get('monitoring/instances/:id/metrics') @Roles('ADMIN') instanceMetrics(@Param('id') id: string, @Query('limit') limit?: string) {
+    if (!/^[1-9][0-9]{0,18}$/.test(id)) throw new BadRequestException('Invalid instance ID');
+    const parsedLimit = limit === undefined ? 20 : Number(limit);
+    if (!Number.isInteger(parsedLimit) || parsedLimit < 1 || parsedLimit > 100) throw new BadRequestException('Invalid limit');
+    return this.service.instanceMetrics(id, parsedLimit);
+  }
   @Post('monitoring/instances/heartbeat') @Roles('ADMIN') heartbeat(@Body() dto: HeartbeatDto) { return this.service.heartbeat(dto as unknown as Record<string, unknown>); }
   @Post('monitoring/instances/:id/metrics') @Roles('ADMIN') metrics(@Param('id') id: string, @Body() dto: MetricsDto) { return this.service.metrics(id, dto as unknown as Record<string, unknown>); }
 }

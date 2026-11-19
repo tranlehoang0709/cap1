@@ -1,0 +1,43 @@
+/* Stable data surfaces: no living waves or continuous decorative animation. */
+@import "../components/user/user-dashboard.css";
+@import "../components/admin/admin-workspace.css";
+/* Never tween an inherited color on body: every descendant (including SVG)
+   otherwise recalculates styles on every theme frame. Surfaces own their fades. */
+body{transition:none}
+.btn{border-radius:var(--radius-sm);transition:background-color var(--motion-fast),transform var(--motion-fast),box-shadow var(--motion-fast)}
+.btn-primary{background:linear-gradient(120deg,var(--accent-start),var(--accent-end));color:var(--accent-ink)}
+@media(hover:hover) and (pointer:fine){.btn-primary:hover:enabled{box-shadow:var(--shadow-lift);transform:translateY(-1px)}}
+.btn-primary:active:enabled{transform:translateY(1px)}
+.app-shell{position:relative;isolation:isolate;background:transparent}
+.app-shell .sidebar{background:var(--sidebar-surface);box-shadow:var(--shadow-soft);transition:background-color var(--motion-theme),border-color var(--motion-theme)}
+.app-shell .workspace-label{background:var(--card);border-radius:var(--radius);padding:var(--space-3)}
+.app-shell .nav-item{min-height:44px;border-radius:var(--radius-sm)}
+.app-shell .nav-item.active{box-shadow:inset 2px 0 var(--primary);background:var(--tint)}
+.app-shell .nav-item:hover{background:var(--tint)}
+.app-shell .topbar{background:var(--glass);backdrop-filter:blur(10px);min-height:70px;height:auto;padding-top:var(--space-3);padding-bottom:var(--space-3)}
+.app-shell .main-content{position:relative}.app-shell .app-content{background:transparent}
+.app-shell .panel,.app-shell .metric-card{border-radius:var(--radius-lg);box-shadow:var(--shadow-soft);background:var(--card);border-color:var(--border)}
+.app-shell .panel-heading{margin-bottom:var(--space-6)}
+.app-shell .welcome-band{background:linear-gradient(110deg,var(--tint),var(--card));border-radius:var(--radius-lg);box-shadow:var(--shadow-soft)}
+.app-shell .heading-mark{color:var(--primary);background:var(--card)}
+.app-shell .role-pill{color:var(--primary);background:var(--tint);border-color:var(--border)}
+.app-shell .metric-card strong{font-variant-numeric:tabular-nums}
+.app-shell .skeleton{background:color-mix(in srgb,var(--border) 50%,var(--card))}
+.app-shell th{background:var(--surface-raised);color:var(--muted)}
+.app-shell tbody tr:hover{background:var(--surface-raised)}
+.app-shell .table-scroll{border-radius:var(--radius-sm)}
+.app-shell .status.good{color:var(--success);background:color-mix(in srgb,var(--success) 9%,var(--card))}
+.app-shell .status.bad{color:var(--danger)}
+.app-shell .blocked{background:var(--card);border-radius:var(--radius)}
+.app-shell .icon-button{min-height:40px;min-width:40px}
+
+@media(hover:hover) and (pointer:fine){.app-shell a.btn:hover{box-shadow:var(--shadow-lift);transform:translateY(-1px)}}
+@media(max-width:900px){.app-shell .sidebar{transition:transform var(--motion-fast),visibility var(--motion-fast),background-color var(--motion-theme)}.app-shell .icon-button{min-height:44px;min-width:44px}}
+@media(prefers-reduced-motion:reduce){.app-shell *{transition:none!important}}
+
+.workspace-view{min-width:0}@keyframes aiva-workspace-enter{from{opacity:.7;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.workspace-view{animation:none}}
+
+.theme-toggle{display:inline-flex;justify-content:center;align-items:center;gap:9px;min-width:94px;min-height:44px;padding:10px 15px;border:1px solid var(--border);border-radius:var(--radius);background:var(--glass);color:var(--foreground);font-size:12px;font-weight:550;box-shadow:var(--shadow-soft);transition:background-color var(--motion-fast),border-color var(--motion-fast),transform var(--motion-fast)}
+.theme-toggle:hover{background:var(--tint);border-color:color-mix(in srgb,var(--primary) 45%,var(--border))}.theme-toggle:active{transform:translateY(1px)}.theme-toggle:focus-visible{outline:3px solid var(--primary);outline-offset:3px}.theme-toggle svg{color:var(--primary)}
+@media(prefers-reduced-motion:reduce){.theme-toggle{transition:none}}

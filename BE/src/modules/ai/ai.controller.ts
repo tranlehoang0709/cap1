@@ -5,6 +5,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthenticatedUser } from '../auth/auth.types';
 import { AiService } from './ai.service';
 import { ChatDto, KeyDto, ModelDto, ModelPatchDto, PageDto, ProfileDto, ProviderDto, QuotaDto, ReplaceKeyDto } from './dto/ai.dto';
+import { RenameConversationDto } from './dto/conversation.dto';
 @ApiTags('ai') @ApiBearerAuth() @Controller()
 export class AiController {constructor(private readonly ai:AiService){}
  @Get('ai/providers') @ApiOperation({summary:'List AI providers'}) providers(){return this.ai.providers();}
@@ -22,12 +23,17 @@ export class AiController {constructor(private readonly ai:AiService){}
  @Get('admin/api-keys/system') @Roles('ADMIN') systemKeys(){return this.ai.systemKeys();}
  @Post('admin/api-keys/system') @Roles('ADMIN') systemKey(@Body()dto:KeyDto){return this.ai.addSystemKey(dto.provider_id,dto.label,dto.secret);}
  @Delete('admin/api-keys/system/:id') @Roles('ADMIN') @HttpCode(HttpStatus.OK) revokeSystemKey(@Param('id')id:string){return this.ai.revokeSystemKey(id);}
- @Post('web-chat/messages') chat(@CurrentUser()u:AuthenticatedUser,@Body()dto:ChatDto){return this.ai.chat(u.id,dto.content,dto.provider_id);}
+ @Post('web-chat/messages') chat(@CurrentUser()u:AuthenticatedUser,@Body()dto:ChatDto){return this.ai.chat(u.id,dto.content,dto.provider_id,dto.conversation_id);}
  @Get('conversations') async conversations(@CurrentUser()u:AuthenticatedUser,@Query()q:PageDto){const r=await this.ai.conversations(u.id,q.page,q.limit);return {...r,page:q.page,limit:q.limit,total_pages:Math.ceil(r.total/q.limit)};}
  @Get('conversations/:id') conversation(@CurrentUser()u:AuthenticatedUser,@Param('id')id:string){return this.ai.conversation(u.id,id);}
+ @Patch('conversations/:id') rename(@CurrentUser()u:AuthenticatedUser,@Param('id')id:string,@Body()dto:RenameConversationDto){return this.ai.renameConversation(u.id,id,dto.title);}
+ @Post('conversations/:id/close') close(@CurrentUser()u:AuthenticatedUser,@Param('id')id:string){return this.ai.closeConversation(u.id,id);}
+ @Post('conversations/:id/resume') resume(@CurrentUser()u:AuthenticatedUser,@Param('id')id:string){return this.ai.resumeConversation(u.id,id);}
  @Delete('conversations/:id') @HttpCode(HttpStatus.OK) delete(@CurrentUser()u:AuthenticatedUser,@Param('id')id:string){return this.ai.deleteConversation(u.id,id);}
+ @Delete('users/me/ai-data') @HttpCode(HttpStatus.OK) deleteAiData(@CurrentUser()u:AuthenticatedUser){return this.ai.deleteAllUserAiData(u.id);}
  @Get('quotas') quotas(@CurrentUser()u:AuthenticatedUser){return this.ai.quotas(u.id);}
  @Get('usage') usage(@CurrentUser()u:AuthenticatedUser,@Query('from')from?:string,@Query('to')to?:string){const end=to?new Date(to):new Date();const start=from?new Date(from):new Date(end.getFullYear(),end.getMonth(),1);if(Number.isNaN(start.getTime())||Number.isNaN(end.getTime())||start>=end)throw new BadRequestException('Invalid usage date range');return this.ai.usage(u.id,start,end);}
+ @Get('usage/timeseries') usageTimeseries(@CurrentUser()u:AuthenticatedUser,@Query('from')from?:string,@Query('to')to?:string){const end=to?new Date(to):new Date();const start=from?new Date(from):new Date(end.getFullYear(),end.getMonth(),1);if(Number.isNaN(start.getTime())||Number.isNaN(end.getTime())||start>=end)throw new BadRequestException('Invalid usage date range');return this.ai.usageTimeseries(u.id,start,end);}
  @Get('admin/quotas') @Roles('ADMIN') adminQuotas(){return this.ai.quotas(null);}
  @Post('admin/quotas') @Roles('ADMIN') setQuota(@Body()dto:QuotaDto){return this.ai.setQuota(dto.user_id??null,dto.provider_id??null,dto.requests_per_minute??null,dto.requests_per_day??null,dto.tokens_per_month??null);}
  @Delete('admin/quotas/:id') @Roles('ADMIN') @HttpCode(HttpStatus.OK) deleteQuota(@Param('id')id:string){return this.ai.deactivateQuota(id);}

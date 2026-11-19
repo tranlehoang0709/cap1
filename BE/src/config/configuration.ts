@@ -21,6 +21,14 @@ export interface RuntimeConfiguration {
     adminDisplayName: string;
   };
   crypto: { encryptionKey: string };
+  smtp: {
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    pass: string;
+    from: string;
+  };
 }
 
 export function validateEnvironment(environment: Record<string, unknown>): Record<string, unknown> {
@@ -119,6 +127,16 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
     }
   }
 
+  if (environment.SMTP_PORT !== undefined && String(environment.SMTP_PORT).trim() !== '') {
+    const smtpPort = Number(environment.SMTP_PORT);
+    if (!Number.isInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535) {
+      throw new Error('SMTP_PORT must be an integer between 1 and 65535');
+    }
+  }
+  if (environment.SMTP_SECURE !== undefined && String(environment.SMTP_SECURE).trim() !== '' && !['true', 'false'].includes(String(environment.SMTP_SECURE))) {
+    throw new Error('SMTP_SECURE must be true or false');
+  }
+
   return environment;
 }
 
@@ -146,5 +164,13 @@ export default function configuration(): RuntimeConfiguration {
       adminDisplayName: process.env.ADMIN_DISPLAY_NAME ?? '',
     },
     crypto: { encryptionKey: process.env.APP_ENCRYPTION_KEY ?? '' },
+    smtp: {
+      host: (process.env.SMTP_HOST ?? '').trim(),
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: process.env.SMTP_SECURE === 'true',
+      user: (process.env.SMTP_USER ?? '').trim(),
+      pass: process.env.SMTP_PASS ?? '',
+      from: (process.env.SMTP_FROM ?? '').trim(),
+    },
   };
 }
