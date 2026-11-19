@@ -724,6 +724,29 @@ export class PersonalAssistantService implements OnApplicationBootstrap, OnAppli
     if (!Number.isInteger(totalSessions) || totalSessions < 1 || totalSessions > 365) {
       throw new BadRequestException('total_sessions must be an integer between 1 and 365');
     }
+    // Explicit steps are the PA-06 reviewed draft. Legacy session-count callers
+    // retain their existing contract when sessions is omitted.
+    if (dto.sessions !== undefined) {
+      if (!Array.isArray(dto.sessions)) throw new BadRequestException('Plan steps must be an array');
+      if (dto.confirmed !== true) throw new BadRequestException('Confirm the plan before saving');
+      if (!dto.goal?.trim()) throw new BadRequestException('Plan goal must not be empty');
+      if (!dto.sessions.length || dto.sessions.length !== totalSessions) {
+        throw new BadRequestException('Explicit steps must match total_sessions');
+      }
+      const numbers = new Set<number>();
+      for (const [index, step] of dto.sessions.entries()) {
+        const number = step.session_number ?? index + 1;
+        if (!step.title?.trim()) throw new BadRequestException('Plan step title must not be empty');
+        if (!Number.isInteger(number) || number < 1 || number > totalSessions || numbers.has(number)) {
+          throw new BadRequestException('Invalid or duplicate plan step number');
+        }
+        if (step.priority !== undefined && !ALLOWED_TASK_PRIORITIES.includes(step.priority)) {
+          throw new BadRequestException('Invalid plan step priority');
+        }
+        parseOptionalDueAt(step.due_at);
+        numbers.add(number);
+      }
+    }
     const startDate = parseOptionalDateOnly(dto.start_date, 'start_date');
     const endDate = parseOptionalDateOnly(dto.end_date, 'end_date');
     if (startDate && endDate && startDate > endDate) {
@@ -810,6 +833,9 @@ export class PersonalAssistantService implements OnApplicationBootstrap, OnAppli
 
       // Match either personal_tasks.id === sId (belonging to plan pId) or session_number === Number(sId)
       let sessionTask = await this.repo.findTaskByIdRaw(sId, conn, true);
+      if (sessionTask?.deleted_at && sessionTask.plan_id === pId && sessionTask.user_id === userId) {
+        throw new NotFoundException('Plan step has been deleted');
+      }
       if (
         !sessionTask ||
         sessionTask.deleted_at ||
@@ -1394,6 +1420,10 @@ export class PersonalAssistantService implements OnApplicationBootstrap, OnAppli
       }
       if (current.user_id !== userId) {
         throw new ForbiddenException('Personal memory does not belong to the authenticated user');
+      }
+
+      if (dto.expected_revision !== undefined && dto.expected_revision !== current.revision) {
+        throw new ConflictException('Ghi nhớ đã thay đổi ở phiên khác. Tải lại bản mới trước khi lưu.');
       }
 
       const nextKey = dto.memory_key !== undefined ? dto.memory_key.trim() : current.memory_key;

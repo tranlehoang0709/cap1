@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { Pool, PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { MYSQL_POOL } from '../../database/database.constants';
@@ -129,6 +130,7 @@ export interface PersonalReminderRecord {
 }
 
 export interface PersonalMemoryRecord {
+  revision: string;
   id: string;
   user_id: string;
   memory_key: string;
@@ -801,17 +803,27 @@ export class PersonalAssistantRepository {
   ): Promise<PersonalPlanRecord> {
     const executor = conn ?? this.pool;
     const planId = String(planRow.id);
-    const totalSessions = Math.max(1, Number(planRow.total_sessions ?? 1));
+    const declaredSessions = Math.max(1, Number(planRow.total_sessions ?? 1));
 
     const [taskRows] = await executor.execute<RowDataPacket[]>(
       `SELECT *
        FROM personal_tasks
-       WHERE plan_id = ? AND user_id = ? AND deleted_at IS NULL
+       WHERE plan_id = ? AND user_id = ?
        ORDER BY COALESCE(session_number, 999999) ASC, id ASC`,
       [planId, String(planRow.user_id)]
     );
 
-    const sessions: PersonalPlanSessionRecord[] = taskRows.map((r, idx) => {
+    const originalNumbers = new Set(taskRows
+      .map(row => Number(row.session_number))
+      .filter(number => Number.isInteger(number) && number >= 1 && number <= declaredSessions));
+    const activeRows = taskRows.filter(row => !row.deleted_at);
+    const sessionKey = (row: RowDataPacket) => row.session_number === null || row.session_number === undefined
+      ? `task:${row.id}` : `session:${row.session_number}`;
+    // Fully seeded plans use their current steps, including later additions/deletions.
+    // Older plans with virtual, not-yet-materialized sessions retain their declared count.
+    const totalSessions = originalNumbers.size === declaredSessions
+      ? new Set(activeRows.map(sessionKey)).size : declaredSessions;
+    const sessions: PersonalPlanSessionRecord[] = activeRows.map((r, idx) => {
       const status = String(r.status ?? 'pending') as TaskStatus;
       const completed = status === 'completed';
       return {
@@ -836,10 +848,8 @@ export class PersonalAssistantRepository {
     // Partial progress ('in_progress' / 'partial' / progress_percent < 100) NEVER counts as completed.
     // Distinct session keys prevent duplicate completion of the same session number from counting twice.
     const completedSessionKeys = new Set<string>();
-    for (const s of sessions) {
-      if (s.status === 'completed') {
-        completedSessionKeys.add(`session:${s.session_number}`);
-      }
+    for (const row of activeRows) {
+      if (row.status === 'completed') completedSessionKeys.add(sessionKey(row));
     }
 
     const completedSessions = Math.min(totalSessions, completedSessionKeys.size);
@@ -1449,7 +1459,7 @@ export class PersonalAssistantRepository {
   // =========================================================================
 
   private mapMemoryRow(row: RowDataPacket): PersonalMemoryRecord {
-    return {
+    const record = {
       id: String(row.id),
       user_id: String(row.user_id),
       memory_key: String(row.memory_key),
@@ -1465,6 +1475,7 @@ export class PersonalAssistantRepository {
       created_at: isoOrNull(row.created_at) ?? new Date(0).toISOString(),
       updated_at: isoOrNull(row.updated_at) ?? new Date(0).toISOString(),
     };
+    return { ...record, revision: createHash('sha256').update(JSON.stringify(record)).digest('hex') };
   }
 
   async findMemoryByIdRaw(

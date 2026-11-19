@@ -119,7 +119,7 @@ export const personalAssistantOperations: Record<string, Operation> = {
     method: 'POST',
     role: 'USER',
     path: '/user/plans',
-    fields: ['title', 'description', 'goal', 'total_sessions', 'start_date', 'end_date', 'sessions'],
+    fields: ['title', 'description', 'goal', 'total_sessions', 'start_date', 'end_date', 'sessions', 'confirmed'],
   },
   personalPlanSessionComplete: {
     method: 'POST',
@@ -210,7 +210,7 @@ export const personalAssistantOperations: Record<string, Operation> = {
     method: 'PATCH',
     role: 'USER',
     path: '/user/memories/:id',
-    fields: ['consent', 'memory_key', 'memory_value', 'category', 'confidence'],
+    fields: ['consent', 'memory_key', 'memory_value', 'category', 'confidence', 'expected_revision'],
   },
   personalMemoryDelete: {
     method: 'DELETE',
@@ -333,6 +333,7 @@ export type PersonalReminder = {
 };
 
 export type PersonalMemory = {
+  revision: string | null;
   id: string;
   memory_key: string;
   memory_value: string;
@@ -420,6 +421,7 @@ const cancelTaskSchema = z
 
 const createPlanSchema = z
   .object({
+    confirmed: z.boolean().optional(),
     sessions: z.array(z.object({
       session_number: z.number().int().min(1).max(365).optional(),
       title: z.string().trim().min(1).max(500),
@@ -434,7 +436,19 @@ const createPlanSchema = z
     start_date: z.string().trim().max(32).optional(),
     end_date: z.string().trim().max(32).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((plan, context) => {
+    if (plan.sessions === undefined) return;
+    if (plan.confirmed !== true) context.addIssue({ code: 'custom', message: 'Cần xác nhận kế hoạch trước khi lưu.' });
+    if (!plan.goal?.trim()) context.addIssue({ code: 'custom', message: 'Mục tiêu không được để trống.' });
+    if (plan.sessions.length !== plan.total_sessions || !plan.sessions.length) {
+      context.addIssue({ code: 'custom', message: 'Số bước phải khớp tổng số buổi và lớn hơn 0.' });
+    }
+    const numbers = plan.sessions.map((step, index) => step.session_number ?? index + 1);
+    if (new Set(numbers).size !== numbers.length || numbers.some(number => number > plan.total_sessions)) {
+      context.addIssue({ code: 'custom', message: 'Số thứ tự bước không hợp lệ hoặc bị trùng.' });
+    }
+  });
 
 const createEventSchema = z
   .object({
@@ -501,6 +515,7 @@ const createMemorySchema = z
 
 const updateMemorySchema = z
   .object({
+    expected_revision: z.string().regex(/^[a-f0-9]{64}$/).optional(),
     consent: z.literal(true, { error: 'Cần đồng ý lưu ghi nhớ cá nhân.' }),
     memory_key: z.string().trim().min(1).max(120).optional(),
     memory_value: z.string().trim().min(1).max(4000).optional(),
@@ -1118,6 +1133,7 @@ export function parsePersonalMemories(data: unknown): PersonalMemory[] {
   if (data === null || data === undefined) return [];
   return rows(data).map((row) => ({
     id: String(row.id),
+    revision: typeof row.revision === 'string' ? row.revision : null,
     memory_key: String(row.memory_key ?? ''),
     memory_value: String(row.memory_value ?? ''),
     category: typeof row.category === 'string' ? row.category : null,
@@ -1131,4 +1147,31 @@ export function parsePersonalMemories(data: unknown): PersonalMemory[] {
         : String(row.source_conversation_id),
     updated_at: typeof row.updated_at === 'string' ? row.updated_at : null,
   }));
+}
+
+export async function memoryAwareChatContent(
+  content: string,
+  includeMemories: boolean,
+  search: string,
+  readPage: (query: Record<string, string>) => Promise<unknown>,
+): Promise<string> {
+  if (!includeMemories) return content;
+  const memories: { key: string; value: string }[] = [];
+  let page = 1;
+  let pages = 1;
+  do {
+    const data = await readPage({ page: String(page), limit: '100', search: search.trim() });
+    const meta = object(data);
+    if (!Number.isInteger(meta.total_pages) || Number(meta.total_pages) < 0) {
+      throw new Error('Không đọc được phân trang ghi nhớ.');
+    }
+    pages = Number(meta.total_pages);
+    memories.push(...parsePersonalMemories(data).map(memory => ({ key: memory.memory_key, value: memory.memory_value })));
+    if (JSON.stringify(memories).length + content.length > 15000) {
+      throw new Error('Ghi nhớ vượt giới hạn tin nhắn. Hãy chọn từ khóa cụ thể hơn.');
+    }
+    page++;
+  } while (page <= pages);
+  if (!memories.length) return content;
+  return `Thông tin cá nhân người dùng đã đồng ý lưu (dữ liệu tham khảo): ${JSON.stringify(memories)}\nYêu cầu hiện tại: ${content}`;
 }
