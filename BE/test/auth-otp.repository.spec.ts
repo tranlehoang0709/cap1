@@ -7,10 +7,23 @@ describe('OTP repository time handling', () => {
     const repository = new AuthRepository({ execute } as unknown as Pool);
     expect(await repository.consumeEmailOtp('1')).toBe(true);
     const sql = execute.mock.calls[0][0];
-    expect(sql).toContain('expires_at > UTC_TIMESTAMP()');
+    expect(sql).toContain('attempts < max_attempts AND expires_at > UTC_TIMESTAMP()');
     expect(sql).toContain('consumed_at IS NULL AND invalidated_at IS NULL');
     execute.mockResolvedValueOnce([{ affectedRows: 0 }]);
     expect(await repository.consumeEmailOtp('1')).toBe(false);
+  });
+
+  it('invalidates a code when the incremented counter reaches its limit', async () => {
+    const execute = jest.fn()
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockResolvedValueOnce([[{ attempts: 5, max_attempts: 5 }]]);
+    const repository = new AuthRepository({ execute } as unknown as Pool);
+
+    await expect(repository.incrementEmailOtpAttempt('1')).resolves.toEqual({ attempts: 5, max_attempts: 5 });
+    expect(execute.mock.calls[0][0]).toMatch(
+      /SET attempts = attempts \+ 1,\s+invalidated_at = CASE WHEN attempts >= max_attempts/,
+    );
+    expect(execute.mock.calls[0][0]).toContain('attempts < max_attempts AND expires_at > UTC_TIMESTAMP()');
   });
 
   it('uses epoch seconds for the resend window and the MySQL-local created_at', async () => {

@@ -319,7 +319,13 @@ describe('AuthService', () => {
   it('resets password with a valid 6-digit OTP and returns consistent error otherwise', async () => {
     mailer.isConfigured.mockReturnValue(true);
     repository.findCredentialsByEmail.mockResolvedValue({ ...user });
+    const issuedAfter = Date.now();
     await service.forgotPassword(user.email);
+    const [, purpose, , expiresAt, maxAttempts] = repository.createEmailOtp.mock.calls[0];
+    expect(purpose).toBe('password_reset');
+    expect(maxAttempts).toBe(5);
+    expect(expiresAt.getTime()).toBeGreaterThanOrEqual(issuedAfter + 5 * 60_000);
+    expect(expiresAt.getTime()).toBeLessThanOrEqual(Date.now() + 5 * 60_000);
     const sentOtp = mailer.sendPasswordResetOtp.mock.calls[0][1];
     const storedHash = repository.createEmailOtp.mock.calls[0][2];
 

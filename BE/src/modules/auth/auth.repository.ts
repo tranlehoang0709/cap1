@@ -207,11 +207,13 @@ export class AuthRepository {
   }
 
   async incrementEmailOtpAttempt(otpId: string): Promise<{ attempts: number; max_attempts: number }> {
+    // MySQL evaluates invalidated_at after incrementing attempts.
     await this.pool.execute(
       `UPDATE auth_email_otps
        SET attempts = attempts + 1,
-           invalidated_at = CASE WHEN attempts + 1 >= max_attempts THEN CURRENT_TIMESTAMP ELSE invalidated_at END
-       WHERE id = ? AND consumed_at IS NULL AND invalidated_at IS NULL`,
+           invalidated_at = CASE WHEN attempts >= max_attempts THEN CURRENT_TIMESTAMP ELSE invalidated_at END
+       WHERE id = ? AND consumed_at IS NULL AND invalidated_at IS NULL
+         AND attempts < max_attempts AND expires_at > UTC_TIMESTAMP()`,
       [otpId],
     );
     const [rows] = await this.pool.execute<OtpAttemptRow[]>(
@@ -230,7 +232,8 @@ export class AuthRepository {
     const [result] = await this.pool.execute<ResultSetHeader>(
       `UPDATE auth_email_otps
        SET consumed_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND consumed_at IS NULL AND invalidated_at IS NULL AND expires_at > UTC_TIMESTAMP()`,
+       WHERE id = ? AND consumed_at IS NULL AND invalidated_at IS NULL
+         AND attempts < max_attempts AND expires_at > UTC_TIMESTAMP()`,
       [otpId],
     );
     return result.affectedRows === 1;

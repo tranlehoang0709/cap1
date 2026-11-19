@@ -87,7 +87,7 @@ def _login_forms():
             except (BackendError, KeyError, TypeError) as error:
                 api_error(error if isinstance(error, BackendError) else BackendError(0, "Backend không trả token đăng nhập hợp lệ."))
         with st.expander("Quên mật khẩu"):
-            st.info("Luồng khôi phục mật khẩu chưa có API được thống nhất; chức năng này chưa được kích hoạt.")
+            _password_recovery_forms()
     with register_tab:
         with st.form("backend_register"):
             display_name = st.text_input("Họ tên")
@@ -101,7 +101,7 @@ def _login_forms():
             else:
                 try:
                     api("/auth/register", "POST", {"email": reg_email.strip(), "display_name": display_name.strip(), "password": reg_password}, auth=False)
-                    st.info("Đã đăng ký. Tài khoản cần xác minh email trước khi đăng nhập; hãy dùng mã được cấp qua kênh xác minh của hệ thống.")
+                    st.info("Đã đăng ký. Tài khoản cần xác minh email trước khi đăng nhập; hãy nhập mã OTP được gửi đến email.")
                 except BackendError as error:
                     api_error(error)
 
@@ -110,11 +110,12 @@ def _login_forms():
         if st.session_state.get("verification_link_received"):
             st.info("Đã nhận mã từ liên kết và xóa fragment khỏi URL. Hãy bấm Xác minh email để tiếp tục.")
         with st.form("backend_verify_email", clear_on_submit=True):
-            verification_token = st.text_input("Mã xác minh email", type="password", key="email_verification_token")
+            verification_email = st.text_input("Email tài khoản", autocomplete="email")
+            verification_code = st.text_input("Mã xác minh email", type="password", max_chars=6, key="email_verification_code")
             verify = st.form_submit_button("Xác minh email")
         if verify:
             try:
-                api("/auth/verify-email", "POST", {"token": verification_token.strip()}, auth=False)
+                api("/auth/verify-email", "POST", {"email": verification_email.strip(), "code": verification_code.strip()}, auth=False)
                 st.session_state.pop("verification_link_received", None)
                 st.success("Email đã được xác minh. Bạn có thể đăng nhập.")
             except BackendError as error:
@@ -131,11 +132,44 @@ def _login_forms():
                 st.info(result.get("message", "Nếu tài khoản đủ điều kiện, hướng dẫn xác minh sẽ được gửi."))
             except BackendError as error:
                 if error.status == 503:
-                    st.warning("Kênh gửi xác minh chưa sẵn sàng. Development cần console cục bộ được bật; production cần email provider.")
+                    st.warning("Kênh gửi xác minh chưa sẵn sàng. Hệ thống cần cấu hình SMTP.")
                 elif error.status == 429:
                     st.warning("Đã đạt giới hạn gửi lại. Hãy chờ rồi thử lại.")
                 else:
                     api_error(error)
+
+
+
+def _password_recovery_forms():
+    st.caption("Mã OTP gồm 6 chữ số, có hiệu lực 5 phút.")
+    with st.form("backend_forgot_password"):
+        email = st.text_input("Email khôi phục", autocomplete="email", key="recovery_request_email")
+        send = st.form_submit_button("Gửi mã khôi phục")
+    if send:
+        try:
+            result = api("/auth/password/forgot", "POST", {"email": email.strip()}, auth=False)
+            st.session_state.recovery_reset_email = email.strip()
+            st.info(field(result, "message", "Nếu tài khoản đủ điều kiện, mã khôi phục sẽ được gửi qua email."))
+        except BackendError as error:
+            api_error(error)
+
+    with st.form("backend_reset_password", clear_on_submit=True):
+        email = st.text_input("Email đặt lại mật khẩu", autocomplete="email", key="recovery_reset_email")
+        code = st.text_input("Mã khôi phục", type="password", max_chars=6)
+        password = st.text_input("Mật khẩu mới", type="password", autocomplete="new-password")
+        repeat = st.text_input("Nhập lại mật khẩu mới", type="password", autocomplete="new-password")
+        reset = st.form_submit_button("Đặt lại mật khẩu")
+    if reset:
+        if password != repeat:
+            st.error("Hai mật khẩu mới không khớp.")
+            return
+        try:
+            api("/auth/password/reset", "POST", {
+                "email": email.strip(), "code": code.strip(), "new_password": password,
+            }, auth=False)
+            st.success("Đã đặt lại mật khẩu. Bạn có thể đăng nhập.")
+        except BackendError as error:
+            api_error(error)
 
 
 def collection(path, *, query=None, max_pages=100):
@@ -846,6 +880,7 @@ def system_settings():
 
 
 def render_page(page, account):
+    from giao_dien.nguoi_dung.lich_ca_nhan import render_page as calendar_page
     renderers = {
         "Tổng quan": lambda: dashboard_admin() if account.get("role") == "ADMIN" else dashboard_user(account),
         "AI Chat": chat_page,
@@ -855,6 +890,7 @@ def render_page(page, account):
         "Lịch sử hội thoại": history_page,
         "Quyền riêng tư": privacy_page,
         "Tài khoản": lambda: account_page(account),
+        "Lịch cá nhân": calendar_page,
         "Quản lý người dùng": users_admin,
         "Quản lý thiết bị": devices_admin,
         "AI Management": ai_admin,

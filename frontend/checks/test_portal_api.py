@@ -471,7 +471,7 @@ class MainChatAdapterTests(unittest.TestCase):
             app.session_state["real_nav_9"] = "AI Chat"
             app.run()
             self.assertFalse(app.exception, [e.message for e in app.exception])
-            self.assertEqual(len(widget(app.sidebar.radio, "Điều hướng").options), 8)
+            self.assertEqual(len(widget(app.sidebar.radio, "Điều hướng").options), 9)
             app.chat_input[0].set_value("Question").run()
             self.assertFalse(app.exception, [e.message for e in app.exception])
             calls = [c for c in backend.calls if c[1] == "/web-chat/messages"]

@@ -30,6 +30,7 @@ describe('Auth and authorization API (e2e)', () => {
     login: jest.fn().mockResolvedValue({ access_token: 'access', refresh_token: 'refresh', token_type: 'Bearer', expires_in: 900 }),
     refresh: jest.fn().mockResolvedValue({ access_token: 'new-access', refresh_token: 'new-refresh', token_type: 'Bearer', expires_in: 900 }),
     logout: jest.fn().mockResolvedValue({ success: true }),
+    resetPassword: jest.fn().mockResolvedValue({ success: true }),
     changePassword: jest.fn().mockResolvedValue({ success: true }),
   };
   const usersService = {
@@ -75,6 +76,19 @@ describe('Auth and authorization API (e2e)', () => {
   async function bearer(id: string): Promise<string> {
     return jwt.signAsync({ sub: id, typ: 'access' }, { secret: ACCESS_SECRET, issuer: 'aiva-iot', audience: 'aiva-api', expiresIn: 300 });
   }
+
+  it('accepts email and a six-digit reset OTP, rejecting the legacy token payload', async () => {
+    const email = 'user@example.test';
+    const newPassword = 'new-test-password';
+    const reset = () => request(app.getHttpServer()).post('/auth/password/reset');
+
+    await reset().send({ token: 'legacy-token', new_password: newPassword }).expect(400);
+    await reset().send({ email, code: '12345', new_password: newPassword }).expect(400);
+    expect(authService.resetPassword).not.toHaveBeenCalled();
+
+    await reset().send({ email, code: '012345', new_password: newPassword }).expect(200);
+    expect(authService.resetPassword).toHaveBeenCalledWith(email, '012345', newPassword);
+  });
 
   it('allows public registration and login requests', async () => {
     await request(app.getHttpServer()).post('/auth/register')

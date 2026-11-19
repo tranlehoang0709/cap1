@@ -142,7 +142,7 @@ class RestoredAuthenticationTests(unittest.TestCase):
                 element(app.text_input, "Mật khẩu").set_value("fixture-only")
                 element(app.button, "Đăng nhập").click().run()
                 self.assert_clean(app)
-                self.assertEqual(len(element(app.sidebar.radio, "Điều hướng").options), 8)
+                self.assertEqual(len(element(app.sidebar.radio, "Điều hướng").options), 9 if role == "USER" else 8)
                 self.assertEqual(app.session_state["account"]["role"], role)
 
     def test_failed_identity_lookup_never_renders_dashboard(self):
@@ -165,7 +165,7 @@ class RestoredAuthenticationTests(unittest.TestCase):
         self.assert_clean(app)
         self.assertEqual(element(app.metric, "Robot đã ghép").value, "201")
         self.assertEqual(len([c for c in self.fixture.calls if c[0] == "/devices"]), 3)
-        self.assertEqual(len(element(app.sidebar.radio, "Điều hướng").options), 8)
+        self.assertEqual(len(element(app.sidebar.radio, "Điều hướng").options), 9)
 
     def test_theme_switch_and_dashboard_navigation(self):
         app = AppTest.from_file(str(ROOT/"app.py"), default_timeout=30)
@@ -196,9 +196,9 @@ class RestoredAuthenticationTests(unittest.TestCase):
         app.session_state["real_nav_" + self.fixture.account()["id"]] = page
         return app.run()
 
-    def test_all_eight_user_pages_render_without_losing_routes(self):
+    def test_all_nine_user_pages_render_without_losing_routes(self):
         for page in ["Tổng quan", "AI Chat", "Robot của tôi", "Trợ lý AI", "API Key cá nhân",
-                     "Lịch sử hội thoại", "Quyền riêng tư", "Tài khoản"]:
+                     "Lịch cá nhân", "Lịch sử hội thoại", "Quyền riêng tư", "Tài khoản"]:
             with self.subTest(page=page):
                 app = self.authenticated_app(page)
                 self.assert_clean(app)

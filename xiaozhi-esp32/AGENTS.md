@@ -251,8 +251,6 @@ Build/flash, real device connection/input and mock hardware playback completion
 were verified; the user heard Gemini output, but rate_limited interrupted the
 turn. Do not claim stable/full Cloud conversation acceptance yet. See
 `../AI_SERVER/docs/sd2-gemini-lan.md` for settings and known test limitations.
-<<<<<<< HEAD
-=======
 
 ### SD2 LAN audio admission and UI follow-up (2026-11-04)
 
@@ -263,4 +261,3 @@ turn; there is no firmware silence timer or wake-word change. Processing,
 answering and failure statuses are accepted only for the current session/turn.
 The existing SD2 USB console `record`/`stop` commands remain command-only test
 triggers. No GPIO or audio data path over USB was added.
->>>>>>> 8656999 (Update AIVA IoT integration and SD2)

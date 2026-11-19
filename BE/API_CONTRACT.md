@@ -874,9 +874,13 @@ The currently active application routes include `/auth/register`, `/auth/login`,
 `/conversations/*`, `/quotas`, `/usage`, `/admin/quotas`, `/admin/logs`,
 `/admin/audit-logs`, `/admin/monitoring/*`, and `/admin/system-settings/*`.
 
-Registration returns a one-time `verification_token` for development delivery;
-the token is signed for 15 minutes and is consumed by `POST /auth/verify-email`.
-Production deployments should deliver that token through the configured email provider.
+Registration and `POST /auth/resend-verification` send an email verification OTP
+through the configured SMTP service. Submit `{email, code}` to `POST /auth/verify-email`.
+
+`POST /auth/password/forgot` accepts `{email}` and returns a generic response.
+Submit `{email, code, new_password}` to `POST /auth/password/reset`.
+Each OTP has six digits, expires after five minutes, and permits up to five
+incorrect attempts. A successful password reset revokes existing refresh sessions.
 
 ## Reset bắt buộc trước khi bàn giao robot — 2026-11-05
 
@@ -909,3 +913,15 @@ Phần này cập nhật quy tắc của cả hai nhóm API ghép nối nêu ở
   User cũ mất quyền đọc lịch sử robot sau revoke, dù dữ liệu còn nguyên; User mới
   không được đọc dữ liệu User cũ. Web history vẫn theo tài khoản. Đây là chính sách
   được cập nhật đồng thời trong working tree, không mở lại quyền đọc trong bản vá reset.
+
+## PA-01 / PA-02 / PA-14 Calendar and reminders
+
+All routes require the normal user JWT. A user can only read or mutate their own events and reminders.
+
+- `GET /user/calendar/events?from=<ISO>&to=<ISO>` lists events in the optional time window.
+- `POST /user/calendar/events` creates an event with `title`, `starts_at`, `ends_at`, optional `description`, `timezone`, and RFC 5545 `recurrence_rule`. An overlapping event returns `409` with `code=CALENDAR_CONFLICT`; retry with `confirm_conflict=true` to explicitly accept the overlap.
+- `GET/PATCH/DELETE /user/calendar/events/:id` reads, updates, or deletes an owned event. PATCH follows the same conflict confirmation rule.
+- `GET /user/calendar/reminders` and `POST /user/calendar/reminders` list/create reminders. A reminder may reference an owned calendar event and an owned device. `delivery_key` prevents duplicate scheduling.
+- `GET /internal/reminders/due?limit=20` claims due reminders and `POST /internal/reminders/:id/ack` acknowledges `delivered` or `failed` delivery. These internal routes currently use the existing Admin JWT guard; a dedicated AI Server service-token contract is still required before production Xiaozhi delivery.
+
+Apply the additive schema with `npm run migration:calendar` after the baseline migration. No existing tables or rows are deleted.

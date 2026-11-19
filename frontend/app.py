@@ -28,7 +28,7 @@ if role not in ("ADMIN", "USER"):
     clear_auth()
     st.stop()
 
-user_pages = ["Tổng quan", "AI Chat", "Robot của tôi", "Trợ lý AI", "API Key cá nhân", "Lịch sử hội thoại", "Quyền riêng tư", "Tài khoản"]
+user_pages = ["Tổng quan", "AI Chat", "Robot của tôi", "Trợ lý AI", "API Key cá nhân", "Lịch cá nhân", "Lịch sử hội thoại", "Quyền riêng tư", "Tài khoản"]
 admin_pages = ["Tổng quan", "Quản lý người dùng", "Quản lý thiết bị", "AI Management", "API Key & Quota", "OTA Firmware", "Logs & Monitoring", "System Settings"]
 pages = admin_pages if role == "ADMIN" else user_pages
 def logout_backend():
@@ -58,6 +58,7 @@ descriptions = {
     "Lịch sử hội thoại": "Xem và quản lý các hội thoại đã lưu.",
     "Quyền riêng tư": "Chọn cách lưu và quản lý dữ liệu cá nhân.",
     "Tài khoản": "Cập nhật thông tin cá nhân và mật khẩu.",
+    "Lịch cá nhân": "Tạo lịch, nhắc nhở và kiểm tra xung đột thời gian.",
 }
 st.session_state.ui_active_page = page
 st.session_state.api_table_index = 0

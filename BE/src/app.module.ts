@@ -26,6 +26,7 @@ import { InternalApiModule } from './modules/internal-api/internal-api.module';
 import { PairingModule } from './modules/pairing/pairing.module';
 import { RecoveryModule } from './modules/device-recovery/recovery.module';
 import { PersonalAssistantModule } from './modules/personal-assistant/personal-assistant.module';
+import { CalendarModule } from './modules/calendar/calendar.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { PersonalAssistantModule } from './modules/personal-assistant/personal-a
     InternalApiModule,
     RecoveryModule,
     PersonalAssistantModule,
+    CalendarModule,
   ],
   controllers: [HealthController],
   providers: [
