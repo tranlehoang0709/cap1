@@ -1,5 +1,6 @@
 """Offline Piper Vietnamese PCM synthesis and bounded Opus conversion."""
 import asyncio
+import re
 import threading
 import unicodedata
 from collections.abc import Callable
@@ -14,6 +15,27 @@ OPUS_FORMAT = AudioFormat(AudioMetadata("opus", 16000, 1, 60), "raw")
 _voices: dict[tuple[str, str], object] = {}
 _voice_lock = threading.Lock()
 _END = object()
+
+_EMOTICON = re.compile(r"(?<!\w)(?::-|;-|:|;)(?:\)|\(|D|P)(?!\w)", re.IGNORECASE)
+_EMOJI = re.compile(
+    "[\U0001F1E6-\U0001F1FF\U0001F300-\U0001FAFF\U00002600-\U000027BF\u2B50\u2B55]"
+    "[\U0000FE0E\U0000FE0F\U0001F3FB-\U0001F3FF]*"
+    "(?:\u200d[\U0001F300-\U0001FAFF][\U0000FE0E\U0000FE0F\U0001F3FB-\U0001F3FF]*)*"
+)
+
+
+def normalize_text_for_speech(value: str) -> str:
+    """Remove visual-only markup from a TTS copy without changing stored text."""
+    text = unicodedata.normalize("NFC", value)
+    text = re.sub(r"(?m)^\s{0,3}#{1,6}\s+", "", text)
+    text = re.sub(r"(?m)^\s*\*+\s+", "", text)
+    # Complete emphasis spans only; arithmetic such as ``2 * 3`` is preserved.
+    text = re.sub(r"(?<!\w)\*{1,3}([^*\n]+?)\*{1,3}(?!\w)", r"\1", text)
+    text = re.sub(r"(?<!\S)#+(?!\S)", " ", text)
+    text = _EMOTICON.sub(" ", text)
+    text = _EMOJI.sub(" ", text)
+    text = text.replace("\ufe0f", "").replace("\ufe0e", "").replace("\u200d", "")
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def _next(iterator):
@@ -56,7 +78,7 @@ class LocalTTSAdapter:
     def _text(self, request: TTSRequest) -> str:
         if not isinstance(request, TTSRequest) or request.config.audio_format != OPUS_FORMAT:
             raise TTSError(TTSErrorCode.INVALID_INPUT)
-        text = unicodedata.normalize("NFC", request.text).strip()
+        text = normalize_text_for_speech(request.text)
         if (not text or len(text) > self.settings.max_text_chars
                 or any(unicodedata.category(char) == "Cc" and char not in "\n\r\t" for char in text)):
             raise TTSError(TTSErrorCode.INVALID_INPUT)

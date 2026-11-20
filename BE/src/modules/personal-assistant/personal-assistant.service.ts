@@ -99,6 +99,20 @@ function timestampsMatch(expectedIso: string, actualIso: string): boolean {
   return Math.floor(expectedMs / 1000) === Math.floor(actualMs / 1000);
 }
 
+function taskAlertSweepDiagnostics(error: unknown): { message: string; stack?: string } {
+  if (!(error instanceof Error)) return { message: 'Non-Error rejection (details withheld)' };
+
+  // MySQL error text can contain bound values. Only expose known schema identifiers.
+  const schemaError = /^Unknown column '(?:(?:t|p|r)\.)?(?:deleted_at|session_number|message|channel)' in '(?:where clause|field list|on clause|order clause)'$/.test(error.message);
+  const invalidDate = error instanceof RangeError && error.message === 'Invalid time value';
+  const message = schemaError || invalidDate ? error.message : 'Exception message withheld';
+
+  // The first stack line repeats the original message, which may span several lines.
+  const header = `${error.name}: ${error.message}\n`;
+  const frames = error.stack?.startsWith(header) ? error.stack.slice(header.length) : undefined;
+  return { message, stack: frames ? `Error: ${message}\n${frames}` : undefined };
+}
+
 @Injectable()
 export class PersonalAssistantService implements OnApplicationBootstrap, OnApplicationShutdown {
   constructor(private readonly repo: PersonalAssistantRepository) {}
@@ -110,7 +124,10 @@ export class PersonalAssistantService implements OnApplicationBootstrap, OnAppli
     if (process.env.NODE_ENV === 'test') return;
     const sweep = () => {
       if (!this.running) this.running = this.repo.sweepTaskAlerts(new Date())
-        .catch(() => this.logger.error('Personal task alert sweep failed; will retry'))
+        .catch((error: unknown) => {
+          const { message, stack } = taskAlertSweepDiagnostics(error);
+          this.logger.error(`Personal task alert sweep failed; will retry. ${message}`, stack);
+        })
         .finally(() => { this.running = null; });
     };
     sweep();

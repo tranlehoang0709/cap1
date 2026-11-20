@@ -27,7 +27,8 @@ def context(seconds=2):
 TOKENS = ServiceTokens(SecretStr("A" * 43), SecretStr("B" * 43), SecretStr("C" * 43))
 PROOF = dto.DeviceProof(deviceUid="robot-42", credential=SecretStr("D" * 43))
 AUTH = {"allowed": True, "deviceId": "42", "ownerUserId": "7"}
-CONFIG = {"userId": "7", "provider": {"id": "2", "code": "OPENAI", "name": "OpenAI"},
+CONFIG = {"userId": "7", "userDisplayName": "Người Dùng Bảy",
+    "provider": {"id": "2", "code": "OPENAI", "name": "OpenAI"},
     "model": {"id": "21", "modelCode": "gpt-6-luna", "capability": "llm"},
     "profile": {"assistantName": "AIVA", "systemPrompt": "MOCK prompt", "preferredProviderId": "2",
                 "preferredLlmModelId": "21", "languageCode": "vi", "voiceCode": "mock-voice"},
@@ -77,6 +78,7 @@ def test_auth_config_and_service_credentials_are_separate():
             assert (session.key.user_id, session.key.device_id) == ("7", "42")
             assert session.key.session_id != "42"  # Server-minted opaque internal identifier.
             assert cfg.credentialReference.id == "9" and not hasattr(cfg, "apiKey")
+            assert cfg.userDisplayName == "Người Dùng Bảy"
             assert fixture.calls[0].headers["authorization"] == "Bearer " + "A" * 43
             assert fixture.calls[1].headers["authorization"] == "Bearer " + "B" * 43
             assert json.loads(fixture.calls[0].content) == {"deviceUid": "robot-42", "credential": "D" * 43}

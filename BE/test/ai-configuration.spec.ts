@@ -34,7 +34,7 @@ describe('AI provider/profile/credential service',()=>{
   let service:AiProvidersService;let repo:{transaction:jest.Mock};let tx:any;let config:ConfigService;let crypto:SecretEncryptionService;
   beforeEach(()=>{
     config=configuration();crypto=new SecretEncryptionService(config);
-    tx={requireApprovedRobot:jest.fn(async()=>{}),users:{findByIdForUpdate:jest.fn(async(id:string)=>({id,status:'active',email_verified_at:new Date()})),
+    tx={requireApprovedRobot:jest.fn(async()=>{}),users:{findByIdForUpdate:jest.fn(async(id:string)=>({id,display_name:id==='7'?'Người Dùng Bảy':'Người Dùng Khác',status:'active',email_verified_at:new Date()})),
       findUserRoles:jest.fn(async(id:string)=>[{code:id==='1'?'ADMIN':'USER'}])},
       provider:jest.fn().mockResolvedValue({id:'2',code:'OPENAI',name:'OpenAI',isEnabled:1}),
       providers:jest.fn().mockResolvedValue([{id:'1',code:'LOCAL',name:'Local',isEnabled:1}]),
@@ -158,8 +158,14 @@ describe('AI provider/profile/credential service',()=>{
   it('internal resolve returns correct User persona and references only',async()=>{
     tx.profile.mockResolvedValue({...emptyProfile,assistantName:'Mine',preferredProviderId:'2',preferredLlmModelId:'3'});
     const result=await service.resolveAIConfiguration({userId:'7',deviceId:'42'});
-    expect(result).toMatchObject({userId:'7',profile:{assistantName:'Mine'},credentialScope:'USER',credentialReference:{id:'9'}});
+    expect(result).toMatchObject({userId:'7',userDisplayName:'Người Dùng Bảy',profile:{assistantName:'Mine'},credentialScope:'USER',credentialReference:{id:'9'}});
     expect(JSON.stringify(result)).not.toMatch(/secret|ciphertext/);expect(tx.ownership.verifyDeviceOwnership).toHaveBeenCalledWith('7','42');
+  });
+  it('returns only the verified active owner display name and never a caller-supplied name',async()=>{
+    const result=await service.resolveAIConfiguration({userId:'7',deviceId:'42',providerId:'2',modelId:'3'});
+    expect(result.userDisplayName).toBe('Người Dùng Bảy');
+    expect(tx.users.findByIdForUpdate).toHaveBeenCalledWith('7');
+    await expect(service.resolveAIConfiguration({userId:'7',deviceId:'42',providerId:'2',modelId:'3',userDisplayName:'Giả Mạo'})).rejects.toMatchObject({status:400});
   });
   it('isolates OpenAI User A and Gemini User B credentials by owner and provider',async()=>{
     const secrets:Record<string,string>={'7:2':'fixture-openai-user-a','8:3':'fixture-gemini-user-b'};

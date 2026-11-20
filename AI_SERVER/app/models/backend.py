@@ -155,6 +155,8 @@ class CredentialReference(ContractModel):
 
 class ResolvedConfig(ContractModel):
     userId: str
+    userDisplayName: str | None = Field(default=None, min_length=1, max_length=120,
+                                        pattern=r"^[^\x00-\x1f\x7f]+$")
     provider: Provider
     model: Model
     profile: Profile

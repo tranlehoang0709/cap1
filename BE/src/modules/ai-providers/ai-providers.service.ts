@@ -21,6 +21,7 @@ export class AiProvidersService {
     const u = await tx.users.findByIdForUpdate(userId);
     const roles = u ? await tx.users.findUserRoles(userId) : [];
     if (!u || u.status !== 'active' || u.email_verified_at === null || roles.length !== 1 || roles[0].code !== role) throw new ForbiddenException('USER_ACCESS_DENIED');
+    return u;
   }
   private actor(actor: CurrentUser, role: 'USER' | 'ADMIN') {
     if (!actor || actor.role !== role) throw new ForbiddenException('ROLE_REQUIRED');
@@ -99,7 +100,7 @@ export class AiProvidersService {
         const a = d ? await tx.ownership.devices.getActiveAssignment(deviceId) : null;
         if (!a || a.userId !== userId) throw new ForbiddenException('DEVICE_ACCESS_DENIED');
       }
-      await this.activeUser(tx,userId);
+      const activeUser = await this.activeUser(tx,userId);
       if (deviceId && !await tx.ownership.verifyDeviceOwnership(userId,deviceId)) throw new ForbiddenException('DEVICE_ACCESS_DENIED');
       const profile = (await tx.profile(userId)) ?? emptyProfile;
       const selectedProvider = providerId ?? profile?.preferredProviderId ?? null;
@@ -114,7 +115,8 @@ export class AiProvidersService {
         if (!stored || stored.id !== p.credentialReference.id) throw new ConflictException('CREDENTIAL_UNAVAILABLE');
         credential = this.decryptSecret(stored.secretCiphertext,owner,p.provider.id);
       }
-      return {userId,provider:{id:p.provider.id,code:p.provider.code,name:p.provider.name},
+      const userDisplayName = typeof activeUser.display_name === 'string' && activeUser.display_name.trim() ? activeUser.display_name.trim() : null;
+      return {userId,userDisplayName,provider:{id:p.provider.id,code:p.provider.code,name:p.provider.name},
         model:{id:p.model.id,modelCode:p.model.modelCode,capability:p.model.capability},profile,
         credentialScope:p.credentialScope,credentialSource:p.credentialSource ?? 'BACKEND',credentialReference:p.credentialReference,...(input.includeCredential === true && p.credentialSource !== 'ENV_SYSTEM' ? {credential} : {})};
     });

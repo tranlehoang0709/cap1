@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.clients.local.voice import LocalTTSAdapter, OPUS_FORMAT
+from app.clients.local.voice import LocalTTSAdapter, OPUS_FORMAT, normalize_text_for_speech
 from app.core.local_tts_config import LocalTTSSettings
 from app.models.llm import ConversationKey
 from app.models.tts import PlaybackScope, TTSConfig, TTSRequest, TTSError
@@ -67,6 +67,30 @@ def test_local_tts_rejects_invalid_text(tmp_path):
 
     with pytest.raises(TTSError, match="invalid_input"):
         asyncio.run(run("\x00private"))
+
+
+def test_voice_copy_removes_markdown_emoticons_and_decorative_emoji_only():
+    source = "# **Xin chào** :) *bạn* ⭐\n* Hẹn lúc 08:30, giá 25.000 ₫."
+    spoken = normalize_text_for_speech(source)
+    assert spoken == "Xin chào bạn Hẹn lúc 08:30, giá 25.000 ₫."
+    assert source == "# **Xin chào** :) *bạn* ⭐\n* Hẹn lúc 08:30, giá 25.000 ₫."
+
+
+def test_voice_copy_preserves_vietnamese_dates_money_and_math():
+    assert normalize_text_for_speech("Ngày 20/11: 2 * 3 = 6; chi phí 50.000 ₫.") == (
+        "Ngày 20/11: 2 * 3 = 6; chi phí 50.000 ₫.")
+
+
+def test_local_tts_synthesizes_normalized_copy_not_original_text(tmp_path):
+    captured = []
+    tts = adapter(tmp_path, captured)
+
+    async def run():
+        return [chunk async for chunk in tts.synthesize(
+            request("**Chào bạn** :) 🌟"), AudioContext(deadline=time.monotonic() + 5))]
+
+    asyncio.run(run())
+    assert captured == ["Chào bạn"]
 
 
 def test_22050_pcm_resamples_to_one_16k_opus_frame_size():

@@ -2428,3 +2428,711 @@
 {"timestamp":"2026-11-19T17:48:16.373800+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","stage":"total_ms","state":"ERROR","turn_ref":"ef3e741a34536d0c","latency_ms":21769.448799999962}
 {"timestamp":"2026-11-19T17:48:16.374037+00:00","level":"WARNING","event":"orchestrator.error","message":"Pipeline failed","state":"ERROR","turn_ref":"ef3e741a34536d0c","reason":"unsafe_text"}
 {"timestamp":"2026-11-19T17:48:17.246090+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","state":"LISTENING","turn_ref":"7f1615cb418c9fcc"}
+{"timestamp":"2026-11-20T10:11:14.867361+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:11:15.065641+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:11:33.389380+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:11:33.431944+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+{"timestamp":"2026-11-20T10:11:39.615444+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0","provider":"LOCAL"}
+{"timestamp":"2026-11-20T10:12:10.125215+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:12:10.132157+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+{"timestamp":"2026-11-20T10:12:13.823725+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0","provider":"LOCAL"}
+{"timestamp":"2026-11-20T10:12:23.021975+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"dcc4df4edf661fac","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:12:27.457248+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"dcc4df4edf661fac","state":"PROCESSING"}
+{"timestamp":"2026-11-20T10:12:27.457916+00:00","level":"INFO","event":"stt.start","message":"STT started","turn_ref":"dcc4df4edf661fac","stage":"stt"}
+{"timestamp":"2026-11-20T10:12:28.210562+00:00","level":"INFO","event":"stt.success","message":"STT completed","turn_ref":"dcc4df4edf661fac","latency_ms":5187.91770000098,"stage":"stt"}
+{"timestamp":"2026-11-20T10:12:28.927274+00:00","level":"INFO","event":"llm.first_token","message":"LLM first token received","turn_ref":"dcc4df4edf661fac","latency_ms":716.3366999957361,"stage":"llm"}
+{"timestamp":"2026-11-20T10:12:31.340940+00:00","level":"INFO","event":"tts.first_audio","message":"TTS first audio received","turn_ref":"dcc4df4edf661fac","latency_ms":2188.8913000002503,"stage":"tts","audio_bytes":116}
+{"timestamp":"2026-11-20T10:12:31.341361+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"dcc4df4edf661fac","state":"SPEAKING"}
+{"timestamp":"2026-11-20T10:12:31.542779+00:00","level":"INFO","event":"playback.ack","message":"Playback ready acknowledgement accepted","ack_state":"ready","session_ref":"8eddcba13a7e6dec"}
+{"timestamp":"2026-11-20T10:12:31.543290+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":1}
+{"timestamp":"2026-11-20T10:12:33.068497+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":25}
+{"timestamp":"2026-11-20T10:12:33.702233+00:00","level":"WARNING","event":"history.assistant_persist_failed","message":"Assistant message persistence failed; continuing voice pipeline","stage":"history","http_status":400,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T10:12:34.661704+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":50}
+{"timestamp":"2026-11-20T10:12:36.270462+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":75}
+{"timestamp":"2026-11-20T10:12:36.523387+00:00","level":"INFO","event":"playback.ready","message":"Playback stream finished sending","audio_frames":79,"ack_state":"ready","session_ref":"8eddcba13a7e6dec"}
+{"timestamp":"2026-11-20T10:12:37.740045+00:00","level":"INFO","event":"playback.ack","message":"Playback complete acknowledgement accepted","audio_frames":79,"ack_state":"complete","session_ref":"8eddcba13a7e6dec"}
+{"timestamp":"2026-11-20T10:12:37.749482+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"dcc4df4edf661fac","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:12:37.749840+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"dcc4df4edf661fac","latency_ms":5187.91770000098,"stage":"stt_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:12:37.750044+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"dcc4df4edf661fac","latency_ms":716.3366999957361,"stage":"llm_first_token_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:12:37.750225+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"dcc4df4edf661fac","latency_ms":2188.8913000002503,"stage":"tts_first_audio_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:12:37.750452+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"dcc4df4edf661fac","latency_ms":14727.936399998725,"stage":"total_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:12:41.599343+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"9d25fd9305b5dd99","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:12:46.066640+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"9d25fd9305b5dd99","state":"PROCESSING"}
+{"timestamp":"2026-11-20T10:12:46.067249+00:00","level":"INFO","event":"stt.start","message":"STT started","turn_ref":"9d25fd9305b5dd99","stage":"stt"}
+{"timestamp":"2026-11-20T10:12:46.615708+00:00","level":"INFO","event":"stt.success","message":"STT completed","turn_ref":"9d25fd9305b5dd99","latency_ms":5015.671900000598,"stage":"stt"}
+{"timestamp":"2026-11-20T10:12:47.526497+00:00","level":"INFO","event":"llm.first_token","message":"LLM first token received","turn_ref":"9d25fd9305b5dd99","latency_ms":910.406699993473,"stage":"llm"}
+{"timestamp":"2026-11-20T10:12:47.793654+00:00","level":"INFO","event":"tts.first_audio","message":"TTS first audio received","turn_ref":"9d25fd9305b5dd99","latency_ms":41.311399996629916,"stage":"tts","audio_bytes":132}
+{"timestamp":"2026-11-20T10:12:47.794623+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"9d25fd9305b5dd99","state":"SPEAKING"}
+{"timestamp":"2026-11-20T10:12:47.997992+00:00","level":"INFO","event":"playback.ack","message":"Playback ready acknowledgement accepted","ack_state":"ready","session_ref":"8eddcba13a7e6dec"}
+{"timestamp":"2026-11-20T10:12:47.998913+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":1}
+{"timestamp":"2026-11-20T10:12:50.537075+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":25}
+{"timestamp":"2026-11-20T10:12:52.131608+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":50}
+{"timestamp":"2026-11-20T10:12:53.714146+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":75}
+{"timestamp":"2026-11-20T10:12:55.343167+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":100}
+{"timestamp":"2026-11-20T10:12:57.025559+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":125}
+{"timestamp":"2026-11-20T10:12:58.687355+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":150}
+{"timestamp":"2026-11-20T10:13:00.577166+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":175}
+{"timestamp":"2026-11-20T10:13:02.250429+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":200}
+{"timestamp":"2026-11-20T10:13:03.929348+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":225}
+{"timestamp":"2026-11-20T10:13:05.555823+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":250}
+{"timestamp":"2026-11-20T10:13:07.189055+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":275}
+{"timestamp":"2026-11-20T10:13:08.823275+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":300}
+{"timestamp":"2026-11-20T10:13:10.453374+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":325}
+{"timestamp":"2026-11-20T10:13:12.086318+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":350}
+{"timestamp":"2026-11-20T10:13:13.688825+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"8eddcba13a7e6dec","frame_count":375}
+{"timestamp":"2026-11-20T10:13:13.828358+00:00","level":"WARNING","event":"history.assistant_persist_failed","message":"Assistant message persistence failed; continuing voice pipeline","stage":"history","http_status":400,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T10:13:13.835602+00:00","level":"WARNING","event":"tts.pipeline_error","message":"TTS pipeline failed","error_type":"unsafe_text","stage":"playback"}
+{"timestamp":"2026-11-20T10:13:13.835917+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"9d25fd9305b5dd99","state":"ERROR"}
+{"timestamp":"2026-11-20T10:13:13.836165+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"9d25fd9305b5dd99","latency_ms":5015.671900000598,"stage":"stt_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:13:13.836344+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"9d25fd9305b5dd99","latency_ms":910.406699993473,"stage":"llm_first_token_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:13:13.836517+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"9d25fd9305b5dd99","latency_ms":41.311399996629916,"stage":"tts_first_audio_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:13:13.836677+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"9d25fd9305b5dd99","latency_ms":32236.880099997506,"stage":"total_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:13:13.836829+00:00","level":"WARNING","event":"orchestrator.error","message":"Pipeline failed","turn_ref":"9d25fd9305b5dd99","reason":"unsafe_text","state":"ERROR"}
+{"timestamp":"2026-11-20T10:13:14.140724+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"3600430e14e033aa","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:20:28.757314+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:28.772791+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"c2b94e15d8ede90e"}
+{"timestamp":"2026-11-20T10:20:28.774172+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:28.788654+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:28.791014+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"c2b94e15d8ede90e"}
+{"timestamp":"2026-11-20T10:20:28.792497+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.362880+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.364302+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.365410+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.377072+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.378228+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.379093+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.390804+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.391912+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.392716+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.404197+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.405732+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.406645+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.418146+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.419283+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.420124+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.432123+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.433527+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.434413+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.451175+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.452568+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.453586+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.467038+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.468784+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.470606+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.483472+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.484632+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.485575+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.496736+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.498116+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.499058+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.510609+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.511750+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.512673+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.524602+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.525867+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.527189+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.539701+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.541157+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.542169+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.554355+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.556050+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.557096+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.571060+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.572262+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.573174+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.585112+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.586308+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.587671+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.600667+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.601881+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.602862+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.615430+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.616609+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.618121+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:20:29.631190+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":401}
+{"timestamp":"2026-11-20T10:20:29.633692+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:20:29.634241+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+{"timestamp":"2026-11-20T10:20:29.636034+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.637744+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:20:29.638215+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":413}
+{"timestamp":"2026-11-20T10:20:29.639073+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.652655+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.654073+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:20:29.655951+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":403}
+{"timestamp":"2026-11-20T10:20:29.657120+00:00","level":"WARNING","event":"gateway.route.denied","message":"Gateway could not resolve an authenticated route","stage":"websocket","error_code":"ROUTE_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:20:29.658633+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:20:29.658956+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":503}
+{"timestamp":"2026-11-20T10:20:29.659935+00:00","level":"WARNING","event":"gateway.route.denied","message":"Gateway could not resolve an authenticated route","stage":"websocket","error_code":"ROUTE_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:20:29.660893+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.673688+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.674484+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"websocket","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.675741+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"websocket","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.676657+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"websocket","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.677500+00:00","level":"WARNING","event":"gateway.route.denied","message":"Gateway could not resolve an authenticated route","stage":"websocket","error_code":"ROUTE_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:20:29.678454+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"websocket"}
+{"timestamp":"2026-11-20T10:20:29.692479+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:20:29.692977+00:00","level":"INFO","event":"gateway.wss.accepted","message":"Gateway WSS handshake accepted","stage":"websocket"}
+{"timestamp":"2026-11-20T10:20:29.694662+00:00","level":"WARNING","event":"robot.turn.protocol_failed","message":"Robot WebSocket protocol operation failed","error_type":"ValueError"}
+{"timestamp":"2026-11-20T10:20:29.694885+00:00","level":"INFO","event":"gateway.wss.closed","message":"Gateway WSS closed","close_code":1008,"stage":"websocket"}
+{"timestamp":"2026-11-20T10:20:29.695719+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.708343+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.709559+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"AUTH_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:20:29.710917+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"AUTH_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:20:29.712110+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.713224+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"websocket","error_code":"AUTH_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:20:29.714700+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.726956+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:29.728237+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:29.729046+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:29.796316+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"websocket"}
+{"timestamp":"2026-11-20T10:20:29.796645+00:00","level":"INFO","event":"gateway.wss.accepted","message":"Gateway WSS handshake accepted","stage":"websocket"}
+{"timestamp":"2026-11-20T10:20:29.797663+00:00","level":"INFO","event":"gateway.wss.closed","message":"Gateway WSS closed","close_code":1000,"stage":"websocket"}
+{"timestamp":"2026-11-20T10:20:29.800224+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"websocket","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:20:30.413148+00:00","level":"WARNING","event":"llm.provider_error","message":"Gemini LLM provider request failed","model":"gemini-3.8-flash","error_type":"RuntimeError","stage":"llm","error_code":"provider_error"}
+{"timestamp":"2026-11-20T10:20:30.419152+00:00","level":"WARNING","event":"llm.provider_error","message":"Gemini LLM provider request failed","model":"gemini-3.8-flash","error_type":"ProviderFailure","stage":"llm","error_code":"rate_limit"}
+{"timestamp":"2026-11-20T10:20:30.422125+00:00","level":"WARNING","event":"llm.provider_error","message":"Gemini LLM provider request failed","model":"gemini-3.8-flash","error_type":"ProviderFailure","stage":"llm","error_code":"service_unavailable"}
+{"timestamp":"2026-11-20T10:20:30.457142+00:00","level":"WARNING","event":"stt.provider_error","message":"Gemini STT request failed","model":"gemini-3.5-flash-lite","error_type":"ProviderError","status":"429","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:20:30.459563+00:00","level":"WARNING","event":"stt.provider_error","message":"Gemini STT request failed","model":"gemini-3.5-flash-lite","error_type":"ProviderError","status":"503","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:20:30.468035+00:00","level":"WARNING","event":"stt.provider_error","message":"Gemini STT request failed","model":"gemini-3.5-flash-lite","error_type":"ConnectionError","status":"NONE","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:20:30.477596+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","error_type":"invalid_audio","stage":"synthesize"}
+{"timestamp":"2026-11-20T10:20:30.479841+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","error_type":"invalid_audio","stage":"synthesize"}
+{"timestamp":"2026-11-20T10:20:30.482271+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","error_type":"invalid_audio","stage":"synthesize"}
+{"timestamp":"2026-11-20T10:20:30.488105+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","error_type":"limit","stage":"synthesize"}
+{"timestamp":"2026-11-20T10:20:30.490435+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","model":"gemini-3.8-flash-tts","error_type":"authentication_failed","stage":"synthesize","http_status":null,"error_code":"authentication_failed"}
+{"timestamp":"2026-11-20T10:20:30.492662+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","model":"gemini-3.8-flash-tts","error_type":"permission_denied","stage":"synthesize","http_status":null,"error_code":"permission_denied"}
+{"timestamp":"2026-11-20T10:20:30.494965+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","model":"gemini-3.8-flash-tts","error_type":"rate_limited","stage":"synthesize","http_status":null,"error_code":"rate_limited"}
+{"timestamp":"2026-11-20T10:20:30.498337+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","model":"gemini-3.8-flash-tts","error_type":"service_unavailable","stage":"synthesize","http_status":null,"error_code":"service_unavailable"}
+{"timestamp":"2026-11-20T10:20:30.966102+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.966875+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.967509+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.968118+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.968750+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.969352+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.969949+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.970544+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.971135+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.971731+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.972352+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.972949+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.973723+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.974331+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:30.974926+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:20:31.099415+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"rate_limit"}
+{"timestamp":"2026-11-20T10:20:31.103941+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"service_unavailable"}
+{"timestamp":"2026-11-20T10:20:31.171733+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.175995+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.188790+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.193836+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.207277+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.212613+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.225376+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.229302+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.241743+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.247441+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.259529+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.262006+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:20:31.263807+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:20:31.265829+00:00","level":"WARNING","event":"robot.turn.protocol_failed","message":"Robot WebSocket protocol operation failed","error_type":"ValueError"}
+{"timestamp":"2026-11-20T10:20:31.267830+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:20:31.269325+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: backend_http_denied status=403","http_status":403,"reason":"unspecified"}
+{"timestamp":"2026-11-20T10:20:31.270144+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.282027+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.285118+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:20:31.286703+00:00","level":"WARNING","event":"robot.turn.protocol_failed","message":"Robot WebSocket protocol operation failed","error_type":"ValueError"}
+{"timestamp":"2026-11-20T10:20:31.287668+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.300061+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.305495+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.318957+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.321579+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:20:31.322079+00:00","level":"INFO","event":"robot.websocket.accepted","message":"Robot WebSocket handshake accepted","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:20:31.322758+00:00","level":"INFO","event":"robot.session.started","message":"Robot audio session started","device_ref":"4c52b8be0682f54c","session_ref":"957ee0ae8f72f867"}
+{"timestamp":"2026-11-20T10:20:31.339952+00:00","level":"INFO","event":"robot.websocket.closed","message":"Robot WebSocket handler finished","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:20:31.340548+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.361353+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.370736+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.389890+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.393441+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:20:31.395249+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:20:31.395836+00:00","level":"INFO","event":"robot.websocket.accepted","message":"Robot WebSocket handshake accepted","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:20:31.396529+00:00","level":"INFO","event":"robot.session.started","message":"Robot audio session started","device_ref":"ddb883cbf3dc2661","session_ref":"dda78ad16d8a7d2c"}
+{"timestamp":"2026-11-20T10:20:31.453721+00:00","level":"INFO","event":"robot.websocket.closed","message":"Robot WebSocket handler finished","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:20:31.454296+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.465865+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.468197+00:00","level":"WARNING","event":"robot.turn.protocol_failed","message":"Robot WebSocket protocol operation failed","error_type":"ValueError"}
+{"timestamp":"2026-11-20T10:20:31.469405+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: backend_network_error status=None","http_status":null,"reason":"unspecified"}
+{"timestamp":"2026-11-20T10:20:31.470167+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.481155+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.483522+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:20:31.485462+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: integration_blocked status=None","http_status":null,"reason":"unspecified"}
+{"timestamp":"2026-11-20T10:20:31.486375+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.497768+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.500114+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:20:31.502275+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:20:31.513630+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:20:31.516572+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:21:06.547075+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:06.553970+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"c2b94e15d8ede90e"}
+{"timestamp":"2026-11-20T10:21:06.554993+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:06.567013+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:06.569344+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"c2b94e15d8ede90e"}
+{"timestamp":"2026-11-20T10:21:06.571049+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:06.987726+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:06.988931+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:06.989791+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.001500+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.002621+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.003509+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.014984+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.016091+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.016879+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.028250+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.032689+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.033610+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.045405+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.046619+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.047506+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.058893+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.060004+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.061077+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.073642+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.074951+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.075833+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.087779+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.088964+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.089796+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.102597+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.103749+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.104730+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.116924+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.118110+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.119018+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.130875+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.132136+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.133048+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.144513+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.145794+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.146746+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.158192+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.159390+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.160308+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.173047+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.174732+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.176090+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.188535+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.189701+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.190502+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.203050+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.204274+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.205169+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.217558+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.218699+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.219509+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.231393+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.232554+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.234051+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:21:07.237294+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":401}
+{"timestamp":"2026-11-20T10:21:07.239032+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:21:07.239448+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+{"timestamp":"2026-11-20T10:21:07.240808+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.242022+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:21:07.242420+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":413}
+{"timestamp":"2026-11-20T10:21:07.243268+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.255352+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.256489+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:21:07.258307+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":403}
+{"timestamp":"2026-11-20T10:21:07.259435+00:00","level":"WARNING","event":"gateway.route.denied","message":"Gateway could not resolve an authenticated route","stage":"websocket","error_code":"ROUTE_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:21:07.261016+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:21:07.261376+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":503}
+{"timestamp":"2026-11-20T10:21:07.262895+00:00","level":"WARNING","event":"gateway.route.denied","message":"Gateway could not resolve an authenticated route","stage":"websocket","error_code":"ROUTE_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:21:07.263929+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.275515+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.276195+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"websocket","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.277123+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"websocket","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.278067+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"websocket","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.279173+00:00","level":"WARNING","event":"gateway.route.denied","message":"Gateway could not resolve an authenticated route","stage":"websocket","error_code":"ROUTE_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:21:07.280195+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"websocket"}
+{"timestamp":"2026-11-20T10:21:07.284436+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:21:07.284771+00:00","level":"INFO","event":"gateway.wss.accepted","message":"Gateway WSS handshake accepted","stage":"websocket"}
+{"timestamp":"2026-11-20T10:21:07.286444+00:00","level":"WARNING","event":"robot.turn.protocol_failed","message":"Robot WebSocket protocol operation failed","error_type":"ValueError"}
+{"timestamp":"2026-11-20T10:21:07.286616+00:00","level":"INFO","event":"gateway.wss.closed","message":"Gateway WSS closed","stage":"websocket","close_code":1008}
+{"timestamp":"2026-11-20T10:21:07.287483+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.299335+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.300550+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"AUTH_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:21:07.301929+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"AUTH_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:21:07.303347+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.304268+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"websocket","error_code":"AUTH_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:21:07.305040+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.316971+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:07.318196+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.318971+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:07.381119+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"websocket"}
+{"timestamp":"2026-11-20T10:21:07.381444+00:00","level":"INFO","event":"gateway.wss.accepted","message":"Gateway WSS handshake accepted","stage":"websocket"}
+{"timestamp":"2026-11-20T10:21:07.382396+00:00","level":"INFO","event":"gateway.wss.closed","message":"Gateway WSS closed","stage":"websocket","close_code":1000}
+{"timestamp":"2026-11-20T10:21:07.383967+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"websocket","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T10:21:07.972166+00:00","level":"WARNING","event":"llm.provider_error","message":"Gemini LLM provider request failed","stage":"llm","error_type":"RuntimeError","model":"gemini-3.8-flash","error_code":"provider_error"}
+{"timestamp":"2026-11-20T10:21:07.976656+00:00","level":"WARNING","event":"llm.provider_error","message":"Gemini LLM provider request failed","stage":"llm","error_type":"ProviderFailure","model":"gemini-3.8-flash","error_code":"rate_limit"}
+{"timestamp":"2026-11-20T10:21:07.979145+00:00","level":"WARNING","event":"llm.provider_error","message":"Gemini LLM provider request failed","stage":"llm","error_type":"ProviderFailure","model":"gemini-3.8-flash","error_code":"service_unavailable"}
+{"timestamp":"2026-11-20T10:21:08.011665+00:00","level":"WARNING","event":"stt.provider_error","message":"Gemini STT request failed","error_type":"ProviderError","status":"429","model":"gemini-3.5-flash-lite","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:21:08.014269+00:00","level":"WARNING","event":"stt.provider_error","message":"Gemini STT request failed","error_type":"ProviderError","status":"503","model":"gemini-3.5-flash-lite","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:21:08.021488+00:00","level":"WARNING","event":"stt.provider_error","message":"Gemini STT request failed","error_type":"ConnectionError","status":"NONE","model":"gemini-3.5-flash-lite","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:21:08.030693+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","stage":"synthesize","error_type":"invalid_audio"}
+{"timestamp":"2026-11-20T10:21:08.033303+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","stage":"synthesize","error_type":"invalid_audio"}
+{"timestamp":"2026-11-20T10:21:08.035712+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","stage":"synthesize","error_type":"invalid_audio"}
+{"timestamp":"2026-11-20T10:21:08.040589+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","stage":"synthesize","error_type":"limit"}
+{"timestamp":"2026-11-20T10:21:08.043378+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","stage":"synthesize","error_type":"authentication_failed","model":"gemini-3.8-flash-tts","error_code":"authentication_failed","http_status":null}
+{"timestamp":"2026-11-20T10:21:08.045577+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","stage":"synthesize","error_type":"permission_denied","model":"gemini-3.8-flash-tts","error_code":"permission_denied","http_status":null}
+{"timestamp":"2026-11-20T10:21:08.047939+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","stage":"synthesize","error_type":"rate_limited","model":"gemini-3.8-flash-tts","error_code":"rate_limited","http_status":null}
+{"timestamp":"2026-11-20T10:21:08.050146+00:00","level":"WARNING","event":"tts.provider_error","message":"Gemini TTS request failed","stage":"synthesize","error_type":"service_unavailable","model":"gemini-3.8-flash-tts","error_code":"service_unavailable","http_status":null}
+{"timestamp":"2026-11-20T10:21:08.517024+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.518104+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.519166+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.520192+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.521194+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.522104+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.522781+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.523403+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.524019+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.524624+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.525265+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.525874+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.526766+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.527392+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.528015+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"overloaded"}
+{"timestamp":"2026-11-20T10:21:08.668815+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"rate_limit"}
+{"timestamp":"2026-11-20T10:21:08.672965+00:00","level":"WARNING","event":"llm.runner_error","message":"LLM runner failed","stage":"llm","error_code":"service_unavailable"}
+{"timestamp":"2026-11-20T10:21:08.732580+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:08.736912+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:08.748136+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:08.753094+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:08.764882+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:08.770220+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:08.782004+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:08.785659+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:08.796587+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:08.802746+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:08.814856+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:08.817602+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:21:08.821464+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:21:08.823428+00:00","level":"WARNING","event":"robot.turn.protocol_failed","message":"Robot WebSocket protocol operation failed","error_type":"ValueError"}
+{"timestamp":"2026-11-20T10:21:08.825356+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:21:08.826811+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: backend_http_denied status=403","reason":"unspecified","http_status":403}
+{"timestamp":"2026-11-20T10:21:08.827730+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:08.842288+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:08.845485+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:21:08.847244+00:00","level":"WARNING","event":"robot.turn.protocol_failed","message":"Robot WebSocket protocol operation failed","error_type":"ValueError"}
+{"timestamp":"2026-11-20T10:21:08.848736+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:08.861291+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:08.866684+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:08.878160+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:08.880642+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:21:08.881159+00:00","level":"INFO","event":"robot.websocket.accepted","message":"Robot WebSocket handshake accepted","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:21:08.881764+00:00","level":"INFO","event":"robot.session.started","message":"Robot audio session started","session_ref":"ddcef2a12b1284ce","device_ref":"4c52b8be0682f54c"}
+{"timestamp":"2026-11-20T10:21:08.898398+00:00","level":"INFO","event":"robot.websocket.closed","message":"Robot WebSocket handler finished","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:21:08.899024+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:08.912836+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:08.919071+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:08.931787+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:08.934327+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:21:08.935663+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:21:08.936088+00:00","level":"INFO","event":"robot.websocket.accepted","message":"Robot WebSocket handshake accepted","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:21:08.936615+00:00","level":"INFO","event":"robot.session.started","message":"Robot audio session started","session_ref":"71a2067841175f9e","device_ref":"ddb883cbf3dc2661"}
+{"timestamp":"2026-11-20T10:21:08.954123+00:00","level":"INFO","event":"robot.websocket.closed","message":"Robot WebSocket handler finished","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:21:08.954799+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:08.966537+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:08.968953+00:00","level":"WARNING","event":"robot.turn.protocol_failed","message":"Robot WebSocket protocol operation failed","error_type":"ValueError"}
+{"timestamp":"2026-11-20T10:21:08.970369+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: backend_network_error status=None","reason":"unspecified","http_status":null}
+{"timestamp":"2026-11-20T10:21:08.971343+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:08.982997+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:08.985426+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:21:08.987236+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: integration_blocked status=None","reason":"unspecified","http_status":null}
+{"timestamp":"2026-11-20T10:21:08.988089+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:08.999265+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:09.001966+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:21:09.004131+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:21:09.015618+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:21:09.018203+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"test-gemini","provider":"GEMINI"}
+{"timestamp":"2026-11-20T10:23:11.390545+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:23:11.398790+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"c2b94e15d8ede90e"}
+{"timestamp":"2026-11-20T10:23:11.400474+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:23:11.414994+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:23:11.417763+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"c2b94e15d8ede90e"}
+{"timestamp":"2026-11-20T10:23:11.419566+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:23:22.259673+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:23:22.266845+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"c2b94e15d8ede90e"}
+{"timestamp":"2026-11-20T10:23:22.268153+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:23:22.286711+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:23:22.290226+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"c2b94e15d8ede90e"}
+{"timestamp":"2026-11-20T10:23:22.292915+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:24:23.555510+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:24:23.583196+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+{"timestamp":"2026-11-20T10:24:27.548670+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0","provider":"LOCAL"}
+{"timestamp":"2026-11-20T10:24:33.757947+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"a6be4c34d85193aa","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:24:39.386480+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"a6be4c34d85193aa","state":"PROCESSING"}
+{"timestamp":"2026-11-20T10:24:39.387177+00:00","level":"INFO","event":"stt.start","message":"STT started","turn_ref":"a6be4c34d85193aa","stage":"stt"}
+{"timestamp":"2026-11-20T10:24:39.778541+00:00","level":"INFO","event":"stt.success","message":"STT completed","turn_ref":"a6be4c34d85193aa","latency_ms":6019.701200006239,"stage":"stt"}
+{"timestamp":"2026-11-20T10:24:40.419483+00:00","level":"INFO","event":"llm.first_token","message":"LLM first token received","turn_ref":"a6be4c34d85193aa","latency_ms":640.5518000028678,"stage":"llm"}
+{"timestamp":"2026-11-20T10:24:40.823401+00:00","level":"INFO","event":"tts.first_audio","message":"TTS first audio received","turn_ref":"a6be4c34d85193aa","latency_ms":73.93089999823133,"stage":"tts","audio_bytes":128}
+{"timestamp":"2026-11-20T10:24:40.823882+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"a6be4c34d85193aa","state":"SPEAKING"}
+{"timestamp":"2026-11-20T10:24:41.027111+00:00","level":"INFO","event":"playback.ack","message":"Playback ready acknowledgement accepted","ack_state":"ready","session_ref":"e52c061173a66dba"}
+{"timestamp":"2026-11-20T10:24:41.027792+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"e52c061173a66dba","frame_count":1}
+{"timestamp":"2026-11-20T10:24:42.637262+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"e52c061173a66dba","frame_count":25}
+{"timestamp":"2026-11-20T10:24:44.305340+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"e52c061173a66dba","frame_count":50}
+{"timestamp":"2026-11-20T10:24:44.909780+00:00","level":"WARNING","event":"history.assistant_persist_failed","message":"Assistant message persistence failed; continuing voice pipeline","stage":"history","http_status":400,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T10:24:44.917308+00:00","level":"WARNING","event":"tts.pipeline_error","message":"TTS pipeline failed","error_type":"unsafe_text","stage":"playback"}
+{"timestamp":"2026-11-20T10:24:44.917695+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"a6be4c34d85193aa","state":"ERROR"}
+{"timestamp":"2026-11-20T10:24:44.917995+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"a6be4c34d85193aa","latency_ms":6019.701200006239,"stage":"stt_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:24:44.918205+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"a6be4c34d85193aa","latency_ms":640.5518000028678,"stage":"llm_first_token_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:24:44.918419+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"a6be4c34d85193aa","latency_ms":73.93089999823133,"stage":"tts_first_audio_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:24:44.918615+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"a6be4c34d85193aa","latency_ms":11160.076500003925,"stage":"total_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:24:44.918809+00:00","level":"WARNING","event":"orchestrator.error","message":"Pipeline failed","turn_ref":"a6be4c34d85193aa","reason":"unsafe_text","state":"ERROR"}
+{"timestamp":"2026-11-20T10:24:45.058813+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"e107ddebe28b4a54","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:25:23.945973+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:25:23.951096+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+{"timestamp":"2026-11-20T10:25:28.754200+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0","provider":"LOCAL"}
+{"timestamp":"2026-11-20T10:25:31.871351+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"ee844dcbf10f09e2","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:25:40.206705+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"ee844dcbf10f09e2","state":"PROCESSING"}
+{"timestamp":"2026-11-20T10:25:40.207225+00:00","level":"INFO","event":"stt.start","message":"STT started","turn_ref":"ee844dcbf10f09e2","stage":"stt"}
+{"timestamp":"2026-11-20T10:25:40.835145+00:00","level":"INFO","event":"stt.success","message":"STT completed","turn_ref":"ee844dcbf10f09e2","latency_ms":8962.493800005177,"stage":"stt"}
+{"timestamp":"2026-11-20T10:25:41.457685+00:00","level":"INFO","event":"llm.first_token","message":"LLM first token received","turn_ref":"ee844dcbf10f09e2","latency_ms":622.1686000062618,"stage":"llm"}
+{"timestamp":"2026-11-20T10:25:41.745068+00:00","level":"INFO","event":"tts.first_audio","message":"TTS first audio received","turn_ref":"ee844dcbf10f09e2","latency_ms":54.2905000038445,"stage":"tts","audio_bytes":127}
+{"timestamp":"2026-11-20T10:25:41.745947+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"ee844dcbf10f09e2","state":"SPEAKING"}
+{"timestamp":"2026-11-20T10:25:41.959091+00:00","level":"INFO","event":"playback.ack","message":"Playback ready acknowledgement accepted","ack_state":"ready","session_ref":"0957a9c92ce4eeb2"}
+{"timestamp":"2026-11-20T10:25:41.960171+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"0957a9c92ce4eeb2","frame_count":1}
+{"timestamp":"2026-11-20T10:25:43.604816+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"0957a9c92ce4eeb2","frame_count":25}
+{"timestamp":"2026-11-20T10:25:45.288320+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"0957a9c92ce4eeb2","frame_count":50}
+{"timestamp":"2026-11-20T10:25:46.973833+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"0957a9c92ce4eeb2","frame_count":75}
+{"timestamp":"2026-11-20T10:25:47.510727+00:00","level":"WARNING","event":"history.assistant_persist_failed","message":"Assistant message persistence failed; continuing voice pipeline","stage":"history","http_status":400,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T10:25:47.517121+00:00","level":"WARNING","event":"tts.pipeline_error","message":"TTS pipeline failed","error_type":"unsafe_text","stage":"playback"}
+{"timestamp":"2026-11-20T10:25:47.517417+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"ee844dcbf10f09e2","state":"ERROR"}
+{"timestamp":"2026-11-20T10:25:47.517686+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"ee844dcbf10f09e2","latency_ms":8962.493800005177,"stage":"stt_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:25:47.517868+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"ee844dcbf10f09e2","latency_ms":622.1686000062618,"stage":"llm_first_token_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:25:47.518029+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"ee844dcbf10f09e2","latency_ms":54.2905000038445,"stage":"tts_first_audio_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:25:47.518182+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"ee844dcbf10f09e2","latency_ms":15646.373600000516,"stage":"total_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:25:47.518329+00:00","level":"WARNING","event":"orchestrator.error","message":"Pipeline failed","turn_ref":"ee844dcbf10f09e2","reason":"unsafe_text","state":"ERROR"}
+{"timestamp":"2026-11-20T10:25:47.989495+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"a72b1813f1a50bd7","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:26:06.670938+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.676110+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.687432+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.693417+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.704854+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.712205+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.723789+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.728552+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.740307+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.745364+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.756977+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.759843+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","provider":"GEMINI","model":"test-gemini"}
+{"timestamp":"2026-11-20T10:26:06.762231+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","provider":"GEMINI","model":"test-gemini"}
+{"timestamp":"2026-11-20T10:26:06.763856+00:00","level":"WARNING","event":"robot.turn.protocol_failed","message":"Robot WebSocket protocol operation failed","error_type":"ValueError"}
+{"timestamp":"2026-11-20T10:26:06.766014+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","provider":"GEMINI","model":"test-gemini"}
+{"timestamp":"2026-11-20T10:26:06.767238+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: backend_http_denied status=403","http_status":403,"reason":"unspecified"}
+{"timestamp":"2026-11-20T10:26:06.768047+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.780475+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.783069+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","provider":"GEMINI","model":"test-gemini"}
+{"timestamp":"2026-11-20T10:26:06.784649+00:00","level":"WARNING","event":"robot.turn.protocol_failed","message":"Robot WebSocket protocol operation failed","error_type":"ValueError"}
+{"timestamp":"2026-11-20T10:26:06.785533+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.796789+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.801944+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.819287+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.821788+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:26:06.822276+00:00","level":"INFO","event":"robot.websocket.accepted","message":"Robot WebSocket handshake accepted","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:26:06.822901+00:00","level":"INFO","event":"robot.session.started","message":"Robot audio session started","device_ref":"4c52b8be0682f54c","session_ref":"2b5aab19083e8bb4"}
+{"timestamp":"2026-11-20T10:26:06.839801+00:00","level":"INFO","event":"robot.websocket.closed","message":"Robot WebSocket handler finished","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:26:06.840383+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.853746+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.859716+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.871126+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.873696+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:26:06.874967+00:00","level":"INFO","event":"robot.websocket.connect","message":"Robot WebSocket request received","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:26:06.875357+00:00","level":"INFO","event":"robot.websocket.accepted","message":"Robot WebSocket handshake accepted","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:26:06.875896+00:00","level":"INFO","event":"robot.session.started","message":"Robot audio session started","device_ref":"ddb883cbf3dc2661","session_ref":"b249b9ca91194f76"}
+{"timestamp":"2026-11-20T10:26:06.893700+00:00","level":"INFO","event":"robot.websocket.closed","message":"Robot WebSocket handler finished","session_ref":"a6db929d4d87c306"}
+{"timestamp":"2026-11-20T10:26:06.894257+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.906270+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.908716+00:00","level":"WARNING","event":"robot.turn.protocol_failed","message":"Robot WebSocket protocol operation failed","error_type":"ValueError"}
+{"timestamp":"2026-11-20T10:26:06.910386+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: backend_network_error status=None","http_status":null,"reason":"unspecified"}
+{"timestamp":"2026-11-20T10:26:06.911163+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.922382+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.925295+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","provider":"GEMINI","model":"test-gemini"}
+{"timestamp":"2026-11-20T10:26:06.926875+00:00","level":"WARNING","event":"robot.turn.backend_denied","message":"Backend denied robot WebSocket operation: integration_blocked status=None","http_status":null,"reason":"unspecified"}
+{"timestamp":"2026-11-20T10:26:06.927761+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.939009+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.942149+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","provider":"GEMINI","model":"test-gemini"}
+{"timestamp":"2026-11-20T10:26:06.944283+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:26:06.955411+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:26:06.958143+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","provider":"GEMINI","model":"test-gemini"}
+{"timestamp":"2026-11-20T10:26:21.357915+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:26:21.362885+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+{"timestamp":"2026-11-20T10:26:25.325933+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0","provider":"LOCAL"}
+{"timestamp":"2026-11-20T10:26:28.372339+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"03c859677de2d3a8","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:26:33.036044+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"03c859677de2d3a8","state":"PROCESSING"}
+{"timestamp":"2026-11-20T10:26:33.036626+00:00","level":"INFO","event":"stt.start","message":"STT started","turn_ref":"03c859677de2d3a8","stage":"stt"}
+{"timestamp":"2026-11-20T10:26:33.512202+00:00","level":"INFO","event":"stt.success","message":"STT completed","turn_ref":"03c859677de2d3a8","latency_ms":5139.031099999556,"stage":"stt"}
+{"timestamp":"2026-11-20T10:26:33.997525+00:00","level":"INFO","event":"llm.first_token","message":"LLM first token received","turn_ref":"03c859677de2d3a8","latency_ms":484.96069999964675,"stage":"llm"}
+{"timestamp":"2026-11-20T10:26:34.272753+00:00","level":"INFO","event":"tts.first_audio","message":"TTS first audio received","turn_ref":"03c859677de2d3a8","latency_ms":45.47589999856427,"stage":"tts","audio_bytes":125}
+{"timestamp":"2026-11-20T10:26:34.273754+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"03c859677de2d3a8","state":"SPEAKING"}
+{"timestamp":"2026-11-20T10:26:34.467906+00:00","level":"INFO","event":"playback.ack","message":"Playback ready acknowledgement accepted","ack_state":"ready","session_ref":"57c978df02820c20"}
+{"timestamp":"2026-11-20T10:26:34.468629+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"57c978df02820c20","frame_count":1}
+{"timestamp":"2026-11-20T10:26:36.646779+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"57c978df02820c20","frame_count":25}
+{"timestamp":"2026-11-20T10:26:38.332666+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"57c978df02820c20","frame_count":50}
+{"timestamp":"2026-11-20T10:26:40.133872+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"57c978df02820c20","frame_count":75}
+{"timestamp":"2026-11-20T10:26:41.817004+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"57c978df02820c20","frame_count":100}
+{"timestamp":"2026-11-20T10:26:43.502525+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"57c978df02820c20","frame_count":125}
+{"timestamp":"2026-11-20T10:26:45.186412+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"57c978df02820c20","frame_count":150}
+{"timestamp":"2026-11-20T10:26:46.871931+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"57c978df02820c20","frame_count":175}
+{"timestamp":"2026-11-20T10:26:48.557425+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"57c978df02820c20","frame_count":200}
+{"timestamp":"2026-11-20T10:26:50.258146+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"57c978df02820c20","frame_count":225}
+{"timestamp":"2026-11-20T10:26:51.942621+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"57c978df02820c20","frame_count":250}
+{"timestamp":"2026-11-20T10:26:52.280478+00:00","level":"WARNING","event":"history.assistant_persist_failed","message":"Assistant message persistence failed; continuing voice pipeline","stage":"history","http_status":400,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T10:26:52.287311+00:00","level":"WARNING","event":"tts.pipeline_error","message":"TTS pipeline failed","error_type":"unsafe_text","stage":"playback"}
+{"timestamp":"2026-11-20T10:26:52.287608+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"03c859677de2d3a8","state":"ERROR"}
+{"timestamp":"2026-11-20T10:26:52.287863+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"03c859677de2d3a8","latency_ms":5139.031099999556,"stage":"stt_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:26:52.288046+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"03c859677de2d3a8","latency_ms":484.96069999964675,"stage":"llm_first_token_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:26:52.288217+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"03c859677de2d3a8","latency_ms":45.47589999856427,"stage":"tts_first_audio_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:26:52.288375+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"03c859677de2d3a8","latency_ms":23915.565200004494,"stage":"total_ms","state":"ERROR"}
+{"timestamp":"2026-11-20T10:26:52.288526+00:00","level":"WARNING","event":"orchestrator.error","message":"Pipeline failed","turn_ref":"03c859677de2d3a8","reason":"unsafe_text","state":"ERROR"}
+{"timestamp":"2026-11-20T10:26:52.525635+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"0738ee2281c33f96","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:27:20.190648+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:27:29.382643+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:27:29.404076+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+{"timestamp":"2026-11-20T10:27:36.579839+00:00","level":"WARNING","event":"gateway.route.denied","message":"Gateway could not resolve an authenticated route","stage":"websocket","error_code":"ROUTE_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:27:51.468569+00:00","level":"WARNING","event":"gateway.route.denied","message":"Gateway could not resolve an authenticated route","stage":"websocket","error_code":"ROUTE_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:27:56.988745+00:00","level":"WARNING","event":"gateway.route.denied","message":"Gateway could not resolve an authenticated route","stage":"websocket","error_code":"ROUTE_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:29:00.896442+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:29:00.903062+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+{"timestamp":"2026-11-20T10:29:05.161806+00:00","level":"WARNING","event":"gateway.route.denied","message":"Gateway could not resolve an authenticated route","stage":"websocket","error_code":"ROUTE_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:29:21.708391+00:00","level":"WARNING","event":"gateway.route.denied","message":"Gateway could not resolve an authenticated route","stage":"websocket","error_code":"ROUTE_UNAVAILABLE"}
+{"timestamp":"2026-11-20T10:29:37.454655+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:29:54.345757+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:30:26.092475+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:30:26.143304+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","http_status":200,"stage":"ota"}
+{"timestamp":"2026-11-20T10:30:30.053634+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","provider":"LOCAL","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0"}
+{"timestamp":"2026-11-20T10:30:45.304019+00:00","level":"INFO","event":"app.shutdown","message":"AI Server shutdown"}
+{"timestamp":"2026-11-20T10:32:16.981176+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:32:35.654088+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:32:35.678296+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","http_status":200,"stage":"ota"}
+{"timestamp":"2026-11-20T10:32:42.747915+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","provider":"LOCAL","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0"}
+{"timestamp":"2026-11-20T10:34:17.527964+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:34:17.794812+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+{"timestamp":"2026-11-20T10:34:52.487451+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:34:52.527515+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","http_status":200,"stage":"ota"}
+{"timestamp":"2026-11-20T10:35:06.010183+00:00","level":"WARNING","event":"gateway.local_proxy.failed","message":"Gateway Local proxy failed","error_type":"RuntimeError","stage":"websocket"}
+{"timestamp":"2026-11-20T10:35:36.490238+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:35:36.497685+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","http_status":200,"stage":"ota"}
+{"timestamp":"2026-11-20T10:35:48.000391+00:00","level":"WARNING","event":"gateway.local_proxy.failed","message":"Gateway Local proxy failed","error_type":"RuntimeError","stage":"websocket"}
+{"timestamp":"2026-11-20T10:36:56.310626+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:36:56.317145+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","http_status":200,"stage":"ota"}
+{"timestamp":"2026-11-20T10:37:03.698252+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0","provider":"LOCAL"}
+{"timestamp":"2026-11-20T10:37:47.792724+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"0070533c86a0a55c","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:37:55.041582+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"0070533c86a0a55c","state":"PROCESSING"}
+{"timestamp":"2026-11-20T10:37:55.042253+00:00","level":"INFO","event":"stt.start","message":"STT started","turn_ref":"0070533c86a0a55c","stage":"stt"}
+{"timestamp":"2026-11-20T10:37:55.870826+00:00","level":"INFO","event":"stt.success","message":"STT completed","turn_ref":"0070533c86a0a55c","latency_ms":8076.586299997871,"stage":"stt"}
+{"timestamp":"2026-11-20T10:37:59.526371+00:00","level":"INFO","event":"llm.first_token","message":"LLM first token received","turn_ref":"0070533c86a0a55c","latency_ms":3655.145299999276,"stage":"llm"}
+{"timestamp":"2026-11-20T10:38:02.508277+00:00","level":"WARNING","event":"history.assistant_persist_failed","message":"Assistant message persistence failed; continuing voice pipeline","stage":"history","http_status":400,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T10:38:04.016235+00:00","level":"INFO","event":"tts.first_audio","message":"TTS first audio received","turn_ref":"0070533c86a0a55c","latency_ms":1499.557700000878,"audio_bytes":129,"stage":"tts"}
+{"timestamp":"2026-11-20T10:38:04.016692+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"0070533c86a0a55c","state":"SPEAKING"}
+{"timestamp":"2026-11-20T10:38:04.180392+00:00","level":"INFO","event":"playback.ack","message":"Playback ready acknowledgement accepted","session_ref":"608a9736e42b9554","ack_state":"ready"}
+{"timestamp":"2026-11-20T10:38:04.180957+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"608a9736e42b9554","frame_count":1}
+{"timestamp":"2026-11-20T10:38:05.809728+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"608a9736e42b9554","frame_count":25}
+{"timestamp":"2026-11-20T10:38:07.493678+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"608a9736e42b9554","frame_count":50}
+{"timestamp":"2026-11-20T10:38:09.161680+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"608a9736e42b9554","frame_count":75}
+{"timestamp":"2026-11-20T10:38:10.847219+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"608a9736e42b9554","frame_count":100}
+{"timestamp":"2026-11-20T10:38:11.514498+00:00","level":"INFO","event":"playback.ready","message":"Playback stream finished sending","audio_frames":110,"session_ref":"608a9736e42b9554","ack_state":"ready"}
+{"timestamp":"2026-11-20T10:38:12.482450+00:00","level":"INFO","event":"playback.ack","message":"Playback complete acknowledgement accepted","audio_frames":110,"session_ref":"608a9736e42b9554","ack_state":"complete"}
+{"timestamp":"2026-11-20T10:38:12.491694+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"0070533c86a0a55c","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:12.492081+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"0070533c86a0a55c","latency_ms":8076.586299997871,"stage":"stt_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:12.492305+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"0070533c86a0a55c","latency_ms":3655.145299999276,"stage":"llm_first_token_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:12.492510+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"0070533c86a0a55c","latency_ms":1499.557700000878,"stage":"tts_first_audio_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:12.492733+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"0070533c86a0a55c","latency_ms":24699.43290000083,"stage":"total_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:14.825107+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"cf5150120756f132","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:18.695919+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"cf5150120756f132","state":"PROCESSING"}
+{"timestamp":"2026-11-20T10:38:18.696590+00:00","level":"INFO","event":"stt.start","message":"STT started","turn_ref":"cf5150120756f132","stage":"stt"}
+{"timestamp":"2026-11-20T10:38:19.067796+00:00","level":"INFO","event":"stt.success","message":"STT completed","turn_ref":"cf5150120756f132","latency_ms":4242.071399996348,"stage":"stt"}
+{"timestamp":"2026-11-20T10:38:20.287660+00:00","level":"INFO","event":"llm.first_token","message":"LLM first token received","turn_ref":"cf5150120756f132","latency_ms":1219.4393999961903,"stage":"llm"}
+{"timestamp":"2026-11-20T10:38:21.412735+00:00","level":"WARNING","event":"history.assistant_persist_failed","message":"Assistant message persistence failed; continuing voice pipeline","stage":"history","http_status":400,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T10:38:21.453750+00:00","level":"INFO","event":"tts.first_audio","message":"TTS first audio received","turn_ref":"cf5150120756f132","latency_ms":34.060400001180824,"audio_bytes":131,"stage":"tts"}
+{"timestamp":"2026-11-20T10:38:21.454160+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"cf5150120756f132","state":"SPEAKING"}
+{"timestamp":"2026-11-20T10:38:21.640494+00:00","level":"INFO","event":"playback.ack","message":"Playback ready acknowledgement accepted","session_ref":"608a9736e42b9554","ack_state":"ready"}
+{"timestamp":"2026-11-20T10:38:21.641037+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"608a9736e42b9554","frame_count":1}
+{"timestamp":"2026-11-20T10:38:23.256440+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"608a9736e42b9554","frame_count":25}
+{"timestamp":"2026-11-20T10:38:24.058759+00:00","level":"INFO","event":"playback.ready","message":"Playback stream finished sending","audio_frames":37,"session_ref":"608a9736e42b9554","ack_state":"ready"}
+{"timestamp":"2026-11-20T10:38:24.470409+00:00","level":"INFO","event":"playback.ack","message":"Playback complete acknowledgement accepted","audio_frames":37,"session_ref":"608a9736e42b9554","ack_state":"complete"}
+{"timestamp":"2026-11-20T10:38:24.477512+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"cf5150120756f132","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:24.477861+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"cf5150120756f132","latency_ms":4242.071399996348,"stage":"stt_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:24.478107+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"cf5150120756f132","latency_ms":1219.4393999961903,"stage":"llm_first_token_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:24.478318+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"cf5150120756f132","latency_ms":34.060400001180824,"stage":"tts_first_audio_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:24.478494+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"cf5150120756f132","latency_ms":9652.79659999942,"stage":"total_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:29.986176+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"a29929325c2b3c80","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:34.626342+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"a29929325c2b3c80","state":"PROCESSING"}
+{"timestamp":"2026-11-20T10:38:34.626941+00:00","level":"INFO","event":"stt.start","message":"STT started","turn_ref":"a29929325c2b3c80","stage":"stt"}
+{"timestamp":"2026-11-20T10:38:35.101461+00:00","level":"INFO","event":"stt.success","message":"STT completed","turn_ref":"a29929325c2b3c80","latency_ms":5114.102699997602,"stage":"stt"}
+{"timestamp":"2026-11-20T10:38:35.965435+00:00","level":"INFO","event":"llm.first_token","message":"LLM first token received","turn_ref":"a29929325c2b3c80","latency_ms":863.5293999977876,"stage":"llm"}
+{"timestamp":"2026-11-20T10:38:37.624503+00:00","level":"WARNING","event":"history.assistant_persist_failed","message":"Assistant message persistence failed; continuing voice pipeline","stage":"history","http_status":400,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T10:38:37.698454+00:00","level":"INFO","event":"tts.first_audio","message":"TTS first audio received","turn_ref":"a29929325c2b3c80","latency_ms":66.70269999449374,"audio_bytes":131,"stage":"tts"}
+{"timestamp":"2026-11-20T10:38:37.698856+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"a29929325c2b3c80","state":"SPEAKING"}
+{"timestamp":"2026-11-20T10:38:37.871356+00:00","level":"INFO","event":"playback.ack","message":"Playback ready acknowledgement accepted","session_ref":"608a9736e42b9554","ack_state":"ready"}
+{"timestamp":"2026-11-20T10:38:37.871791+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"608a9736e42b9554","frame_count":1}
+{"timestamp":"2026-11-20T10:38:39.470560+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"608a9736e42b9554","frame_count":25}
+{"timestamp":"2026-11-20T10:38:41.138488+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"608a9736e42b9554","frame_count":50}
+{"timestamp":"2026-11-20T10:38:41.338932+00:00","level":"INFO","event":"playback.ready","message":"Playback stream finished sending","audio_frames":53,"session_ref":"608a9736e42b9554","ack_state":"ready"}
+{"timestamp":"2026-11-20T10:38:42.492011+00:00","level":"INFO","event":"playback.ack","message":"Playback complete acknowledgement accepted","audio_frames":53,"session_ref":"608a9736e42b9554","ack_state":"complete"}
+{"timestamp":"2026-11-20T10:38:42.498879+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"a29929325c2b3c80","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:42.499240+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"a29929325c2b3c80","latency_ms":5114.102699997602,"stage":"stt_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:42.499460+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"a29929325c2b3c80","latency_ms":863.5293999977876,"stage":"llm_first_token_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:42.499658+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"a29929325c2b3c80","latency_ms":66.70269999449374,"stage":"tts_first_audio_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:42.499848+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"a29929325c2b3c80","latency_ms":12513.095100002829,"stage":"total_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:38:58.621398+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T10:38:58.628035+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","http_status":200,"stage":"ota"}
+{"timestamp":"2026-11-20T10:39:02.505651+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0","provider":"LOCAL"}
+{"timestamp":"2026-11-20T10:39:08.391381+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"a03a2774a91d0a3f","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:39:14.636543+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"a03a2774a91d0a3f","state":"PROCESSING"}
+{"timestamp":"2026-11-20T10:39:14.637190+00:00","level":"INFO","event":"stt.start","message":"STT started","turn_ref":"a03a2774a91d0a3f","stage":"stt"}
+{"timestamp":"2026-11-20T10:39:15.130416+00:00","level":"INFO","event":"stt.success","message":"STT completed","turn_ref":"a03a2774a91d0a3f","latency_ms":6738.056000001961,"stage":"stt"}
+{"timestamp":"2026-11-20T10:39:15.731060+00:00","level":"INFO","event":"llm.first_token","message":"LLM first token received","turn_ref":"a03a2774a91d0a3f","latency_ms":600.2154000016162,"stage":"llm"}
+{"timestamp":"2026-11-20T10:39:19.946795+00:00","level":"WARNING","event":"history.assistant_persist_failed","message":"Assistant message persistence failed; continuing voice pipeline","stage":"history","http_status":400,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T10:39:20.078471+00:00","level":"INFO","event":"tts.first_audio","message":"TTS first audio received","turn_ref":"a03a2774a91d0a3f","latency_ms":125.15320000238717,"audio_bytes":117,"stage":"tts"}
+{"timestamp":"2026-11-20T10:39:20.078909+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"a03a2774a91d0a3f","state":"SPEAKING"}
+{"timestamp":"2026-11-20T10:39:20.241297+00:00","level":"INFO","event":"playback.ack","message":"Playback ready acknowledgement accepted","session_ref":"03290d98db764051","ack_state":"ready"}
+{"timestamp":"2026-11-20T10:39:20.241875+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":1}
+{"timestamp":"2026-11-20T10:39:21.873764+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":25}
+{"timestamp":"2026-11-20T10:39:23.591799+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":50}
+{"timestamp":"2026-11-20T10:39:25.276388+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":75}
+{"timestamp":"2026-11-20T10:39:26.920539+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":100}
+{"timestamp":"2026-11-20T10:39:28.628187+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":125}
+{"timestamp":"2026-11-20T10:39:30.311157+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":150}
+{"timestamp":"2026-11-20T10:39:31.049037+00:00","level":"INFO","event":"playback.ready","message":"Playback stream finished sending","audio_frames":161,"session_ref":"03290d98db764051","ack_state":"ready"}
+{"timestamp":"2026-11-20T10:39:31.892150+00:00","level":"INFO","event":"playback.ack","message":"Playback complete acknowledgement accepted","audio_frames":161,"session_ref":"03290d98db764051","ack_state":"complete"}
+{"timestamp":"2026-11-20T10:39:31.899881+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"a03a2774a91d0a3f","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:39:31.900180+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"a03a2774a91d0a3f","latency_ms":6738.056000001961,"stage":"stt_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:39:31.900364+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"a03a2774a91d0a3f","latency_ms":600.2154000016162,"stage":"llm_first_token_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:39:31.900539+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"a03a2774a91d0a3f","latency_ms":125.15320000238717,"stage":"tts_first_audio_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:39:31.900706+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"a03a2774a91d0a3f","latency_ms":23508.842499999446,"stage":"total_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:39:36.704610+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"8ef654fa6cb22e08","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:39:42.990312+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"8ef654fa6cb22e08","state":"PROCESSING"}
+{"timestamp":"2026-11-20T10:39:42.992691+00:00","level":"INFO","event":"stt.start","message":"STT started","turn_ref":"8ef654fa6cb22e08","stage":"stt"}
+{"timestamp":"2026-11-20T10:39:43.498265+00:00","level":"INFO","event":"stt.success","message":"STT completed","turn_ref":"8ef654fa6cb22e08","latency_ms":6792.573799997626,"stage":"stt"}
+{"timestamp":"2026-11-20T10:39:45.331136+00:00","level":"INFO","event":"llm.first_token","message":"LLM first token received","turn_ref":"8ef654fa6cb22e08","latency_ms":1832.4325000066892,"stage":"llm"}
+{"timestamp":"2026-11-20T10:39:53.853576+00:00","level":"WARNING","event":"history.assistant_persist_failed","message":"Assistant message persistence failed; continuing voice pipeline","stage":"history","http_status":400,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T10:39:54.116916+00:00","level":"INFO","event":"tts.first_audio","message":"TTS first audio received","turn_ref":"8ef654fa6cb22e08","latency_ms":255.95099999918602,"audio_bytes":127,"stage":"tts"}
+{"timestamp":"2026-11-20T10:39:54.117359+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"8ef654fa6cb22e08","state":"SPEAKING"}
+{"timestamp":"2026-11-20T10:39:54.288314+00:00","level":"INFO","event":"playback.ack","message":"Playback ready acknowledgement accepted","session_ref":"03290d98db764051","ack_state":"ready"}
+{"timestamp":"2026-11-20T10:39:54.288795+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":1}
+{"timestamp":"2026-11-20T10:39:55.916121+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":25}
+{"timestamp":"2026-11-20T10:39:57.584352+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":50}
+{"timestamp":"2026-11-20T10:39:59.251935+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":75}
+{"timestamp":"2026-11-20T10:40:00.887703+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":100}
+{"timestamp":"2026-11-20T10:40:02.554031+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":125}
+{"timestamp":"2026-11-20T10:40:04.237187+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":150}
+{"timestamp":"2026-11-20T10:40:05.878304+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":175}
+{"timestamp":"2026-11-20T10:40:07.509758+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":200}
+{"timestamp":"2026-11-20T10:40:09.159452+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":225}
+{"timestamp":"2026-11-20T10:40:10.863582+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":250}
+{"timestamp":"2026-11-20T10:40:12.542285+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":275}
+{"timestamp":"2026-11-20T10:40:14.213160+00:00","level":"INFO","event":"opus.frame.sent","message":"Opus playback frame sent","session_ref":"03290d98db764051","frame_count":300}
+{"timestamp":"2026-11-20T10:40:14.213562+00:00","level":"INFO","event":"playback.ready","message":"Playback stream finished sending","audio_frames":300,"session_ref":"03290d98db764051","ack_state":"ready"}
+{"timestamp":"2026-11-20T10:40:15.204587+00:00","level":"INFO","event":"playback.ack","message":"Playback complete acknowledgement accepted","audio_frames":300,"session_ref":"03290d98db764051","ack_state":"complete"}
+{"timestamp":"2026-11-20T10:40:15.212416+00:00","level":"INFO","event":"orchestrator.state","message":"Session state changed","turn_ref":"8ef654fa6cb22e08","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:40:15.212752+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"8ef654fa6cb22e08","latency_ms":6792.573799997626,"stage":"stt_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:40:15.212952+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"8ef654fa6cb22e08","latency_ms":1832.4325000066892,"stage":"llm_first_token_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:40:15.213132+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"8ef654fa6cb22e08","latency_ms":255.95099999918602,"stage":"tts_first_audio_ms","state":"LISTENING"}
+{"timestamp":"2026-11-20T10:40:15.213310+00:00","level":"INFO","event":"orchestrator.latency","message":"Pipeline latency","turn_ref":"8ef654fa6cb22e08","latency_ms":38508.177600000636,"stage":"total_ms","state":"LISTENING"}
