@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Pool, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import { MYSQL_POOL } from '../../database/database.constants';
+import { createHash } from 'node:crypto';
 
 export interface CalendarEventRow extends RowDataPacket {
   id: string; user_id: string; title: string; description: string | null; starts_at: Date; ends_at: Date;
@@ -19,7 +20,7 @@ export class CalendarRepository {
   async overlaps(userId: string, startsAt: Date, endsAt: Date, excludeId?: string): Promise<boolean> {
     const values = excludeId ? [userId, endsAt, startsAt, excludeId] : [userId, endsAt, startsAt];
     const [rows] = await this.pool.execute<RowDataPacket[]>(
-      `SELECT id FROM personal_events WHERE user_id = ? AND start_at < ? AND end_at > ?${excludeId ? ' AND id <> ?' : ''} LIMIT 1`, values as never[],
+      `SELECT id FROM personal_events WHERE user_id = ? AND deleted_at IS NULL AND start_at < ? AND end_at > ?${excludeId ? ' AND id <> ?' : ''} LIMIT 1`, values as never[],
     );
     return rows.length > 0;
   }
@@ -41,7 +42,7 @@ export class CalendarRepository {
     const [result] = await this.pool.execute<ResultSetHeader>(
       `INSERT INTO personal_events (user_id,title,description,start_at,end_at,timezone,recurrence_rule,created_at,updated_at)
        VALUES (?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`,
-      [userId, data.title, data.description ?? null, data.starts_at, data.ends_at, data.timezone ?? 'UTC', data.recurrence_rule ?? null] as never[],
+      [userId, data.title, data.description ?? null, data.starts_at, data.ends_at, data.timezone ?? 'UTC', data.recurrence_rule == null ? null : JSON.stringify(data.recurrence_rule)] as never[],
     );
     return String(result.insertId);
   }
@@ -49,7 +50,7 @@ export class CalendarRepository {
   async updateEvent(userId: string, id: string, data: Record<string, unknown>): Promise<void> {
     await this.pool.execute(
       `UPDATE personal_events SET title=?,description=?,start_at=?,end_at=?,timezone=?,recurrence_rule=?,updated_at=CURRENT_TIMESTAMP WHERE user_id=? AND id=? AND deleted_at IS NULL`,
-      [data.title, data.description ?? null, data.starts_at, data.ends_at, data.timezone ?? 'UTC', data.recurrence_rule ?? null, userId, id] as never[],
+      [data.title, data.description ?? null, data.starts_at, data.ends_at, data.timezone ?? 'UTC', data.recurrence_rule == null ? null : JSON.stringify(data.recurrence_rule), userId, id] as never[],
     );
   }
 
@@ -70,14 +71,16 @@ export class CalendarRepository {
     try {
       await connection.beginTransaction();
       const [result] = await connection.execute<ResultSetHeader>(
-        `INSERT INTO personal_reminders (user_id,event_id,title,remind_at,timezone,response_behavior,repeat_policy,status,created_at,updated_at)
-         VALUES (?,?,?, ?,?,'notify_only','none','scheduled',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`,
-        [userId, data.calendar_event_id ?? null, data.message, data.remind_at, data.timezone ?? 'UTC'] as never[],
+        `INSERT INTO personal_reminders (user_id,event_id,message,remind_at,timezone,channel,status,created_at,updated_at)
+         VALUES (?,?,?,?,?,?,'scheduled',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`,
+        [userId, data.calendar_event_id ?? null, data.message, data.remind_at, data.timezone ?? 'UTC', data.device_id ? 'VOICE' : 'WEB'] as never[],
       );
       await connection.execute(
-        `INSERT INTO reminder_deliveries (reminder_id,device_id,delivery_channel,status,attempt_count,idempotency_key,created_at)
+        `INSERT INTO reminder_deliveries (reminder_id,device_id,channel,status,attempt_count,idempotency_key,created_at)
          VALUES (?,?,?,'pending',0,?,CURRENT_TIMESTAMP)`,
-        [result.insertId, data.device_id ?? null, data.device_id ? 'VOICE' : 'WEB', deliveryKey] as never[],
+        // Keep the existing equivalence key, store its digest without truncating
+        // long/Unicode messages to fit an indexed SQL string.
+        [result.insertId, data.device_id ?? null, data.device_id ? 'VOICE' : 'WEB', createHash('sha256').update(deliveryKey).digest('hex')] as never[],
       );
       await connection.commit();
       return String(result.insertId);
@@ -85,12 +88,12 @@ export class CalendarRepository {
   }
 
   async listReminders(userId: string, status?: string): Promise<ReminderRow[]> {
-    const [rows] = await this.pool.execute<ReminderRow[]>(`SELECT r.id,r.user_id,r.event_id AS calendar_event_id,d.device_id,r.title AS message,r.remind_at,r.timezone,d.status,d.attempt_count,d.next_retry_at AS next_attempt_at,d.acknowledged_at,d.last_error,r.created_at,r.updated_at FROM personal_reminders r JOIN reminder_deliveries d ON d.reminder_id=r.id WHERE r.user_id = ?${status ? ' AND d.status = ?' : ''} ORDER BY r.remind_at ASC, r.id ASC`, status ? [userId, status] : [userId]);
+    const [rows] = await this.pool.execute<ReminderRow[]>(`SELECT r.id,r.user_id,r.event_id AS calendar_event_id,d.device_id,r.message,r.remind_at,r.timezone,d.status,d.attempt_count,d.next_retry_at AS next_attempt_at,d.acknowledged_at,d.error_message AS last_error,r.created_at,r.updated_at FROM personal_reminders r JOIN reminder_deliveries d ON d.reminder_id=r.id WHERE r.user_id = ?${status ? ' AND d.status = ?' : ''} ORDER BY r.remind_at ASC, r.id ASC`, status ? [userId, status] : [userId]);
     return rows;
   }
 
   async findReminder(id: string): Promise<ReminderRow | null> {
-    const [rows] = await this.pool.execute<ReminderRow[]>('SELECT r.id,r.user_id,r.event_id AS calendar_event_id,d.device_id,r.title AS message,r.remind_at,r.timezone,d.status,d.attempt_count,d.next_retry_at AS next_attempt_at,d.acknowledged_at,d.last_error,r.created_at,r.updated_at FROM personal_reminders r JOIN reminder_deliveries d ON d.reminder_id=r.id WHERE r.id = ? LIMIT 1', [id]);
+    const [rows] = await this.pool.execute<ReminderRow[]>('SELECT r.id,r.user_id,r.event_id AS calendar_event_id,d.device_id,r.message,r.remind_at,r.timezone,d.status,d.attempt_count,d.next_retry_at AS next_attempt_at,d.acknowledged_at,d.error_message AS last_error,r.created_at,r.updated_at FROM personal_reminders r JOIN reminder_deliveries d ON d.reminder_id=r.id WHERE r.id = ? LIMIT 1', [id]);
     return rows[0] ?? null;
   }
 
@@ -102,7 +105,7 @@ export class CalendarRepository {
       // worker waits for this transaction, then its locking read observes the
       // committed `queued` state and cannot claim the same delivery.
       const [rows] = await connection.execute<ReminderRow[]>(
-        `SELECT r.id,r.user_id,r.event_id AS calendar_event_id,d.device_id,r.title AS message,r.remind_at,r.timezone,d.status,d.attempt_count,d.next_retry_at AS next_attempt_at,d.acknowledged_at,d.last_error,r.created_at,r.updated_at FROM personal_reminders r JOIN reminder_deliveries d ON d.reminder_id=r.id WHERE d.status IN ('pending','failed') AND r.remind_at <= CURRENT_TIMESTAMP AND (d.next_retry_at IS NULL OR d.next_retry_at <= CURRENT_TIMESTAMP)
+        `SELECT r.id,r.user_id,r.event_id AS calendar_event_id,d.device_id,r.message,r.remind_at,r.timezone,d.status,d.attempt_count,d.next_retry_at AS next_attempt_at,d.acknowledged_at,d.error_message AS last_error,r.created_at,r.updated_at FROM personal_reminders r JOIN reminder_deliveries d ON d.reminder_id=r.id WHERE d.status IN ('pending','failed') AND r.remind_at <= CURRENT_TIMESTAMP AND (d.next_retry_at IS NULL OR d.next_retry_at <= CURRENT_TIMESTAMP)
          ORDER BY r.remind_at ASC, r.id ASC LIMIT ? FOR UPDATE`, [limit],
       );
       for (const row of rows) {
@@ -123,9 +126,9 @@ export class CalendarRepository {
 
   async acknowledge(id: string, result: 'delivered' | 'failed', failureCode?: string): Promise<void> {
     if (result === 'delivered') {
-      await this.pool.execute(`UPDATE reminder_deliveries SET status='acknowledged',acknowledged_at=CURRENT_TIMESTAMP,last_error=NULL WHERE reminder_id=? AND status IN ('queued','sent')`, [id]);
+      await this.pool.execute(`UPDATE reminder_deliveries SET status='acknowledged',acknowledged_at=CURRENT_TIMESTAMP,error_message=NULL WHERE reminder_id=? AND status IN ('queued','sent')`, [id]);
     } else {
-      await this.pool.execute(`UPDATE reminder_deliveries SET status='failed',last_error=?,next_retry_at=DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 5 MINUTE) WHERE reminder_id=? AND status IN ('queued','sent')`, [failureCode ?? 'DELIVERY_FAILED', id]);
+      await this.pool.execute(`UPDATE reminder_deliveries SET status='failed',error_message=?,next_retry_at=DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 5 MINUTE) WHERE reminder_id=? AND status IN ('queued','sent')`, [failureCode ?? 'DELIVERY_FAILED', id]);
     }
   }
 }

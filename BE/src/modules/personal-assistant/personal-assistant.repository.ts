@@ -248,7 +248,7 @@ export class PersonalAssistantRepository {
        FROM personal_tasks t
        LEFT JOIN personal_plans p ON p.id = t.plan_id AND p.deleted_at IS NULL
        LEFT JOIN personal_tasks pt ON pt.id = t.parent_task_id AND pt.deleted_at IS NULL
-       LEFT JOIN personal_events ev ON ev.id = t.event_id
+       LEFT JOIN personal_events ev ON ev.id = t.event_id AND ev.deleted_at IS NULL
        WHERE t.id = ?
        LIMIT 1${lockClause}`,
       [taskId]
@@ -272,7 +272,7 @@ export class PersonalAssistantRepository {
        FROM personal_tasks t
        LEFT JOIN personal_plans p ON p.id = t.plan_id AND p.deleted_at IS NULL
        LEFT JOIN personal_tasks pt ON pt.id = t.parent_task_id AND pt.deleted_at IS NULL
-       LEFT JOIN personal_events ev ON ev.id = t.event_id
+       LEFT JOIN personal_events ev ON ev.id = t.event_id AND ev.deleted_at IS NULL
        WHERE t.parent_task_id = ? AND t.user_id = ? AND t.deleted_at IS NULL
        ORDER BY
          CASE t.status WHEN 'cancelled' THEN 3 WHEN 'completed' THEN 2 ELSE 1 END ASC,
@@ -361,7 +361,7 @@ export class PersonalAssistantRepository {
        FROM personal_tasks t
        LEFT JOIN personal_plans p ON p.id = t.plan_id AND p.deleted_at IS NULL
        LEFT JOIN personal_tasks pt ON pt.id = t.parent_task_id AND pt.deleted_at IS NULL
-       LEFT JOIN personal_events ev ON ev.id = t.event_id
+       LEFT JOIN personal_events ev ON ev.id = t.event_id AND ev.deleted_at IS NULL
        WHERE ${whereSql}
        ORDER BY ${orderBySql}
        LIMIT ? OFFSET ?`,
@@ -413,7 +413,7 @@ export class PersonalAssistantRepository {
       `SELECT t.*, p.title AS plan_title, ev.title AS event_title
        FROM personal_tasks t
        LEFT JOIN personal_plans p ON p.id = t.plan_id AND p.deleted_at IS NULL
-       LEFT JOIN personal_events ev ON ev.id = t.event_id
+       LEFT JOIN personal_events ev ON ev.id = t.event_id AND ev.deleted_at IS NULL
        WHERE ${where}
        ORDER BY t.due_at IS NULL, t.due_at, t.id DESC LIMIT ? OFFSET ?`,
       [userId, limit, (page - 1) * limit]
@@ -469,7 +469,7 @@ export class PersonalAssistantRepository {
       `SELECT t.*, p.title AS plan_title, ev.title AS event_title
        FROM personal_tasks t
        LEFT JOIN personal_plans p ON p.id = t.plan_id AND p.deleted_at IS NULL
-       LEFT JOIN personal_events ev ON ev.id = t.event_id
+       LEFT JOIN personal_events ev ON ev.id = t.event_id AND ev.deleted_at IS NULL
        WHERE t.user_id = ? AND t.deleted_at IS NULL
          AND t.status IN ('pending', 'in_progress', 'partial') AND t.due_at IS NOT NULL
          AND t.due_at < DATE_ADD(?, INTERVAL 3 DAY)
@@ -482,7 +482,11 @@ export class PersonalAssistantRepository {
 
   async sweepTaskAlerts(now: Date): Promise<void> {
     const [users] = await this.pool.execute<RowDataPacket[]>(
-      `SELECT DISTINCT user_id FROM personal_tasks WHERE deleted_at IS NULL AND due_at IS NOT NULL`
+      `SELECT DISTINCT user_id FROM personal_tasks WHERE deleted_at IS NULL AND due_at IS NOT NULL
+       UNION
+       SELECT DISTINCT user_id FROM personal_reminders
+       WHERE status = 'pending'
+         AND (message LIKE '%[PA-22:%' OR message LIKE '%[PA-15:%')`
     );
     for (const user of users) {
       const userId = String(user.user_id);
@@ -783,7 +787,7 @@ export class PersonalAssistantRepository {
        FROM personal_tasks t
        LEFT JOIN personal_plans p ON p.id = t.plan_id AND p.deleted_at IS NULL
        LEFT JOIN personal_tasks pt ON pt.id = t.parent_task_id AND pt.deleted_at IS NULL
-       LEFT JOIN personal_events ev ON ev.id = t.event_id
+       LEFT JOIN personal_events ev ON ev.id = t.event_id AND ev.deleted_at IS NULL
        WHERE t.user_id = ?
          AND t.deleted_at IS NULL
          AND t.status != 'cancelled'
@@ -1010,6 +1014,7 @@ export class PersonalAssistantRepository {
       `SELECT id
        FROM personal_events
        WHERE user_id = ?
+         AND deleted_at IS NULL
          AND status = 'scheduled'
          AND start_at < ?
          AND COALESCE(end_at, DATE_ADD(start_at, INTERVAL 1 HOUR)) > ?${excludeSql}
@@ -1030,7 +1035,7 @@ export class PersonalAssistantRepository {
       `SELECT e.*, p.title AS plan_title
        FROM personal_events e
        LEFT JOIN personal_plans p ON p.id = e.plan_id AND p.deleted_at IS NULL
-       WHERE e.id = ?
+       WHERE e.id = ? AND e.deleted_at IS NULL
        LIMIT 1${lockClause}`,
       [eventId]
     );
@@ -1062,7 +1067,7 @@ export class PersonalAssistantRepository {
       to?: Date | null;
     }
   ): Promise<{ items: PersonalEventRecord[]; total: number }> {
-    const where: string[] = ['e.user_id = ?'];
+    const where: string[] = ['e.user_id = ?', 'e.deleted_at IS NULL'];
     const params: (string | number | Date)[] = [userId];
 
     if (filters.search?.trim()) {
@@ -1263,7 +1268,7 @@ export class PersonalAssistantRepository {
       `SELECT r.*, t.title AS task_title, e.title AS event_title
        FROM personal_reminders r
        LEFT JOIN personal_tasks t ON t.id = r.task_id AND t.deleted_at IS NULL
-       LEFT JOIN personal_events e ON e.id = r.event_id
+       LEFT JOIN personal_events e ON e.id = r.event_id AND e.deleted_at IS NULL
        WHERE r.id = ?
        LIMIT 1${lockClause}`,
       [reminderId]
@@ -1317,7 +1322,7 @@ export class PersonalAssistantRepository {
       `SELECT r.*, t.title AS task_title, e.title AS event_title
        FROM personal_reminders r
        LEFT JOIN personal_tasks t ON t.id = r.task_id AND t.deleted_at IS NULL
-       LEFT JOIN personal_events e ON e.id = r.event_id
+       LEFT JOIN personal_events e ON e.id = r.event_id AND e.deleted_at IS NULL
        WHERE ${whereSql}
        ORDER BY
          CASE r.status WHEN 'pending' THEN 1 WHEN 'delivered' THEN 2 WHEN 'acknowledged' THEN 3 ELSE 4 END ASC,

@@ -43,7 +43,8 @@ class LocalChatSessions:
                 raise LLMError(LLMErrorCode.CONTEXT_LIMIT)
             self._pending[key] = deepcopy(value)
 
-    async def claim(self, user_id: str, session_id: str) -> tuple[Message, ...]:
+    async def claim(self, user_id: str, session_id: str,
+                    restored: tuple[Message, ...] | None = None) -> tuple[Message, ...]:
         key = (user_id, session_id)
         async with self._lock:
             now = time.monotonic()
@@ -57,6 +58,13 @@ class LocalChatSessions:
                 _, history, busy = current
                 if busy:
                     raise LLMError(LLMErrorCode.SESSION_BUSY)
+            if restored is not None:
+                # Only authenticated Backend ingress supplies this snapshot.
+                # Replace, do not append: restart/retry must not duplicate turns.
+                history = restored
+                while history and (len(history) // 2 >= self.max_turns or
+                        sum(len(m.text) for m in history) > self.max_history_chars):
+                    history = history[2:]
             if len(history) // 2 >= self.max_turns:
                 raise LLMError(LLMErrorCode.CONTEXT_LIMIT)
             self._items[key] = (now + self.ttl_seconds, history, True)

@@ -5,11 +5,13 @@ import { AiServiceError } from './ai.errors';
 import { SecretCipherService } from '../../common/crypto/secret-cipher.service';
 import { AuthService } from '../auth/auth.service';
 import { randomUUID } from 'node:crypto';
+import { Pa08ChatRepository } from './pa08-chat.repository';
 
 @Injectable()
 export class AiService {
   constructor(private readonly repo: AiRepository, private readonly cipher: SecretCipherService,
-    private readonly config: ConfigService = new ConfigService(), private readonly auth?: AuthService) {}
+    private readonly config: ConfigService = new ConfigService(), private readonly auth?: AuthService,
+    private readonly chats?: Pa08ChatRepository) {}
   providers(){return this.repo.providers();}
   models(providerId:string){return this.repo.models(providerId);}
   adminModels(){return this.repo.allModels();}
@@ -25,23 +27,27 @@ export class AiService {
   async addSystemKey(providerId:string,label:string,secret:string){const p=await this.repo.providerEnabled(providerId);if(!p)throw new AiServiceError('PROVIDER_NOT_FOUND','Provider was not found');const id=await this.repo.createSystemCredential(providerId,label.trim(),this.cipher.encrypt(secret),secret.slice(-4));return {id,label:label.trim(),provider_id:providerId,secret_hint:`****${secret.slice(-4)}`};}
   async revokeSystemKey(id:string){if(!await this.repo.revokeSystemCredential(id))throw new AiServiceError('API_KEY_NOT_FOUND','System API key was not found');return {success:true};}
   async revokeKey(userId:string,id:string){if(!await this.repo.revokeCredential(id,userId))throw new AiServiceError('API_KEY_NOT_FOUND','API key was not found');return {success:true};}
-  async chat(userId:string,content:string,providerId?:string,conversationId?:string) {
+  async chat(userId:string,content:string,providerId?:string,conversationId?:string,requestId?:string) {
     if(!this.auth)throw new AiServiceError('AI_PIPELINE_UNAVAILABLE','Authentication service is unavailable');
     const serviceToken=this.config.get<string>('toolExecution.serviceToken');
     const origin=this.config.get<string>('AI_SERVER_LOCAL_URL')||'http://127.0.0.1:8002';
     if(!serviceToken||serviceToken.length<43)throw new AiServiceError('AI_PIPELINE_UNAVAILABLE','AI tool service authentication is not configured');
-    const sessionId='web_'+randomUUID().replaceAll('-','');
-    const delegation=await this.auth.issueToolDelegation(userId,'schedule.query',sessionId);
+    if(!this.chats)throw new AiServiceError('AI_PIPELINE_UNAVAILABLE','Conversation persistence is unavailable');
+    const auth=this.auth;
+    return this.chats.turn(userId,requestId ?? randomUUID(),content,conversationId,async ({sessionId,history})=>{
+    const delegation=await auth.issueToolDelegation(userId,'schedule.query',sessionId);
     try{
       const result=await fetch(new URL('/internal/pa08-chat',origin),{method:'POST',redirect:'error',
         headers:{'X-AI-Tool-Service':serviceToken,'Content-Type':'application/json'},
         body:JSON.stringify({user_id:userId,session_id:sessionId,content,timezone:'Asia/Bangkok',
-          delegation:delegation.delegation_token,stream:false,personalize:false}),signal:AbortSignal.timeout(120000)});
+          delegation:delegation.delegation_token,stream:false,personalize:false,
+          ...(history === undefined ? {} : {history})}),signal:AbortSignal.timeout(120000)});
       if(!result.ok){await result.body?.cancel();throw new HttpException('AI_REQUEST_FAILED',[400,401,403,404,409,422,429].includes(result.status)?result.status:503)}
       const data=await result.json() as {content?:unknown;tool?:unknown;grounded?:unknown};
       if(typeof data.content!=='string'||data.content.length>8000)throw new Error();
-      return {content:data.content,tool:data.tool??null,grounded:data.grounded===true};
+      return {content:data.content,tool:typeof data.tool==='string'?data.tool:null,grounded:data.grounded===true};
     }catch(error){if(error instanceof HttpException)throw error;throw new AiServiceError('AI_PIPELINE_UNAVAILABLE','Local AI Server could not complete the request')}
+    });
   }
   conversations(userId:string,page:number,limit:number){return this.repo.conversations(userId,page,limit);}
   quotas(userId:string|null){return this.repo.quotas(userId);}

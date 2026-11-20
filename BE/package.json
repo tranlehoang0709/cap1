@@ -15,7 +15,8 @@
     "lint": "tsc --noEmit",
     "test": "jest --runInBand",
     "test:e2e": "jest --config test/jest-e2e.json --runInBand",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "migration:pa": "node scripts/migrate-pa-compat.cjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.5",

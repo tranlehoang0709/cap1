@@ -365,9 +365,8 @@ export class AuthService {
     const canLogin = await this.users.canLogin(userId);
     if (!canLogin.allowed) throw new UnauthorizedException('Account cannot use tool delegation');
     const ttl = 60;
-    const payload: ToolDelegationPayload = {
+    const payload: Omit<ToolDelegationPayload, 'aud'> = {
       sub: userId, typ: 'tool_delegation', scope, sid: sessionId,
-      aud: 'aiva-backend-tool-execution',
     };
     return {
       delegation_token: await this.jwt.signAsync(payload, {

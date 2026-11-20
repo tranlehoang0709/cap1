@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { pendingChatTurn, type PendingChatTurn } from '@/lib/chat-turn';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowUpRight, Plus, Send, ShieldCheck, Sparkles } from 'lucide-react';
@@ -386,6 +387,8 @@ export function Chat() {
   const [notice, setNotice] = useState('');
   const [conversation, setConversation] = useState('');
   const [conversationStatus, setConversationStatus] = useState<'active' | 'ended' | ''>('');
+  const sending = useRef(false);
+  const pendingTurn = useRef<PendingChatTurn | null>(null);
 
   let savedConversations: Row[] = [];
   try {
@@ -449,8 +452,11 @@ export function Chat() {
 
   async function send(e?: React.FormEvent) {
     e?.preventDefault();
-    if (busy || ready.loading || ready.error || !textValue.trim() || conversationStatus === 'ended') return;
+    if (sending.current || busy || ready.loading || ready.error || !textValue.trim() || conversationStatus === 'ended') return;
     const content = textValue.trim();
+    sending.current = true;
+    const turn = pendingChatTurn(pendingTurn.current, content, conversation);
+    pendingTurn.current = turn;
     setBusy(true);
     setError('');
     setNotice('');
@@ -463,13 +469,15 @@ export function Chat() {
     });
     setText('');
     try {
-      const messageContent = await memoryAwareChatContent(
+      const messageContent = turn.prepared ?? await memoryAwareChatContent(
         content, includeMemories, memorySearch,
         (query) => api('personalMemories', { query }),
       );
-      const payload: Record<string, string> = { content: messageContent };
+      turn.prepared = messageContent;
+      const payload: Record<string, string> = { content: messageContent, request_id: turn.id };
       if (conversation) payload.conversation_id = conversation;
       const r = chatReply.parse(await api('chat', { body: payload }));
+      pendingTurn.current = null;
       setMessages((prev) => [...prev, { role: 'assistant', content: r.content }]);
       if (r.conversation_id) {
         setConversation(r.conversation_id);
@@ -487,6 +495,7 @@ export function Chat() {
       setText((prev) => prev || content);
       setError((err as Error).message);
     } finally {
+      sending.current = false;
       setBusy(false);
     }
   }
@@ -514,6 +523,7 @@ export function Chat() {
               onChange={(e) => {
                 const nextId = e.target.value;
                 if (!nextId) {
+                  pendingTurn.current = null;
                   setMessages([]);
                   setConversation('');
                   setConversationStatus('');
@@ -546,6 +556,7 @@ export function Chat() {
             variant="ghost"
             disabled={busy}
             onClick={() => {
+              pendingTurn.current = null;
               setMessages([]);
               setConversation('');
               setConversationStatus('');

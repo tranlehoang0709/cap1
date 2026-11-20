@@ -36,6 +36,7 @@ export async function POST(req: Request) {
                 body = {
                     content: z.string().trim().min(1).max(16000).parse(body?.content),
                     ...(conversationId ? { conversation_id: conversationId } : {}),
+                    ...(body?.request_id === undefined ? {} : { request_id: z.string().regex(/^[A-Za-z0-9_-]{16,128}$/).parse(body.request_id) }),
                 };
             }
             catch (e) {

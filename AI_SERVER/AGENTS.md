@@ -1,5 +1,23 @@
 # Bản đồ luồng AI_SERVER
 
+## PA08 web context 2026 11 20
+
+| Từ | Qua | Ghi chú |
+|---|---|---|
+| Backend conversation | Stable session ID | Owner checked |
+| PA08 authenticated ingress | Optional history | Bounded dialogue |
+| History snapshot | Understanding and LLM | No system roles |
+| Cold or expired cache | Backend history | Privacy opt in |
+
+`/internal/pa08-chat` accepts an optional, Backend-authenticated history snapshot
+of at most 20 alternating user/assistant messages and 16000 characters. Ordinary
+clients cannot restore history through `/local/chat`. Backend persists the
+conversation/session mapping and serializes/idempotently records web turns.
+Snapshot replacement avoids duplicate context after a lost response or restart.
+Without save_history consent only existing RAM context is available; cold-cache
+recovery cannot reconstruct private dialogue. Tests use real HTTP/session code
+with a recording LLM, not a live model. No live AI or device PASS is claimed.
+
 ## D2-S2-15 integrated Gemini (2026-11-04)
 
 | Từ | Qua | Ghi chú |

@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { createConnection, Connection } from 'mysql2/promise';
-import { randomBytes } from 'node:crypto';
 import { AddressInfo } from 'node:net';
 import { APP_GUARD, Reflector } from '@nestjs/core';
 import { ApiExceptionFilter } from '../src/common/filters/api-exception.filter';
@@ -27,7 +26,9 @@ const {
   migratePa10Subtasks,
 } = require('../src/database/migrations/20261115_pa10_subtasks.cjs');
 
-describe('Personal Assistant real-MySQL CRUD, task priority, progress and ownership', () => {
+const mysqlSuite = process.env.PA_CRUD_TEST_DATABASE ? describe : describe.skip;
+
+mysqlSuite('Personal Assistant real-MySQL CRUD, task priority, progress and ownership', () => {
   let conn: Connection;
   let dbName: string;
   let app: INestApplication;
@@ -36,22 +37,29 @@ describe('Personal Assistant real-MySQL CRUD, task priority, progress and owners
   let currentUserRole: 'USER' | 'ADMIN' = 'USER';
 
   beforeAll(async () => {
-    require('dotenv').config({ path: require('node:path').resolve(__dirname, '../.env') });
+    const database = process.env.PA_CRUD_TEST_DATABASE;
+    if (!database || !/^aiva_pa_test_[a-z0-9_]+$/.test(database)) {
+      throw new Error('PA_CRUD_TEST_DATABASE must identify a dedicated empty test database');
+    }
+    if (!process.env.PA_TEST_HOST || !process.env.PA_TEST_USER) {
+      throw new Error('Explicit PA_TEST_HOST and PA_TEST_USER are required');
+    }
     conn = await createConnection({
-      host: process.env.DB_HOST || '127.0.0.1',
-      port: Number(process.env.DB_PORT || 3306),
-      user: process.env.DB_USERNAME || 'root',
-      password: process.env.DB_PASSWORD || '',
+      host: process.env.PA_TEST_HOST,
+      port: Number(process.env.PA_TEST_PORT || 3306),
+      user: process.env.PA_TEST_USER,
+      password: process.env.PA_TEST_PASSWORD || '',
+      database,
       supportBigNumbers: true,
       bigNumberStrings: true,
       timezone: 'Z',
     });
 
-    dbName = `aiva_pa_test_${randomBytes(4).toString('hex')}`;
-    await conn.query(
-      `CREATE DATABASE \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    dbName = database;
+    const [existingTables] = await conn.query<any[]>(
+      'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()'
     );
-    await conn.changeUser({ database: dbName });
+    if (existingTables.length) throw new Error('Refusing to use a nonempty CRUD test database');
 
     // Create minimal prerequisite parent tables (users, devices, conversations)
     await conn.query(`
@@ -96,6 +104,9 @@ describe('Personal Assistant real-MySQL CRUD, task priority, progress and owners
     const pa10Statements = await migratePa10Subtasks(conn, { apply: true });
     expect(pa10Statements).toHaveLength(3);
     expect(await migratePa10Subtasks(conn, { apply: true })).toEqual([]);
+
+    await require('../src/database/migrations/20261120_pa_calendar_compat.cjs')
+      .migratePaCalendarCompat(conn, { apply: true });
 
     const [tables] = await conn.query<any[]>(
       `SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND (TABLE_NAME LIKE 'personal_%' OR TABLE_NAME = 'reminder_deliveries') ORDER BY TABLE_NAME`
@@ -148,7 +159,7 @@ describe('Personal Assistant real-MySQL CRUD, task priority, progress and owners
   afterAll(async () => {
     if (app) await app.close();
     if (conn) {
-      await conn.query(`DROP DATABASE IF EXISTS \`${dbName}\``);
+      // Preserve the dedicated test database for inspection; never DROP a database.
       await conn.end();
     }
   });

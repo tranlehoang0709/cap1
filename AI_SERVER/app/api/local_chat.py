@@ -8,17 +8,24 @@ import os
 from uuid import uuid4
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from typing import Literal
 
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.clients.local.llama import LocalLLMError
 from app.core.llm_config import LLMSettings
 from app.core.logging import get_logger, log_event
 from app.models.llm import (ConversationKey, LLMError, LLMErrorCode, LLMRequest,
-                            ProviderDelta, ProviderDone)
+                            ProviderDelta, ProviderDone, Message)
 from app.services.audio_context import AudioContext
+
+
+class HistoryMessage(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True, hide_input_in_errors=True)
+    role: Literal['user', 'assistant']
+    content: str = Field(min_length=1, max_length=16000, repr=False)
 
 
 class LocalChatRequest(BaseModel):
@@ -30,6 +37,17 @@ class LocalChatRequest(BaseModel):
     personalize: bool = False
     delegation: str | None = Field(default=None, min_length=1, max_length=4096, repr=False)
     timezone: str = Field(default='Asia/Bangkok', max_length=100)
+    history: list[HistoryMessage] | None = Field(default=None, max_length=20, repr=False)
+
+    @field_validator('history')
+    @classmethod
+    def bounded_dialogue(cls, history):
+        if history is not None and (len(history) % 2 or
+                sum(len(m.content) for m in history) > 16000 or
+                any(m.role != ('user' if i % 2 == 0 else 'assistant')
+                    for i, m in enumerate(history))):
+            raise ValueError('INVALID_DIALOGUE_HISTORY')
+        return history
 
 
 def _authorize(request: Request) -> None:
@@ -69,7 +87,7 @@ async def local_chat(request: Request):
     _authorize(request)
     try:
         raw = await request.body()
-        if len(raw) > 70000:
+        if len(raw) > (160000 if request.url.path == '/internal/pa08-chat' else 70000):
             raise HTTPException(413, "REQUEST_TOO_LARGE")
         data = LocalChatRequest.model_validate_json(raw)
     except HTTPException:
@@ -77,6 +95,23 @@ async def local_chat(request: Request):
     except Exception:
         raise HTTPException(400, "INVALID_REQUEST") from None
 
+    if data.history is not None and request.url.path != '/internal/pa08-chat':
+        raise HTTPException(400, 'BACKEND_HISTORY_ONLY')
+    sessions = request.app.state.local_chat_sessions
+    restored = None if data.history is None else tuple(Message(m.role, m.content) for m in data.history)
+    try:
+        history = await sessions.claim(data.user_id, data.session_id, restored)
+    except Exception as error:
+        status, detail = _error_status(error)
+        raise HTTPException(status, detail) from None
+    try:
+        return await _claimed_chat(request, data, history)
+    except BaseException:
+        await sessions.finish(data.user_id, data.session_id, data.content, None)
+        raise
+
+
+async def _claimed_chat(request: Request, data: LocalChatRequest, history):
     # Delegated PA-08 requests use the existing structured understanding and
     # workflow boundary. The delegation is opaque here and is only forwarded
     # to the Backend; the Backend remains authoritative for subject/ownership.
@@ -96,7 +131,7 @@ async def local_chat(request: Request):
         try:
             analysis = await understanding.analyze(data.content,
                 key=ConversationKey(data.user_id, data.session_id, 'pa08'),
-                timezone=data.timezone, context=context)
+                history=history, timezone=data.timezone, context=context)
             op = next((item for item in analysis.operations
                        if item.feature == 'PA-08' and item.action == 'query'), None)
             if op is None:
@@ -116,6 +151,8 @@ async def local_chat(request: Request):
                 items = (result.data or {}).get('items', [])
                 answer = ('Hôm nay bạn không có lịch nào.' if not items else
                           'Hôm nay bạn có ' + str(len(items)) + ' lịch trong hệ thống.')
+                await request.app.state.local_chat_sessions.finish(
+                    data.user_id, data.session_id, data.content, answer)
                 return JSONResponse({'content': answer, 'tool': 'schedule.query',
                     'tool_result': {'items': items}, 'grounded': True}, headers={'Cache-Control': 'no-store'})
         except HTTPException:
@@ -125,14 +162,10 @@ async def local_chat(request: Request):
 
     settings = request.app.state.local_llm_settings
     sessions = request.app.state.local_chat_sessions
-    claimed = False
     try:
-        history = await sessions.claim(data.user_id, data.session_id)
-        claimed = True
         model = await request.app.state.local_llm.discover_model()
     except Exception as error:
-        if claimed:
-            await sessions.finish(data.user_id, data.session_id, data.content, None)
+        await sessions.finish(data.user_id, data.session_id, data.content, None)
         status, detail = _error_status(error)
         raise HTTPException(status, detail) from None
     config = LLMSettings(_env_file=None, model=model,

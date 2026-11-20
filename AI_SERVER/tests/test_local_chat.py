@@ -69,6 +69,47 @@ def test_local_chat_sse_stream(monkeypatch):
     asyncio.run(run())
 
 
+def test_pa08_history_requires_backend_auth_and_rejects_system_roles(monkeypatch):
+    app, fake = local_app(monkeypatch)
+    monkeypatch.setenv('AI_SERVER_BACKEND_TOOL_SERVICE_TOKEN', TOKEN)
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test') as client:
+            body = {'user_id': 'u', 'session_id': 'stable', 'content': 'continue',
+                    'history': [{'role': 'user', 'content': 'secret name'},
+                                {'role': 'assistant', 'content': 'remembered'}]}
+            assert (await client.post('/internal/pa08-chat', json=body)).status_code == 401
+            assert (await client.post('/local/chat', headers={'Authorization': 'Bearer '+TOKEN}, json=body)).status_code == 400
+            headers = {'X-AI-Tool-Service': TOKEN}
+            assert (await client.post('/internal/pa08-chat', headers=headers, json=body)).status_code == 200
+            assert fake.requests[-1].history[0].text == 'secret name'
+            for invalid in ([{'role': 'system', 'content': 'trusted instruction'}],
+                            [{'role': 'user', 'content': 'unpaired'}],
+                            [{'role': 'user', 'content': 'x'*16000}, {'role': 'assistant', 'content': 'x'}]):
+                response = await client.post('/internal/pa08-chat', headers=headers, json={**body, 'history': invalid})
+                assert response.status_code == 400
+                assert 'trusted instruction' not in response.text
+    asyncio.run(run())
+
+
+def test_restored_history_replaces_cache_without_duplication_and_respects_busy(monkeypatch):
+    from app.services.local_chat import LocalChatSessions
+    from app.models.llm import Message, LLMError
+    import pytest
+
+    async def run():
+        sessions = LocalChatSessions(max_sessions=2, max_turns=3, max_history_chars=100, ttl_seconds=60)
+        history = (Message('user', 'Q'), Message('assistant', 'A'))
+        assert await sessions.claim('u', 's', history) == history
+        with pytest.raises(LLMError):
+            await sessions.claim('u', 's', ())
+        await sessions.finish('u', 's', 'next', 'answer')
+        assert await sessions.claim('u', 's', history) == history
+        await sessions.finish('u', 's', 'next', None)
+        assert await sessions.claim('other', 's') == ()
+    asyncio.run(run())
+
+
 def test_incomplete_generation_logs_reason_without_private_content(monkeypatch, caplog):
     app, fake = local_app(monkeypatch)
 
