@@ -28,4 +28,17 @@ describe('CalendarService', () => {
     repository.findEvent.mockResolvedValue({} as never);
     await expect(service.create(user, { device_id: '99', message: 'x', remind_at: '2030-01-01T10:00:00Z' })).rejects.toBeInstanceOf(NotFoundException);
   });
+
+  it('uses a stable delivery key within the MySQL limit and checks the legacy key', async () => {
+    const repository = repoMock();
+    repository.createReminder.mockResolvedValue('11');
+    const service = new ReminderService(repository);
+    const reminder = { message: 'x'.repeat(180), remind_at: '2099-01-01T10:00:00Z' };
+    await service.create(user, reminder);
+    await service.create(user, reminder);
+    const [, , key, legacyKey] = repository.createReminder.mock.calls[0];
+    expect(key).toMatch(/^calendar:v1:[a-f0-9]{64}$/);
+    expect(repository.createReminder.mock.calls[1][2]).toBe(key);
+    expect(legacyKey?.endsWith(reminder.message)).toBe(true);
+  });
 });

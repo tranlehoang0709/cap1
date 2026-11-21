@@ -156,9 +156,9 @@ function dateOnlyOrNull(value: unknown): string | null {
 }
 
 const TASK_SUBTASK_METRICS_SELECT = `
-  (SELECT COUNT(*) FROM personal_tasks st WHERE st.parent_task_id = t.id AND st.user_id = t.user_id AND st.deleted_at IS NULL) AS subtask_count,
-  (SELECT COUNT(*) FROM personal_tasks st WHERE st.parent_task_id = t.id AND st.user_id = t.user_id AND st.deleted_at IS NULL AND st.status <> 'cancelled') AS active_subtask_count,
-  (SELECT AVG(st.progress_percent) FROM personal_tasks st WHERE st.parent_task_id = t.id AND st.user_id = t.user_id AND st.deleted_at IS NULL AND st.status <> 'cancelled') AS aggregated_progress_percent
+  (SELECT COUNT(*) FROM personal_tasks st WHERE st.parent_task_id = t.id AND st.user_id = t.user_id) AS subtask_count,
+  (SELECT COUNT(*) FROM personal_tasks st WHERE st.parent_task_id = t.id AND st.user_id = t.user_id AND st.status <> 'cancelled') AS active_subtask_count,
+  (SELECT AVG(st.progress_percent) FROM personal_tasks st WHERE st.parent_task_id = t.id AND st.user_id = t.user_id AND st.status <> 'cancelled') AS aggregated_progress_percent
 `;
 
 function mapTaskRow(row: RowDataPacket): PersonalTaskRecord {
@@ -186,9 +186,9 @@ function mapTaskRow(row: RowDataPacket): PersonalTaskRecord {
         : String(row.parent_task_id),
     parent_task_title: row.parent_task_title ? String(row.parent_task_title) : null,
     session_number:
-      row.session_number === null || row.session_number === undefined
+      row.step_order === null || row.step_order === undefined
         ? null
-        : Number(row.session_number),
+        : Number(row.step_order),
     title: String(row.title),
     description: row.description === null || row.description === undefined ? null : String(row.description),
     status,
@@ -243,12 +243,11 @@ export class PersonalAssistantRepository {
     const executor = conn ?? this.pool;
     const lockClause = forUpdate ? ' FOR UPDATE' : '';
     const [rows] = await executor.execute<RowDataPacket[]>(
-      `SELECT t.*, p.title AS plan_title, pt.title AS parent_task_title, ev.title AS event_title,
+      `SELECT t.*, p.title AS plan_title, pt.title AS parent_task_title,
               ${TASK_SUBTASK_METRICS_SELECT}
        FROM personal_tasks t
-       LEFT JOIN personal_plans p ON p.id = t.plan_id AND p.deleted_at IS NULL
-       LEFT JOIN personal_tasks pt ON pt.id = t.parent_task_id AND pt.deleted_at IS NULL
-       LEFT JOIN personal_events ev ON ev.id = t.event_id
+       LEFT JOIN personal_plans p ON p.id = t.plan_id
+       LEFT JOIN personal_tasks pt ON pt.id = t.parent_task_id
        WHERE t.id = ?
        LIMIT 1${lockClause}`,
       [taskId]
@@ -256,7 +255,7 @@ export class PersonalAssistantRepository {
     if (!rows[0]) return null;
     return {
       ...mapTaskRow(rows[0]),
-      deleted_at: isoOrNull(rows[0].deleted_at),
+      deleted_at: null,
     };
   }
 
@@ -569,8 +568,8 @@ export class PersonalAssistantRepository {
     const [rows] = await executor.execute<RowDataPacket[]>(
       `SELECT t.*, p.title AS plan_title
        FROM personal_tasks t
-       LEFT JOIN personal_plans p ON p.id = t.plan_id AND p.deleted_at IS NULL
-       WHERE t.plan_id = ? AND t.session_number = ? AND t.deleted_at IS NULL
+       LEFT JOIN personal_plans p ON p.id = t.plan_id
+       WHERE t.plan_id = ? AND t.step_order = ?
        ORDER BY t.id ASC
        LIMIT 1${lockClause}`,
       [planId, sessionNumber]
@@ -597,11 +596,12 @@ export class PersonalAssistantRepository {
   ): Promise<PersonalTaskRecord> {
     const [res] = await conn.execute<ResultSetHeader>(
       `INSERT INTO personal_tasks
-        (user_id, plan_id, session_number, title, description, status, priority, progress_percent, due_at, completed_at, event_id, parent_task_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())`,
+        (user_id, plan_id, parent_task_id, step_order, title, description, status, priority, progress_percent, due_at, completed_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())`,
       [
         input.user_id,
         input.plan_id,
+        input.parent_task_id ?? null,
         input.session_number,
         input.title,
         input.description,
@@ -610,8 +610,6 @@ export class PersonalAssistantRepository {
         input.progress_percent,
         input.due_at,
         input.completed_at ?? null,
-        input.event_id ?? null,
-        input.parent_task_id ?? null,
       ]
     );
     const created = await this.findTaskByIdRaw(String(res.insertId), conn);
@@ -697,7 +695,7 @@ export class PersonalAssistantRepository {
            progress_percent = 100,
            completed_at = COALESCE(completed_at, UTC_TIMESTAMP()),
            updated_at = UTC_TIMESTAMP()
-       WHERE id = ? AND deleted_at IS NULL`,
+       WHERE id = ?`,
       [taskId]
     );
     const updated = await this.findTaskByIdRaw(taskId, conn);
@@ -737,7 +735,7 @@ export class PersonalAssistantRepository {
     await conn.execute(
       `UPDATE personal_tasks
        SET parent_task_id = NULL, updated_at = UTC_TIMESTAMP()
-       WHERE parent_task_id = ? AND user_id = ? AND deleted_at IS NULL`,
+       WHERE parent_task_id = ? AND user_id = ?`,
       [parentTaskId, userId]
     );
   }
@@ -763,13 +761,8 @@ export class PersonalAssistantRepository {
     return publicTask;
   }
 
-  async softDeleteTask(conn: PoolConnection, taskId: string): Promise<void> {
-    await conn.execute(
-      `UPDATE personal_tasks
-       SET deleted_at = UTC_TIMESTAMP(), updated_at = UTC_TIMESTAMP()
-       WHERE id = ? AND deleted_at IS NULL`,
-      [taskId]
-    );
+  async deleteTaskPermanently(conn: PoolConnection, userId: string, taskId: string): Promise<void> {
+    await conn.execute('DELETE FROM personal_tasks WHERE id = ? AND user_id = ?', [taskId, userId]);
   }
 
   async findTasksByTitleReference(
@@ -803,26 +796,17 @@ export class PersonalAssistantRepository {
   ): Promise<PersonalPlanRecord> {
     const executor = conn ?? this.pool;
     const planId = String(planRow.id);
-    const declaredSessions = Math.max(1, Number(planRow.total_sessions ?? 1));
-
     const [taskRows] = await executor.execute<RowDataPacket[]>(
       `SELECT *
        FROM personal_tasks
        WHERE plan_id = ? AND user_id = ?
-       ORDER BY COALESCE(session_number, 999999) ASC, id ASC`,
+       ORDER BY COALESCE(step_order, 999999) ASC, id ASC`,
       [planId, String(planRow.user_id)]
     );
-
-    const originalNumbers = new Set(taskRows
-      .map(row => Number(row.session_number))
-      .filter(number => Number.isInteger(number) && number >= 1 && number <= declaredSessions));
-    const activeRows = taskRows.filter(row => !row.deleted_at);
-    const sessionKey = (row: RowDataPacket) => row.session_number === null || row.session_number === undefined
-      ? `task:${row.id}` : `session:${row.session_number}`;
-    // Fully seeded plans use their current steps, including later additions/deletions.
-    // Older plans with virtual, not-yet-materialized sessions retain their declared count.
-    const totalSessions = originalNumbers.size === declaredSessions
-      ? new Set(activeRows.map(sessionKey)).size : declaredSessions;
+    const activeRows = taskRows;
+    const sessionKey = (row: RowDataPacket) => row.step_order === null || row.step_order === undefined
+      ? `task:${row.id}` : `session:${row.step_order}`;
+    const totalSessions = new Set(activeRows.map(sessionKey)).size;
     const sessions: PersonalPlanSessionRecord[] = activeRows.map((r, idx) => {
       const status = String(r.status ?? 'pending') as TaskStatus;
       const completed = status === 'completed';
@@ -830,8 +814,8 @@ export class PersonalAssistantRepository {
         id: String(r.id),
         task_id: String(r.id),
         session_number:
-          r.session_number !== null && r.session_number !== undefined
-            ? Number(r.session_number)
+          r.step_order !== null && r.step_order !== undefined
+            ? Number(r.step_order)
             : idx + 1,
         title: String(r.title),
         description: r.description === null || r.description === undefined ? null : String(r.description),
@@ -871,8 +855,8 @@ export class PersonalAssistantRepository {
       completed_sessions: completedSessions,
       remaining_sessions: remainingSessions,
       progress_percent: progressPercent,
-      start_date: dateOnlyOrNull(planRow.start_date),
-      end_date: dateOnlyOrNull(planRow.end_date),
+      start_date: dateOnlyOrNull(planRow.start_at),
+      end_date: dateOnlyOrNull(planRow.target_end_at),
       created_at: isoOrNull(planRow.created_at) ?? new Date(0).toISOString(),
       updated_at: isoOrNull(planRow.updated_at) ?? new Date(0).toISOString(),
       sessions,
@@ -883,7 +867,7 @@ export class PersonalAssistantRepository {
     userId: string,
     filters: { page: number; limit: number; status?: string }
   ): Promise<{ items: PersonalPlanRecord[]; total: number }> {
-    const where: string[] = ['user_id = ?', 'deleted_at IS NULL'];
+    const where: string[] = ['user_id = ?'];
     const params: (string | number)[] = [userId];
     if (filters.status?.trim()) {
       where.push('status = ?');
@@ -928,19 +912,23 @@ export class PersonalAssistantRepository {
   ): Promise<string> {
     const [res] = await conn.execute<ResultSetHeader>(
       `INSERT INTO personal_plans
-        (user_id, title, description, goal, total_sessions, status, start_date, end_date, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, 'active', ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())`,
+        (user_id, title, description, goal, status, start_at, target_end_at, confirmed_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'active', ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP(), UTC_TIMESTAMP())`,
       [
         input.user_id,
         input.title,
         input.description,
         input.goal,
-        input.total_sessions,
         input.start_date,
         input.end_date,
       ]
     );
     return String(res.insertId);
+  }
+
+  async deletePlanWithTasks(conn: PoolConnection, userId: string, planId: string): Promise<void> {
+    await conn.execute('DELETE FROM personal_tasks WHERE plan_id = ? AND user_id = ?', [planId, userId]);
+    await conn.execute('DELETE FROM personal_plans WHERE id = ? AND user_id = ?', [planId, userId]);
   }
 
   async syncPlanCompletionStatus(conn: PoolConnection, planId: string): Promise<void> {
@@ -1458,20 +1446,34 @@ export class PersonalAssistantRepository {
   // Personal memories.
   // =========================================================================
 
+  private memorySchemaPromise?: Promise<'v15' | 'consent'>;
+
+  private memorySchema(): Promise<'v15' | 'consent'> {
+    if (!this.memorySchemaPromise) {
+      this.memorySchemaPromise = this.pool.execute<RowDataPacket[]>(
+        `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='personal_memories'
+           AND COLUMN_NAME IN ('memory_key','memory_type')`
+      ).then(([rows]) => rows.some(row => row.COLUMN_NAME === 'memory_type') ? 'consent' : 'v15');
+    }
+    return this.memorySchemaPromise;
+  }
+
   private mapMemoryRow(row: RowDataPacket): PersonalMemoryRecord {
+    const memoryKey = String(row.memory_type ?? row.memory_key);
     const record = {
       id: String(row.id),
       user_id: String(row.user_id),
-      memory_key: String(row.memory_key),
-      memory_value: String(row.memory_value),
-      category:
-        row.category === null || row.category === undefined ? null : String(row.category),
+      memory_key: memoryKey,
+      memory_value: String(row.content ?? row.memory_value),
+      category: row.category === null || row.category === undefined
+        ? (memoryKey === 'profile.name' || memoryKey === 'profile.residence' ? 'personal_information' : null)
+        : String(row.category),
       confidence:
-        row.confidence === null || row.confidence === undefined ? null : Number(row.confidence),
-      source_conversation_id:
-        row.source_conversation_id === null || row.source_conversation_id === undefined
-          ? null
-          : String(row.source_conversation_id),
+        row.confidence !== null && row.confidence !== undefined ? Number(row.confidence)
+        : row.importance === null || row.importance === undefined ? null : Number(row.importance) / 5,
+      source_conversation_id: row.source_conversation_id === null || row.source_conversation_id === undefined
+        ? null : String(row.source_conversation_id),
       created_at: isoOrNull(row.created_at) ?? new Date(0).toISOString(),
       updated_at: isoOrNull(row.updated_at) ?? new Date(0).toISOString(),
     };
@@ -1485,8 +1487,16 @@ export class PersonalAssistantRepository {
   ): Promise<PersonalMemoryRecord | null> {
     const executor = conn ?? this.pool;
     const lockClause = forUpdate ? ' FOR UPDATE' : '';
+    if (await this.memorySchema() === 'v15') {
+      const [rows] = await executor.execute<RowDataPacket[]>(
+        `SELECT * FROM personal_memories WHERE id = ? LIMIT 1${lockClause}`, [memoryId]);
+      return rows[0] ? this.mapMemoryRow(rows[0]) : null;
+    }
     const [rows] = await executor.execute<RowDataPacket[]>(
-      `SELECT * FROM personal_memories WHERE id = ? LIMIT 1${lockClause}`,
+      `SELECT * FROM personal_memories
+       WHERE id = ? AND deleted_at IS NULL AND consent_revoked_at IS NULL
+         AND (expires_at IS NULL OR expires_at > UTC_TIMESTAMP())
+       LIMIT 1${lockClause}`,
       [memoryId]
     );
     return rows[0] ? this.mapMemoryRow(rows[0]) : null;
@@ -1500,8 +1510,17 @@ export class PersonalAssistantRepository {
   ): Promise<PersonalMemoryRecord | null> {
     const executor = conn ?? this.pool;
     const lockClause = forUpdate ? ' FOR UPDATE' : '';
+    if (await this.memorySchema() === 'v15') {
+      const [rows] = await executor.execute<RowDataPacket[]>(
+        `SELECT * FROM personal_memories WHERE user_id = ? AND memory_key = ? LIMIT 1${lockClause}`,
+        [userId, memoryKey]);
+      return rows[0] ? this.mapMemoryRow(rows[0]) : null;
+    }
     const [rows] = await executor.execute<RowDataPacket[]>(
-      `SELECT * FROM personal_memories WHERE user_id = ? AND memory_key = ? LIMIT 1${lockClause}`,
+      `SELECT * FROM personal_memories
+       WHERE user_id = ? AND memory_type = ? AND deleted_at IS NULL AND consent_revoked_at IS NULL
+         AND (expires_at IS NULL OR expires_at > UTC_TIMESTAMP())
+       ORDER BY updated_at DESC, id DESC LIMIT 1${lockClause}`,
       [userId, memoryKey]
     );
     return rows[0] ? this.mapMemoryRow(rows[0]) : null;
@@ -1516,17 +1535,27 @@ export class PersonalAssistantRepository {
       category?: string;
     }
   ): Promise<{ items: PersonalMemoryRecord[]; total: number }> {
-    const where: string[] = ['user_id = ?'];
+    const schema = await this.memorySchema();
+    const where: string[] = ['user_id = ?', 'deleted_at IS NULL', 'consent_revoked_at IS NULL',
+      '(expires_at IS NULL OR expires_at > UTC_TIMESTAMP())'];
+    if (schema === 'v15') where.splice(1);
     const params: (string | number)[] = [userId];
 
     if (filters.search?.trim()) {
-      where.push('(memory_key LIKE ? OR memory_value LIKE ?)');
+      where.push(schema === 'v15' ? '(memory_key LIKE ? OR memory_value LIKE ?)' : '(memory_type LIKE ? OR content LIKE ?)');
       const like = `%${filters.search.trim()}%`;
       params.push(like, like);
     }
     if (filters.category?.trim()) {
-      where.push('category = ?');
-      params.push(filters.category.trim());
+      if (schema === 'v15') {
+        where.push('category = ?');
+        params.push(filters.category.trim());
+      } else if (filters.category.trim() === 'personal_information') {
+        where.push("memory_type IN ('profile.name','profile.residence')");
+      } else {
+        where.push('memory_type LIKE ?');
+        params.push(`${filters.category.trim()}.%`);
+      }
     }
 
     const whereSql = where.join(' AND ');
@@ -1561,25 +1590,33 @@ export class PersonalAssistantRepository {
       source_conversation_id: string | null;
     }
   ): Promise<PersonalMemoryRecord> {
-    await conn.execute(
-      `INSERT INTO personal_memories
-        (user_id, memory_key, memory_value, category, confidence, source_conversation_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())
-       ON DUPLICATE KEY UPDATE
-        memory_value = VALUES(memory_value),
-        category = COALESCE(VALUES(category), category),
-        confidence = COALESCE(VALUES(confidence), confidence),
-        source_conversation_id = COALESCE(VALUES(source_conversation_id), source_conversation_id),
-        updated_at = UTC_TIMESTAMP()`,
-      [
-        input.user_id,
-        input.memory_key,
-        input.memory_value,
-        input.category,
-        input.confidence,
-        input.source_conversation_id,
-      ]
-    );
+    if (await this.memorySchema() === 'v15') {
+      await conn.execute(
+        `INSERT INTO personal_memories
+          (user_id,memory_key,memory_value,category,confidence,source_conversation_id,created_at,updated_at)
+         VALUES (?,?,?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP())
+         ON DUPLICATE KEY UPDATE memory_value=VALUES(memory_value),category=COALESCE(VALUES(category),category),
+          confidence=COALESCE(VALUES(confidence),confidence),source_conversation_id=COALESCE(VALUES(source_conversation_id),source_conversation_id),
+          updated_at=UTC_TIMESTAMP()`,
+        [input.user_id,input.memory_key,input.memory_value,input.category,input.confidence,input.source_conversation_id]);
+      const legacy = await this.findMemoryByKey(input.user_id,input.memory_key,conn);
+      if (!legacy) throw new Error('Saved memory could not be reloaded');
+      return legacy;
+    }
+    const current = await this.findMemoryByKey(input.user_id, input.memory_key, conn, true);
+    const importance = input.confidence === null ? null : Math.max(1, Math.min(5, Math.round(input.confidence * 5)));
+    if (current) {
+      await conn.execute(
+        `UPDATE personal_memories SET content=?,source='personal_assistant',importance=?,
+         consented_at=UTC_TIMESTAMP(),consent_revoked_at=NULL,expires_at=NULL,deleted_at=NULL,updated_at=UTC_TIMESTAMP()
+         WHERE id=?`, [input.memory_value, importance, current.id]);
+    } else {
+      await conn.execute(
+        `INSERT INTO personal_memories
+         (user_id,memory_type,content,source,importance,consented_at,created_at,updated_at)
+         VALUES (?,?,?,'personal_assistant',?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP())`,
+        [input.user_id, input.memory_key, input.memory_value, importance]);
+    }
     const saved = await this.findMemoryByKey(input.user_id, input.memory_key, conn);
     if (!saved) throw new Error('Saved memory could not be reloaded');
     return saved;
@@ -1595,15 +1632,24 @@ export class PersonalAssistantRepository {
       confidence: number | null;
     }
   ): Promise<PersonalMemoryRecord> {
+    if (await this.memorySchema() === 'v15') {
+      await conn.execute(
+        `UPDATE personal_memories SET memory_key=?,memory_value=?,category=?,confidence=?,updated_at=UTC_TIMESTAMP() WHERE id=?`,
+        [fields.memory_key,fields.memory_value,fields.category,fields.confidence,memoryId]);
+      const legacy = await this.findMemoryByIdRaw(memoryId,conn);
+      if (!legacy) throw new Error('Updated memory could not be reloaded');
+      return legacy;
+    }
     await conn.execute(
       `UPDATE personal_memories
-       SET memory_key = ?,
-           memory_value = ?,
-           category = ?,
-           confidence = ?,
+       SET memory_type = ?,
+           content = ?,
+           importance = ?,
+           consented_at = UTC_TIMESTAMP(),
            updated_at = UTC_TIMESTAMP()
        WHERE id = ?`,
-      [fields.memory_key, fields.memory_value, fields.category, fields.confidence, memoryId]
+      [fields.memory_key, fields.memory_value,
+       fields.confidence === null ? null : Math.max(1, Math.min(5, Math.round(fields.confidence * 5))), memoryId]
     );
     const updated = await this.findMemoryByIdRaw(memoryId, conn);
     if (!updated) throw new Error('Updated memory could not be reloaded');
@@ -1611,7 +1657,13 @@ export class PersonalAssistantRepository {
   }
 
   async deleteMemoryById(conn: PoolConnection, memoryId: string): Promise<void> {
-    await conn.execute(`DELETE FROM personal_memories WHERE id = ?`, [memoryId]);
+    if (await this.memorySchema() === 'v15') {
+      await conn.execute(`DELETE FROM personal_memories WHERE id = ?`, [memoryId]);
+      return;
+    }
+    await conn.execute(
+      `UPDATE personal_memories SET consent_revoked_at=UTC_TIMESTAMP(),deleted_at=UTC_TIMESTAMP(),updated_at=UTC_TIMESTAMP()
+       WHERE id = ?`, [memoryId]);
   }
 
   async verifyUserDeviceOwnership(

@@ -167,6 +167,13 @@ describe('AI provider/profile/credential service',()=>{
     expect(tx.users.findByIdForUpdate).toHaveBeenCalledWith('7');
     await expect(service.resolveAIConfiguration({userId:'7',deviceId:'42',providerId:'2',modelId:'3',userDisplayName:'Giả Mạo'})).rejects.toMatchObject({status:400});
   });
+  it('revalidates active device ownership for internal memory access',async()=>{
+    await expect(service.verifyInternalUserDevice({userId:'7',deviceId:'42'})).resolves.toEqual({userId:'7',deviceId:'42'});
+    expect(tx.requireApprovedRobot).toHaveBeenCalledWith('7');
+    tx.ownership.devices.getActiveAssignment.mockResolvedValue({deviceId:'42',userId:'8'});
+    await expect(service.verifyInternalUserDevice({userId:'7',deviceId:'42'})).rejects.toMatchObject({status:403});
+    await expect(service.verifyInternalUserDevice({userId:'7',deviceId:'42',userDisplayName:'forged'})).rejects.toMatchObject({status:400});
+  });
   it('isolates OpenAI User A and Gemini User B credentials by owner and provider',async()=>{
     const secrets:Record<string,string>={'7:2':'fixture-openai-user-a','8:3':'fixture-gemini-user-b'};
     tx.provider.mockImplementation(async(providerId:string)=>({id:providerId,code:providerId==='2'?'OPENAI':'GEMINI',name:'fixture',isEnabled:1}));

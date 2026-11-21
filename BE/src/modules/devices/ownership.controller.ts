@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, HttpCode, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, Param, Patch, Post, HttpCode, Req, UseGuards } from '@nestjs/common';
 import { AuthenticatedRequest } from '../auth/access-role.guard';
 import { UserPairingGuard } from '../pairing/user-pairing.guard';
 import { InternalDeviceGuard } from './internal-device.guard';
@@ -35,6 +35,14 @@ export class InternalDevicesController {
   @Post('authorize')
   @HttpCode(200)
   authorize(@Body() body:unknown){return this.ownership.authorizeDeviceConnection(body);}
+  @Post('personal-memory')
+  @HttpCode(200)
+  @Header('Cache-Control', 'no-store')
+  personalMemory(@Body() body: unknown) { return this.ownership.personalMemory(body); }
+  @Post('reminder-receipt')
+  @HttpCode(200)
+  @Header('Cache-Control', 'no-store')
+  reminderReceipt(@Body() body: unknown) { return this.ownership.reminderReceipt(body); }
   @Post('heartbeat')
   @HttpCode(200)
   heartbeat(@Body() body:unknown){return this.ownership.recordDeviceHeartbeat(body);}

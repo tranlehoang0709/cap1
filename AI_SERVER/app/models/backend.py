@@ -64,11 +64,52 @@ class DeviceProof(ContractModel):
 
     _credential = field_validator("credential")(validate_credential)
 
+class DevicePersonalMemoryRequest(DeviceProof):
+    expectedOwner: str
+    write: dict[str, str] | None = None
+
+
+class DeviceReminderReceiptRequest(DeviceProof):
+    expectedOwner: str
+    reminderId: str
+    deliveryId: str
+
+
+class DeviceReminderReceiptResult(ContractModel):
+    reminderId: str
+    deliveryId: str
+    status: Literal["acknowledged"]
+    acknowledgedAt: str = Field(min_length=1)
+
+
+class DevicePersonalMemoryResult(ContractModel):
+    saved: bool
+    name: str | None
+    residence: str | None
+
+
+class DeviceToolDelegationRequest(ContractModel):
+    device_uid: str
+    credential: SecretStr = Field(repr=False)
+    session_id: str
+    proof_nonce: str
+    scope: Literal["schedule.query", "event.query", "event.check_conflict", "event.create", "event.update", "event.delete"]
+
+    _credential = field_validator("credential")(validate_credential)
+
 
 class Authorization(ContractModel):
     allowed: Literal[True]
     deviceId: str
     ownerUserId: str
+
+class ToolDelegation(ContractModel):
+    delegation_token: SecretStr = Field(repr=False)
+    token_type: Literal["Bearer"]
+    expires_in: int = Field(gt=0, le=300)
+    scope: Literal["schedule.query", "event.query", "event.check_conflict", "event.create", "event.update", "event.delete"]
+    session_id: str
+    device_id: str
 
 
 class TelemetryPayload(ContractModel):
@@ -292,3 +333,39 @@ class TurnSaved(ContractModel):
     conversationId: str
     sessionId: str
     saved: bool
+
+
+class MemoryContextRequest(ContractModel):
+    userId: str
+    deviceId: str
+
+
+class MemoryUpsertItem(ContractModel):
+    key: Literal["profile.name", "profile.residence"]
+    value: str = Field(min_length=1, max_length=200, repr=False)
+
+
+class MemoryUpsertRequest(MemoryContextRequest):
+    memories: tuple[MemoryUpsertItem, ...] = Field(min_length=1, max_length=8)
+
+
+class MemoryContextItem(ContractModel):
+    key: Literal["profile.name", "profile.residence"]
+    value: str = Field(min_length=1, max_length=200, repr=False)
+    category: Literal["personal_information"]
+    updatedAt: str
+
+
+class MemoryContextResult(ContractModel):
+    userId: str
+    items: list[MemoryContextItem]
+
+
+class MemorySavedItem(ContractModel):
+    key: Literal["profile.name", "profile.residence"]
+    updatedAt: str
+
+
+class MemoryUpsertResult(ContractModel):
+    userId: str
+    saved: list[MemorySavedItem]

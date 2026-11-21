@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { CalendarRepository } from './calendar.repository';
 import { AuthenticatedUser } from '../auth/auth.types';
 
@@ -21,15 +22,30 @@ export class CalendarService {
   }
   async createEvent(user: AuthenticatedUser, dto: Record<string, unknown>, allowConflict = false) {
     const start = this.date(String(dto.starts_at)); const end = this.date(String(dto.ends_at)); this.validateRange(start, end);
-    if (!allowConflict && await this.repository.overlaps(user.id, start, end)) throw new ConflictException({ code: 'CALENDAR_CONFLICT', message: 'Event overlaps an existing event', requires_confirmation: true });
-    const id = await this.repository.createEvent(user.id, { ...dto, starts_at: start, ends_at: end });
+    let id: string;
+    if (!allowConflict && typeof (this.repository as CalendarRepository & { createEventAtomic?: unknown }).createEventAtomic === 'function') {
+      try {
+        id = await (this.repository as CalendarRepository & { createEventAtomic: (userId: string, data: Record<string, unknown>) => Promise<string> }).createEventAtomic(user.id, { ...dto, starts_at: start, ends_at: end });
+      } catch (error) {
+        if (error instanceof Error && (error as Error & { code?: string }).code === 'CALENDAR_CONFLICT') throw new ConflictException({ code: 'CALENDAR_CONFLICT', message: 'Event overlaps an existing event', requires_confirmation: true });
+        throw error;
+      }
+    } else {
+      if (!allowConflict && await this.repository.overlaps(user.id, start, end)) throw new ConflictException({ code: 'CALENDAR_CONFLICT', message: 'Event overlaps an existing event', requires_confirmation: true });
+      id = await this.repository.createEvent(user.id, { ...dto, starts_at: start, ends_at: end });
+    }
     return this.repository.findEvent(user.id, id);
+  }
+  async checkConflict(user: AuthenticatedUser, dto: Record<string, unknown>) {
+    const start = this.date(String(dto.starts_at)); const end = this.date(String(dto.ends_at)); this.validateRange(start, end);
+    return { has_conflict: await this.repository.overlaps(user.id, start, end), starts_at: start.toISOString(), ends_at: end.toISOString() };
   }
   async updateEvent(user: AuthenticatedUser, id: string, dto: Record<string, unknown>, allowConflict = false) {
     const current = await this.repository.findEvent(user.id, id); if (!current) throw new NotFoundException('Calendar event not found');
     const start = this.date(String(dto.starts_at ?? current.starts_at.toISOString()));
-    const end = this.date(String(dto.ends_at ?? current.ends_at.toISOString())); this.validateRange(start, end);
-    if (!allowConflict && await this.repository.overlaps(user.id, start, end, id)) throw new ConflictException({ code: 'CALENDAR_CONFLICT', message: 'Event overlaps an existing event', requires_confirmation: true });
+    const end = dto.ends_at == null ? current.ends_at : this.date(String(dto.ends_at));
+    if (end) this.validateRange(start, end);
+    if (!allowConflict && await this.repository.overlaps(user.id, start, end ?? start, id)) throw new ConflictException({ code: 'CALENDAR_CONFLICT', message: 'Event overlaps an existing event', requires_confirmation: true });
     await this.repository.updateEvent(user.id, id, {
       title: dto.title ?? current.title,
       description: dto.description ?? current.description,
@@ -53,11 +69,14 @@ export class ReminderService {
     if (dto.device_id && !await this.repository.ownsDevice(user.id, String(dto.device_id))) {
       throw new NotFoundException('Device not found');
     }
-    const key = `${user.id}:${dto.calendar_event_id ?? 'standalone'}:${when.toISOString()}:${dto.message}`;
+    const legacyKey = `${user.id}:${dto.calendar_event_id ?? 'standalone'}:${when.toISOString()}:${dto.message}`;
+    const key = 'calendar:v1:' + createHash('sha256').update(legacyKey.normalize('NFC')).digest('hex');
     try {
-      const id = await this.repository.createReminder(user.id, { ...dto, remind_at: when }, key); return this.repository.findReminder(id);
+      const id = await this.repository.createReminder(user.id, { ...dto, remind_at: when }, key, legacyKey); return this.repository.findReminder(id);
     } catch (error) {
-      if (error instanceof Error && /duplicate|unique/i.test(error.message)) {
+      if (error instanceof Error && ['ER_DUP_ENTRY', 'REMINDER_DUPLICATE'].includes(
+        (error as Error & { code?: string }).code ?? ''
+      )) {
         throw new ConflictException({ code: 'REMINDER_DUPLICATE', message: 'An equivalent reminder already exists' });
       }
       throw error;
@@ -66,4 +85,13 @@ export class ReminderService {
   async list(user: AuthenticatedUser, status?: string) { return { items: await this.repository.listReminders(user.id, status) }; }
   async due(limit = 20) { return { items: await this.repository.claimDue(Math.min(limit, 100)) }; }
   async ack(id: string, result: 'delivered' | 'failed', failureCode?: string) { const reminder = await this.repository.findReminder(id); if (!reminder) throw new NotFoundException('Reminder not found'); await this.repository.acknowledge(id, result, failureCode); return this.repository.findReminder(id); }
+
+  async confirmReceipt(user: AuthenticatedUser, reminderId: string, deliveryId: string) {
+    for (const id of [reminderId, deliveryId]) {
+      if (!/^[1-9]\d{0,18}$/.test(id) || BigInt(id) > 9223372036854775807n) {
+        throw new BadRequestException('Invalid reminder or delivery ID');
+      }
+    }
+    return this.repository.confirmReceipt(user.id, reminderId, deliveryId);
+  }
 }

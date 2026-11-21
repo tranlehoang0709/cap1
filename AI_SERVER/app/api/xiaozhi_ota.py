@@ -1,6 +1,7 @@
 """Xiaozhi Ota::CheckVersion bootstrap, not an enrollment or firmware registry."""
 import asyncio
 import ipaddress
+import logging
 import time
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -10,6 +11,9 @@ from app.models.backend import DeviceProof
 from app.services.audio_context import AudioContext
 from app.services.device_auth import authorize_device
 from app.services.device_auth import validate_local_device_credential
+from app.core.logging import get_logger, log_event
+
+logger = get_logger("xiaozhi_ota")
 
 router = APIRouter()
 
@@ -23,6 +27,7 @@ def device_proof(headers):
 
 @router.post("/xiaozhi/ota/")
 async def bootstrap(request: Request):
+    request_id = request.headers.get("x-request-id") or f"ota-{time.time_ns()}"
     if request.url.scheme != "https":
         raise HTTPException(426, "HTTPS_REQUIRED")
     state = request.app.state
@@ -71,8 +76,12 @@ async def bootstrap(request: Request):
         session = await authorize_device(state.backend_client, proof,
             AudioContext(deadline=time.monotonic() + state.backend_settings.timeout_seconds))
     except BackendError as error:
+        log_event(logger,  logging.WARNING, "ota.device_authorization_failed",
+                  "Device authorization failed", request_id=request_id,
+                  error_code=error.code.value, http_status=error.status)
         status = 503 if error.status is None or error.status >= 500 else 403
-        raise HTTPException(status, "DEVICE_AUTHORIZATION_UNAVAILABLE" if status == 503 else "DEVICE_ACCESS_DENIED") from None
+        raise HTTPException(status, "DEVICE_AUTHORIZATION_UNAVAILABLE" if status == 503 else "DEVICE_ACCESS_DENIED",
+                            headers={"X-Request-ID": request_id}) from None
     try:
         # Firmware POSTs board system info. Bound/discard it; no audio or identity
         # is persisted or inferred from MAC/Client-Id or self-declared board JSON.
@@ -87,7 +96,7 @@ async def bootstrap(request: Request):
         return JSONResponse({
             "websocket": {"url": websocket_url, "version": 1},
             "server_time": {"timestamp": int(time.time() * 1000), "timezone_offset": 0},
-        }, headers={"Cache-Control": "no-store"})
+        }, headers={"Cache-Control": "no-store", "X-Request-ID": request_id})
     except TimeoutError:
         raise HTTPException(408, "BOOTSTRAP_BODY_TIMEOUT") from None
     finally:

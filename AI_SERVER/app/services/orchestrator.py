@@ -11,7 +11,7 @@ import time
 
 from app.core.logging import get_logger, log_event
 from app.models.audio import AudioError, AudioFrame, AudioMetadata, TranscriptionResult, positive_int
-from app.models.llm import ConversationKey, LLMError, ProviderDelta
+from app.models.llm import ConversationKey, LLMError, ProviderDelta, ProviderDone
 from app.models.tts import PlaybackLimits, PlaybackReceipt, TTSConfig, TTSError
 from app.services.audio_context import AudioContext
 from app.services.audio_input import BoundedAudioInput
@@ -96,6 +96,8 @@ class AIOrchestrator:
                  speech_activity: Callable[[AudioFrame], bool], tts_config: TTSConfig,
                  playback_limits: PlaybackLimits, limits: OrchestrationLimits, system_prompt: str,
                  defer_stt_until_input_complete: bool = False,
+                 prompt_enricher=None,
+                 transcript_handler=None,
                  clock_ms: Callable[[], float] = lambda: time.monotonic() * 1000):
         self.key = key  # Must come from trusted auth, never wire session_id.
         self.stt, self.llm, self.tts, self.output = stt, llm, tts, output
@@ -103,6 +105,8 @@ class AIOrchestrator:
         self.turn_config, self.rules, self.vad = turn_config, language_rules, speech_activity
         self.tts_config, self.limits, self.prompt = tts_config, limits, system_prompt
         self.defer_stt_until_input_complete = defer_stt_until_input_complete
+        self.prompt_enricher = prompt_enricher
+        self.transcript_handler = transcript_handler
         self.clock = clock_ms
         self.conversation = Conversation(key, max_turns=limits.history_turns, max_history_chars=limits.history_chars)
         self.playback = PlaybackScheduler(key, playback_limits)
@@ -324,7 +328,20 @@ class AIOrchestrator:
                 async def abort(_, scope):
                     await owner.output.abort(scope)
 
-            texts = self.runner.stream(ObservedLLM(), self.conversation, self.key, turn, final, self.prompt, turn.audio.context)
+            prompt = self.prompt
+            if self.prompt_enricher is not None:
+                prompt = await self.prompt_enricher(final.text, prompt, turn.audio.context)
+            direct = None
+            if self.transcript_handler is not None:
+                direct = await self.transcript_handler(final.text, turn.audio.context)
+            if direct is not None:
+                class DirectLLM:
+                    async def stream(_, request, context):
+                        yield ProviderDelta(direct)
+                        yield ProviderDone(True, 'completed')
+                texts = self.runner.stream(DirectLLM(), self.conversation, self.key, turn, final, prompt, turn.audio.context)
+            else:
+                texts = self.runner.stream(ObservedLLM(), self.conversation, self.key, turn, final, prompt, turn.audio.context)
             receipt = await self.playback.play(ObservedTTS(), ObservedOutput(), texts, key=self.key, turn=turn, config=self.tts_config)
             finish_turn = getattr(self.llm, "finish_turn", None)
             if callable(finish_turn):

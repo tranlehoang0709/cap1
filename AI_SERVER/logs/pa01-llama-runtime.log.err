@@ -1,0 +1,15 @@
+0.00.002.506 I srv  llama_server: initializing ...
+0.05.953.270 E get_repo_commit: error: HTTPLIB failed: Could not establish connection
+0.05.953.278 W get_repo_files: failed to resolve commit for ggml-org/gemma-4-e4b-it-GGUF
+0.05.959.421 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.05.989.215 I srv    load_model: loading model 'ggml-org/gemma-4-e4b-it-GGUF:Q4_0'
+0.06.875.511 W load: control-looking token:     50 '<|tool_response>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.06.875.575 W load: control-looking token:    212 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.06.928.225 W load: '</s>' is a normal token here, removing it from EOG list
+0.10.977.808 I cmn          init: llama threadpool init, n_threads = 6
+0.12.906.374 W init_audio: audio input is in experimental stage and may have reduced quality:
+    https://github.com/ggml-org/llama.cpp/discussions/13759
+0.12.906.439 I srv    load_model: loaded multimodal model, 'C:\Users\troc\.cache\huggingface\hub\models--ggml-org--gemma-4-e4b-it-GGUF\snapshots\8903cb408c7df39cde2ed15fac397e6d7be92951\mmproj-gemma-4-E4B-it-Q8_0.gguf'
+0.13.141.687 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 131072, kv_unified = 'true'
+0.13.155.865 I srv  server_run_i: model loaded
+0.13.155.878 I srv  server_on_li: listening on http://0.0.0.0:8001

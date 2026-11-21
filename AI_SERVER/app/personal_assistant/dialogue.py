@@ -120,7 +120,7 @@ Khi không có dữ liệu cần bổ sung, không thêm entities. Câu 'Đúng 
     def _context(state, key, ready=True):
         if state.owner_ref != DialogueManager._owner(key):
             raise PermissionError('Dialogue owner mismatch')
-        return TrustedToolContext(key.user_id, key.session_id, state.correlation_id, dialogue_ready=ready)
+        return TrustedToolContext(key.user_id, key.session_id, state.correlation_id, delegation_token=getattr(state, 'delegation_token', None), dialogue_ready=ready, device_id=key.device_id)
 
     @staticmethod
     def _readback(analysis):

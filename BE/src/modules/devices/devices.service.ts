@@ -98,6 +98,10 @@ export class DevicesService {
     return { deviceId: found.device_id, deviceUid: found.device_uid };
   }
 
+  async ownerForDevice(deviceId: string): Promise<string | null> {
+    return this.repository.findActiveOwner(deviceId);
+  }
+
   async heartbeat(principal: DevicePrincipal, battery: number | undefined, rssi: number | undefined, heap: string | undefined): Promise<DeviceRecord> {
     return this.repository.transaction(async (repo) => {
       const device = await repo.recordHeartbeat(principal.deviceId, battery ?? null, rssi ?? null, heap ?? null);

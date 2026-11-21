@@ -1,0 +1,23 @@
+INFO:     Started server process [19080]
+INFO:     Waiting for application startup.
+{"timestamp":"2026-11-21T05:30:45.749874+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8081 (Press CTRL+C to quit)
+{"timestamp":"2026-11-21T05:31:14.285676+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-21T05:31:14.353857+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+INFO:     127.0.0.1:55810 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+{"timestamp":"2026-11-21T05:36:44.457098+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Users\troc\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\troc\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+{"timestamp":"2026-11-21T05:36:44.486152+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+INFO:     127.0.0.1:60026 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open

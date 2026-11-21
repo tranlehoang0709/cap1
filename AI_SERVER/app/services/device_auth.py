@@ -24,9 +24,10 @@ def validate_local_device_credential(credentials, uid: str, credential: str) -> 
 
 
 class AuthorizedSession:
-    def __init__(self, client: BackendClient, proof: dto.DeviceProof, authorization: dto.Authorization):
+    def __init__(self, client: BackendClient, proof: dto.DeviceProof, authorization: dto.Authorization, delegation_token: str | None = None):
         self.client, self._proof, self.authorization = client, proof, authorization
         self.key = ConversationKey(authorization.ownerUserId, uuid4().hex, authorization.deviceId)
+        self.delegation_token = delegation_token
         self.config = None
         self.orchestrator = None
         self.valid = True
@@ -65,6 +66,27 @@ class AuthorizedSession:
             await self.invalidate()
             raise
 
+    async def confirm_reminder_receipt(self, reminder_id, delivery_id, context):
+        if not self.valid:
+            raise BackendError(BackendCode.BINDING)
+        return await self.client.confirm_reminder_receipt(dto.DeviceReminderReceiptRequest(
+            deviceUid=self._proof.deviceUid, credential=self._proof.credential,
+            expectedOwner=self.authorization.ownerUserId, reminderId=reminder_id, deliveryId=delivery_id), context)
+
+    async def personal_memory(self, context, *, write=None):
+        if not self.valid:
+            raise BackendError(BackendCode.BINDING)
+        return await self.client.device_personal_memory(dto.DevicePersonalMemoryRequest(
+            deviceUid=self._proof.deviceUid, credential=self._proof.credential,
+            expectedOwner=self.authorization.ownerUserId, write=write), context)
+
+    async def calendar_delegation(self, scope, context):
+        if not self.valid:
+            raise BackendError(BackendCode.BINDING)
+        result = await self.client.issue_device_delegation(
+            self._proof, self.key.session_id, uuid4().hex, scope, context)
+        return result.delegation_token.get_secret_value()
+
     async def heartbeat_received(self, context, *, telemetry: dto.Telemetry | None = None, received_at: datetime | None = None):
         """Call only for an approved direct robot heartbeat, NEVER WS Ping/Pong.
 
@@ -93,4 +115,9 @@ async def authorize_device(client: BackendClient, proof: dto.DeviceProof, contex
     authorization = await client.authorize(proof, context)
     if expected_device_id is not None and authorization.deviceId != expected_device_id:
         raise BackendError(BackendCode.BINDING)
-    return AuthorizedSession(client, proof, authorization)
+    session = AuthorizedSession(client, proof, authorization)
+    issue = getattr(client, 'issue_device_delegation', None) if getattr(client, '_device_delegation', False) else None
+    if issue is not None:
+        delegation = await issue(proof, session.key.session_id, uuid4().hex, "schedule.query", context)
+        session.delegation_token = delegation.delegation_token.get_secret_value()
+    return session

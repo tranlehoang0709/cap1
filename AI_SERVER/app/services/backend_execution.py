@@ -187,9 +187,10 @@ class QuotaLLMAdapter:
         self._validate_mode()
         if (not session.valid or config is None or request.key != session.key
             or request.config.model != config.model.modelCode
-            or request.system_prompt != (self.expected_system_prompt
-                                          if self.expected_system_prompt is not None
-                                          else config.profile.systemPrompt)):
+            or (self.expected_system_prompt is not None and
+                not (request.system_prompt == self.expected_system_prompt or
+                     request.system_prompt.startswith(self.expected_system_prompt + "\n\nTrusted PA-04 memory context:")))
+            or (self.expected_system_prompt is None and request.system_prompt != config.profile.systemPrompt)):
             raise BackendError(BackendCode.BINDING)
         if request.turn_id in self._attempted:
             raise BackendError(BackendCode.DUPLICATE)

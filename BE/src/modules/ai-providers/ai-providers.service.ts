@@ -121,6 +121,20 @@ export class AiProvidersService {
         credentialScope:p.credentialScope,credentialSource:p.credentialSource ?? 'BACKEND',credentialReference:p.credentialReference,...(input.includeCredential === true && p.credentialSource !== 'ENV_SYSTEM' ? {credential} : {})};
     });
   }
+  async verifyInternalUserDevice(body: unknown): Promise<{userId:string;deviceId:string}> {
+    const input = objectInput(body,['userId','deviceId','memories']);
+    const userId=id(input.userId), deviceId=id(input.deviceId);
+    return this.database(async tx=>{
+      await tx.requireApprovedRobot(userId);
+      await this.activeUser(tx,userId);
+      const device=await tx.ownership.devices.findDeviceById(deviceId);
+      const assignment=device?await tx.ownership.devices.getActiveAssignment(deviceId):null;
+      if(!assignment||assignment.userId!==userId||!await tx.ownership.verifyDeviceOwnership(userId,deviceId)){
+        throw new ForbiddenException('DEVICE_ACCESS_DENIED');
+      }
+      return {userId,deviceId};
+    });
+  }
   async listAvailableProviders(actor: CurrentUser) {
     if (!actor || !['USER','ADMIN'].includes(actor.role)) throw new ForbiddenException();
     return this.database(async tx=>{

@@ -61,6 +61,14 @@ class BackendFixture:
         if path == "/internal/ai/usage":
             return httpx.Response(200, json={"requestId": body["requestId"], "status": body["status"].upper(),
                 "recorded": True, "replayed": False, "budgetExceeded": False})
+        if path == "/internal/ai/memories/context":
+            return httpx.Response(200, json={"userId": body["userId"], "items": [
+                {"key": "profile.name", "value": "Fixture User", "category": "personal_information",
+                 "updatedAt": "2026-11-20T01:00:00.000Z"}]})
+        if path == "/internal/ai/memories/upsert":
+            return httpx.Response(200, json={"userId": body["userId"], "saved": [
+                {"key": item["key"], "updatedAt": "2026-11-20T01:00:00.000Z"}
+                for item in body["memories"]]})
         raise AssertionError("Unexpected route")
 
 
@@ -85,6 +93,23 @@ def test_auth_config_and_service_credentials_are_separate():
             assert json.loads(fixture.calls[1].content) == {"userId": "7", "deviceId": "42"}
         with pytest.raises(BackendError, match="backend_closed"):
             await api.authorize(PROOF, context())
+    asyncio.run(scenario())
+
+
+def test_memory_calls_use_config_service_auth_and_bind_owner_response():
+    async def scenario():
+        fixture = BackendFixture()
+        async with client(fixture) as api:
+            result = await api.memory_context("7", "42", context())
+            assert result.items[0].value == "Fixture User"
+            saved = await api.upsert_memories("7", "42",
+                [type("Fact", (), {"key": "profile.residence", "value": "Fixture City"})()], context())
+            assert saved.saved[0].key == "profile.residence"
+            assert all(call.headers["authorization"] == "Bearer " + "B" * 43 for call in fixture.calls)
+            assert all(json.loads(call.content)["userId"] == "7" for call in fixture.calls)
+            fixture.overrides["/internal/ai/memories/context"] = httpx.Response(200, json={"userId":"8","items":[]})
+            with pytest.raises(BackendError, match="identity_mismatch"):
+                await api.memory_context("7", "42", context())
     asyncio.run(scenario())
 
 

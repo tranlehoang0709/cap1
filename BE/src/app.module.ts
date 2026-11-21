@@ -33,6 +33,8 @@ import { CalendarModule } from './modules/calendar/calendar.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      ignoreEnvFile: process.env.NODE_ENV === 'test' && process.env.MYSQL_INTEGRATION_TESTS === 'true'
+        && process.env.DB_NAME === 'aiva_pa01_voice_clone',
       load: [configuration],
       validate: validateEnvironment,
     }),

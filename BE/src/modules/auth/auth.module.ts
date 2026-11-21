@@ -8,9 +8,10 @@ import { AuthController } from './auth.controller';
 import { AuthRepository } from './auth.repository';
 import { AuthService } from './auth.service';
 import { SmtpMailerService } from './smtp-mailer.service';
+import { DevicesModule } from '../devices/devices.module';
 
 @Module({
-  imports: [DatabaseModule, UsersModule, JwtModule.register({})],
+  imports: [DatabaseModule, UsersModule, DevicesModule, JwtModule.register({})],
   controllers: [AuthController, AdminUsersController],
   providers: [AuthRepository, AuthService, AdminSeeder, SmtpMailerService],
   exports: [AuthService, JwtModule],

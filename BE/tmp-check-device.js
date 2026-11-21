@@ -1,0 +1,6 @@
+const mysql = require('mysql2/promise');
+const crypto = require('node:crypto');
+const fs = require('node:fs');
+const env = Object.fromEntries(fs.readFileSync('../AI_SERVER/.env','utf8').split(/\r?\n/).filter(x=>x&&!x.startsWith('#')&&x.includes('=')).map(x=>[x.slice(0,x.indexOf('=')),x.slice(x.indexOf('=')+1)]));
+const [uid, credential] = Object.entries(JSON.parse(env.AI_SERVER_ROBOT_LOCAL_DEVICE_CREDENTIALS))[0];
+(async()=>{const c=await mysql.createConnection({host:'127.0.0.1',port:3306,user:'root',password:'Hoang@795',database:'aiva_iot'});const hash=crypto.createHash('sha256').update(credential).digest('hex');const [rows]=await c.query(`SELECT d.id,d.device_uid,d.connection_status,dc.status credential_status,dc.revoked_at,dc.expires_at,a.user_id,u.status user_status,u.email_verified_at,r.code role FROM devices d LEFT JOIN device_credentials dc ON dc.device_id=d.id AND dc.credential_hash=? LEFT JOIN device_assignments a ON a.device_id=d.id LEFT JOIN users u ON u.id=a.user_id LEFT JOIN user_roles ur ON ur.user_id=u.id LEFT JOIN roles r ON r.id=ur.role_id WHERE d.device_uid=?`,[hash,uid]);console.log(JSON.stringify(rows));await c.end()})().catch(e=>{console.error(e.code);process.exit(1)});

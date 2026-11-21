@@ -19,9 +19,14 @@ export interface RuntimeConfiguration {
     adminEmail: string;
     adminPassword: string;
     adminDisplayName: string;
+    adminSeedEnabled: boolean;
   };
   crypto: { encryptionKey: string };
-  toolExecution: { serviceToken: string };
+  toolExecution: {
+    serviceToken: string; calendarWritesEnabled: boolean; voiceMutationSecret: string;
+    productionCalendarTest: { enabled: boolean; userId: string; deviceId: string; expiresAt: string;
+      title: string; startsAt: string; endsAt: string; timezone: string };
+  };
   smtp: {
     host: string;
     port: number;
@@ -48,7 +53,7 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
     throw new Error('DB_PORT must be an integer between 1 and 65535');
   }
   const isolatedTest = environment.NODE_ENV === 'test' && environment.MYSQL_INTEGRATION_TESTS === 'true'
-    && typeof environment.DB_NAME === 'string' && /^aiva_iot_test(?:_[a-z0-9_]+)?$/.test(environment.DB_NAME);
+    && typeof environment.DB_NAME === 'string' && (/^aiva_iot_test(?:_[a-z0-9_]+)?$/.test(environment.DB_NAME) || environment.DB_NAME === 'aiva_pa01_voice_clone');
   if (environment.DB_NAME !== 'aiva_iot' && !isolatedTest) {
     throw new Error('DB_NAME must be aiva_iot; this backend is restricted to the existing V1.5 database');
   }
@@ -77,10 +82,15 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
     throw new Error('APP_ENCRYPTION_KEY must be a 32-byte base64url value');
   }
 
-  for (const key of ['ADMIN_EMAIL', 'ADMIN_PASSWORD', 'ADMIN_DISPLAY_NAME'] as const) {
-    const value = environment[key];
-    if (typeof value !== 'string' || value.trim().length === 0) {
-      throw new Error(`${key} is required`);
+  if (environment.ADMIN_SEED_ENABLED !== undefined && !['true', 'false'].includes(String(environment.ADMIN_SEED_ENABLED))) {
+    throw new Error('ADMIN_SEED_ENABLED must be true or false');
+  }
+  if (environment.ADMIN_SEED_ENABLED === 'true') {
+    for (const key of ['ADMIN_EMAIL', 'ADMIN_PASSWORD', 'ADMIN_DISPLAY_NAME'] as const) {
+      const value = environment[key];
+      if (typeof value !== 'string' || value.trim().length === 0) {
+        throw new Error(`${key} is required when ADMIN_SEED_ENABLED=true`);
+      }
     }
   }
 
@@ -167,9 +177,27 @@ export default function configuration(): RuntimeConfiguration {
       adminEmail: process.env.ADMIN_EMAIL ?? '',
       adminPassword: process.env.ADMIN_PASSWORD ?? '',
       adminDisplayName: process.env.ADMIN_DISPLAY_NAME ?? '',
+      adminSeedEnabled: process.env.ADMIN_SEED_ENABLED === 'true',
     },
     crypto: { encryptionKey: process.env.APP_ENCRYPTION_KEY ?? '' },
-    toolExecution: { serviceToken: process.env.AI_TOOL_SERVICE_TOKEN ?? '' },
+    toolExecution: {
+      serviceToken: process.env.AI_TOOL_SERVICE_TOKEN ?? '',
+      calendarWritesEnabled: process.env.CALENDAR_WRITES_ENABLED === 'true'
+        && process.env.NODE_ENV === 'test' && process.env.MYSQL_INTEGRATION_TESTS === 'true'
+        && process.env.DB_NAME === 'aiva_pa01_voice_clone'
+        && process.env.DB_HOST === '127.0.0.1' && process.env.DB_PORT === '43316',
+      voiceMutationSecret: process.env.VOICE_MUTATION_SECRET ?? '',
+      productionCalendarTest: {
+        enabled: process.env.PRODUCTION_CALENDAR_TEST_ENABLED === 'true',
+        userId: process.env.PRODUCTION_CALENDAR_TEST_USER_ID ?? '',
+        deviceId: process.env.PRODUCTION_CALENDAR_TEST_DEVICE_ID ?? '',
+        expiresAt: process.env.PRODUCTION_CALENDAR_TEST_EXPIRES_AT ?? '',
+        title: process.env.PRODUCTION_CALENDAR_TEST_TITLE ?? '',
+        startsAt: process.env.PRODUCTION_CALENDAR_TEST_STARTS_AT ?? '',
+        endsAt: process.env.PRODUCTION_CALENDAR_TEST_ENDS_AT ?? '',
+        timezone: process.env.PRODUCTION_CALENDAR_TEST_TIMEZONE ?? '',
+      },
+    },
     smtp: {
       host: (process.env.SMTP_HOST ?? '').trim(),
       port: Number(process.env.SMTP_PORT || 587),

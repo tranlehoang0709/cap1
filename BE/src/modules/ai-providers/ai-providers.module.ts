@@ -7,8 +7,9 @@ import { InternalAIConfigGuard } from './ai.guards';
 import { AiProfilesController, InternalAIConfigController } from '../ai-profiles/ai-profiles.controller';
 import { UsersModule } from '../users/users.module';
 import { UserPairingGuard } from '../pairing/user-pairing.guard';
+import { PersonalAssistantModule } from '../personal-assistant/personal-assistant.module';
 
-@Module({imports:[DatabaseModule,UsersModule],controllers:[InternalAIConfigController,AiProfilesController],
+@Module({imports:[DatabaseModule,UsersModule,PersonalAssistantModule],controllers:[InternalAIConfigController,AiProfilesController],
   providers:[AiProvidersRepository,AiProvidersService,SecretEncryptionService,InternalAIConfigGuard,UserPairingGuard],
   exports:[AiProvidersService]})
 export class AiProvidersModule {}

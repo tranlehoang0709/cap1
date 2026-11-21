@@ -17,6 +17,7 @@ import { UsersService } from '../users/users.service';
 import { AuthRepository, OtpPurpose } from './auth.repository';
 import { AccessTokenPayload, RefreshTokenPayload, ToolDelegationPayload, TokenPair } from './auth.types';
 import { SmtpMailerService } from './smtp-mailer.service';
+import { DevicesService } from '../devices/devices.service';
 
 const OTP_TTL_MS = 5 * 60 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
@@ -27,12 +28,14 @@ const OTP_MAX_PER_WINDOW = 5;
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly consumedDeviceProofNonces = new Set<string>();
   constructor(
     private readonly repository: AuthRepository,
     private readonly users: UsersService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     @Optional() private readonly mailer?: SmtpMailerService,
+    @Optional() private readonly devices?: DevicesService,
   ) {}
 
   async register(
@@ -361,24 +364,56 @@ export class AuthService {
     return { success: true };
   }
 
-  async issueToolDelegation(userId: string, scope: 'schedule.query', sessionId: string) {
+  async issueToolDelegation(userId: string, scope: ToolDelegationPayload['scope'], sessionId: string, deviceId?: string) {
     const canLogin = await this.users.canLogin(userId);
     if (!canLogin.allowed) throw new UnauthorizedException('Account cannot use tool delegation');
+    if (deviceId !== undefined) {
+      if (!this.devices) throw new UnauthorizedException('Device authorization is unavailable');
+      await this.devices.getOwned(userId, deviceId);
+    }
     const ttl = 60;
     const payload: ToolDelegationPayload = {
       sub: userId, typ: 'tool_delegation', scope, sid: sessionId,
       aud: 'aiva-backend-tool-execution',
+      ...(deviceId ? { did: deviceId } : {}), jti: randomUUID(),
     };
     return {
       delegation_token: await this.jwt.signAsync(payload, {
         secret: this.config.getOrThrow<string>('auth.accessTokenSecret'),
-        expiresIn: ttl, issuer: 'aiva-iot', audience: 'aiva-backend-tool-execution',
+        // `aud` is already part of the typed payload. jsonwebtoken rejects
+        // specifying it again through the signing options.
+        expiresIn: ttl, issuer: 'aiva-iot',
       }),
       token_type: 'Bearer' as const,
       expires_in: ttl,
       scope,
       session_id: sessionId,
+      ...(deviceId ? { device_id: deviceId } : {}),
     };
+  }
+
+  async issueDeviceToolDelegation(input: { deviceUid: string; credential: string; sessionId: string; scope: ToolDelegationPayload['scope']; proofNonce: string }) {
+    if (this.config.get<string>('DEVICE_AUTH_CONTRACT_APPROVED') !== 'true') {
+      throw new UnauthorizedException('Device authorization contract is not approved');
+    }
+    if (this.consumedDeviceProofNonces.has(input.proofNonce)) throw new UnauthorizedException('Device proof replay detected');
+    // Reserve the nonce before awaiting database work so concurrent replays fail closed.
+    this.consumedDeviceProofNonces.add(input.proofNonce);
+    try {
+      const principal = await this.devices?.verifyCredential(input.credential);
+      if (!principal || principal.deviceUid !== input.deviceUid) throw new UnauthorizedException('Device proof invalid');
+      const owner = await this.devices?.ownerForDevice(principal.deviceId);
+      if (!owner) throw new UnauthorizedException('Device is not assigned');
+      return await this.issueToolDelegation(owner, input.scope, input.sessionId, principal.deviceId);
+    } catch (error) {
+      this.consumedDeviceProofNonces.delete(input.proofNonce);
+      const detail = error instanceof Error
+        ? `${error.name}: ${error.message}\n${error.stack ?? ''}`
+        : 'Unknown device delegation failure';
+      // Never log the request: it contains the one-time device credential.
+      this.logger?.error(`Device tool delegation failed: ${detail}`);
+      throw error;
+    }
   }
 
   private async issueTokens(userId: string): Promise<TokenPair> {

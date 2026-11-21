@@ -38,6 +38,6 @@ class BackendSettings(BaseSettings):
     def create_client(self, *, transport=None):
         return BackendClient(self.url, self.service_tokens(),
             ClientLimits(self.timeout_seconds, self.max_connections, self.max_response_bytes),
-            allow_local_http=self.allow_local_http, transport=transport)
+            allow_local_http=self.allow_local_http, transport=transport, device_delegation=True)
 
 

@@ -1,0 +1,234 @@
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [NestFactory] Starting Nest application...
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] ConversationsModule dependencies initialized +17ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] WebChatModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] AiProfilesModule dependencies initialized +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] ApiKeysModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] ConfigHostModule dependencies initialized +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] ThrottlerModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] JwtModule dependencies initialized +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] ConfigModule dependencies initialized +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] ConfigModule dependencies initialized +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] DatabaseModule dependencies initialized +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] PersonalAssistantModule dependencies initialized +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] FirmwareOtaModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] LogsModule dependencies initialized +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] MonitoringModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] SystemSettingsModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] InternalApiModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] UsersModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] CalendarModule dependencies initialized +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] AppModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] AuthModule dependencies initialized +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] AiModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] DevicesModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] PairingModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] RecoveryModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] AiProvidersModule dependencies initialized +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [InstanceLoader] QuotasModule dependencies initialized +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM    WARN Duplicate DTO detected: "HeartbeatDto" is defined multiple times with different schemas.
+Consider using unique class names or applying @ApiExtraModels() decorator with custom schema names.
+Note: This will throw an error in the next major version.
+[Nest] 18692  - 11/21/2026, 12:42:44 PM    WARN Duplicate DTO detected: "CreateReminderDto" is defined multiple times with different schemas.
+Consider using unique class names or applying @ApiExtraModels() decorator with custom schema names.
+Note: This will throw an error in the next major version.
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] HealthController {/health}: +8ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/health, GET} route +2ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] AuthController {/auth}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/auth/register, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/auth/verify-email, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/auth/resend-verification, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/auth/password/forgot, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/auth/password/reset, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/auth/login, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/auth/refresh, POST} route +3ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/auth/logout, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/auth/me, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/auth/tool-delegations, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/auth/tool-delegations/device, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/auth/password, PATCH} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] AdminUsersController {/users}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/users, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] UsersController {/users}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/users/me, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/users/me, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/users/me/privacy, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/users/me/privacy, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/users, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/users/:id, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/users/:id/role, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/users/:id/status, PATCH} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/users/:id, DELETE} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] DevicesController {/devices}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/:id, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/:id, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/:id/assignment, DELETE} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/pairing-requests, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/pairing-requests/mine, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/admin, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/admin/all, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/admin/:id/pairing-codes, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/admin/:id/credential, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/admin/pairing-requests, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/admin/pairing-requests/:id/approve, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/admin/pairing-requests/:id/reject, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/device/me, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/devices/device/heartbeat, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] UserDevicesController {/user/devices}: +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/devices, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/devices/:id, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/devices/:id, PATCH} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] DashboardAccessController {/user/dashboard}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/dashboard/access, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] InternalDevicesController {/internal/devices}: +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/devices/authorize, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/devices/personal-memory, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/devices/reminder-receipt, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/devices/heartbeat, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] UserPairingController {/user/devices/pairing-requests}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/devices/pairing-requests, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/devices/pairing-requests, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] AdminPairingController {/admin/pairing-requests}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/pairing-requests, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/pairing-requests/:id/approve, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/pairing-requests/:id/reject, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] InternalAIConfigController {/internal/ai}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/ai/resolve-config, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/ai/turns/start, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/ai/turns/user-message, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/ai/turns/assistant-message, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/ai/turns/complete, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/ai/memories/context, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/ai/memories/upsert, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] AiProfilesController {/user/ai/profile}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/ai/profile, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/ai/profile, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] PersonalAssistantController {/}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/tasks, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/tasks/incomplete, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/tasks/report, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/tasks/deadlines, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/tasks/resolve, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/tasks/:id, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/tasks, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/tasks/:id, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/tasks/:id/priority, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/tasks/:id/complete, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/tasks/:id/reopen, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/tasks/:id/cancel, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/tasks/:id, DELETE} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/plans, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/plans/:id, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/plans, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/plans/:id/sessions/:sessionId/complete, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/events, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/events/:id, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/events, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/events/:id, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/events/:id, DELETE} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/reminders, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/reminders/:id, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/reminders, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/reminders/:id, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/reminders/:id/acknowledge, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/reminders/:id, DELETE} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/memories, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/memories/:id, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/memories, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/memories/:id, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/memories/:id, DELETE} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] AiController {/}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/ai/providers, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/ai/providers/:id/models, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/ai/providers/:id, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/ai/models, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/ai/models, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/ai/models/:id, PATCH} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/ai/profile, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/ai/profile, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/api-keys, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/api-keys, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/api-keys/:id, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/api-keys/:id, DELETE} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/api-keys/system, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/api-keys/system, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/api-keys/system/:id, DELETE} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/web-chat/messages, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/conversations, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/conversations/:id, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/conversations/:id, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/conversations/:id/close, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/conversations/:id/resume, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/conversations/:id, DELETE} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/users/me/ai-data, DELETE} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/quotas, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/usage, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/usage/timeseries, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/quotas, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/quotas, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/quotas/:id, DELETE} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] InternalQuotasController {/internal/ai}: +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/ai/authorize-request, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/ai/usage, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] AdminQuotasController {/admin/ai}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/ai/quotas/users/:userId/providers/:providerId, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/ai/quotas/users/:userId/providers/:providerId, PUT} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/ai/usage, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] UserUsageController {/user/ai/usage}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/ai/usage, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] FirmwareOtaController {/}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/firmware, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/firmware, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/firmware/:id/release, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/firmware/device/check, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/firmware/device/updates/:id/status, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] LogsController {/admin}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/logs, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/logs, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/audit-logs, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] MonitoringController {/admin}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/dashboard, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/monitoring/instances, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/monitoring/instances/:id/metrics, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/monitoring/instances/heartbeat, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/monitoring/instances/:id/metrics, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] SystemSettingsController {/admin/system-settings}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/system-settings, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/system-settings/:key, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/system-settings/:key, PUT} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] InternalApiController {/internal}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/ai/sessions, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/ai/sessions/:id, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/usage, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] RecoveryController {/admin}: +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/devices/:id/revoke, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/devices/:id/recovery, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/devices/:id/reset-status, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/admin/device-recovery/:backupId/restore, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] InternalResetController {/internal/device-reset-jobs}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/device-reset-jobs/claim, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/device-reset-jobs/:id/ack, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] CalendarController {/user/calendar}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/calendar/events, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/calendar/events, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/calendar/events/:id, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/calendar/events/:id, PATCH} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/calendar/events/:id, DELETE} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] ReminderController {/user/calendar/reminders}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/calendar/reminders, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/calendar/reminders, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/user/calendar/reminders/:id/deliveries/:deliveryId/acknowledge, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] InternalReminderController {/internal/reminders}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/reminders/due, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/reminders/:id/ack, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RoutesResolver] ToolExecutionController {/internal/tool-execution}: +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/tool-execution/event-prepare, POST} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/tool-execution/event-confirm, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/tool-execution/schedule, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/tool-execution/event-query, GET} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/tool-execution/assistant-summary, GET} route +1ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/tool-execution/event-check-conflict, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/tool-execution/event-create, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/tool-execution/event-update, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [RouterExplorer] Mapped {/internal/tool-execution/event-delete, POST} route +0ms
+[Nest] 18692  - 11/21/2026, 12:42:44 PM     LOG [NestApplication] Nest application successfully started +6ms

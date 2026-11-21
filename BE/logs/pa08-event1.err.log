@@ -1,0 +1,12 @@
+[Nest] 7712  - 11/21/2026, 12:39:52 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at sweep (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at PersonalAssistantService.onApplicationBootstrap (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:95:9)
+    at MapIterator.iteratee (E:\learn\AI_Project\cap1\BE\node_modules\@nestjs\core\hooks\on-app-bootstrap.hook.js:22:43)
+    at MapIterator.next (E:\learn\AI_Project\cap1\BE\node_modules\iterare\lib\map.js:13:39)
+    at IteratorWithOperators.next (E:\learn\AI_Project\cap1\BE\node_modules\iterare\lib\iterate.js:21:28)
+    at Array.from (<anonymous>)
+    at IteratorWithOperators.toArray (E:\learn\AI_Project\cap1\BE\node_modules\iterare\lib\iterate.js:180:22)
+    at callOperator (E:\learn\AI_Project\cap1\BE\node_modules\@nestjs\core\hooks\on-app-bootstrap.hook.js:23:10)
+    at callModuleBootstrapHook (E:\learn\AI_Project\cap1\BE\node_modules\@nestjs\core\hooks\on-app-bootstrap.hook.js:43:23)

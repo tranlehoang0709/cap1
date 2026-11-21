@@ -1,0 +1,8 @@
+const mysql=require('mysql2/promise');
+(async()=>{const c=await mysql.createConnection({host:'127.0.0.1',port:3306,user:'root',password:'Hoang@795',database:'aiva_iot'});const tests=[
+['device',`SELECT CAST(id AS CHAR) id,lifecycle_status lifecycleStatus FROM devices WHERE id=3 FOR UPDATE`],
+['assignment',`SELECT CAST(device_id AS CHAR) deviceId,CAST(user_id AS CHAR) userId FROM device_assignments WHERE device_id=3 FOR UPDATE`],
+['user',`SELECT id,email,display_name,status,email_verified_at,last_login_at,created_at,updated_at FROM users WHERE id=2 LIMIT 1 FOR UPDATE`],
+['roles',`SELECT r.id,r.code,r.name FROM user_roles ur INNER JOIN roles r ON r.id=ur.role_id WHERE ur.user_id=2 ORDER BY r.code`],
+['ownership',`SELECT CAST(d.id AS CHAR) id,d.device_uid deviceUid,d.display_name displayName,d.connection_status connectionStatus FROM device_assignments a INNER JOIN devices d ON d.id=a.device_id INNER JOIN device_pairing_requests p ON p.id=a.pairing_request_id AND p.device_id=a.device_id AND p.user_id=a.user_id WHERE a.user_id=2 AND d.id=3 AND p.status='approved' AND d.lifecycle_status='assigned' AND NOT EXISTS (SELECT 1 FROM device_unlink_operations x WHERE x.device_id=d.id AND (x.status<>'completed' OR x.revoked_at IS NULL OR x.completed_at IS NULL)) AND NOT EXISTS (SELECT 1 FROM device_reset_jobs j WHERE j.device_id=d.id AND j.id=(SELECT MAX(j2.id) FROM device_reset_jobs j2 WHERE j2.device_id=d.id) AND (j.status<>'acknowledged' OR j.acknowledged_at IS NULL)) LIMIT 1`]
+];await c.beginTransaction();for(const [name,sql] of tests){try{const [r]=await c.query(sql);console.log(name,'OK',r.length)}catch(e){console.log(name,e.code,e.message)}}await c.rollback();await c.end()})()

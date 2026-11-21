@@ -21,7 +21,7 @@ See `.env.example` for all settings:
 - `DB_*`: MySQL connection (`DB_NAME` is restricted to `aiva_iot`).
 - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`: separate signing secrets (32+ chars).
 - `ACCESS_TOKEN_TTL_SECONDS` (default 900) and `REFRESH_TOKEN_TTL_SECONDS` (default 2592000).
-- `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_DISPLAY_NAME`: initial Admin seed.
+- `ADMIN_SEED_ENABLED=true` explicitly enables the one-time Admin bootstrap. `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ADMIN_DISPLAY_NAME` are required only while it is enabled.
 - `CORS_ORIGINS`: comma-separated exact HTTP(S) origins; empty disables browser CORS.
 
 Refresh JWTs are stored as SHA-256 hashes and rotated on use. Passwords use bcrypt. Login is throttled to 5 requests per minute per client IP by the in-memory Nest throttler; production multi-instance deployments should use a shared throttler store.

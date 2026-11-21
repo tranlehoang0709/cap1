@@ -3,6 +3,7 @@ import { Pool, PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2/pro
 import { MYSQL_POOL } from '../../database/database.constants';
 import { PairingTransaction } from '../pairing/pairing.repository';
 import { HeartbeatEvent } from '../monitoring/dto/heartbeat.dto';
+import { recordReminderReceipt } from '../calendar/reminder-receipt';
 
 const ownedFrom=`FROM device_assignments a
   INNER JOIN devices d ON d.id=a.device_id
@@ -51,6 +52,41 @@ export class OwnershipRepository {
 }
 
 export class OwnershipTransaction {
+  confirmReminderReceipt(userId: string, deviceId: string, reminderId: string, deliveryId: string) {
+    return recordReminderReceipt(this.connection, userId, reminderId, deliveryId, deviceId);
+  }
+  async voicePersonalMemory(userId: string, values: Array<[string, string]>) {
+    // Device authorization holds the owner row lock through this transaction.
+    const source = 'PA-04:robot-voice';
+    for (const [field, value] of values) {
+      const type = `profile.${field}`;
+      const [existing] = await this.connection.execute<RowDataPacket[]>(
+        `SELECT id FROM personal_memories WHERE user_id = ? AND memory_type = ?
+         AND deleted_at IS NULL AND consent_revoked_at IS NULL
+         AND (expires_at IS NULL OR expires_at > UTC_TIMESTAMP())
+         ORDER BY updated_at DESC, id DESC LIMIT 1 FOR UPDATE`, [userId, type]);
+      if (existing[0]) {
+        await this.connection.execute(
+          `UPDATE personal_memories SET content = ?, consented_at = UTC_TIMESTAMP(), updated_at = UTC_TIMESTAMP()
+           WHERE id = ? AND user_id = ?`, [value, existing[0].id, userId]);
+      } else {
+        await this.connection.execute(
+          `INSERT INTO personal_memories (user_id, memory_type, content, source, consented_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP(), UTC_TIMESTAMP())`, [userId, type, value, source]);
+      }
+    }
+    const [rows] = await this.connection.execute<RowDataPacket[]>(
+      `SELECT memory_type, content FROM personal_memories
+       WHERE user_id = ? AND memory_type IN ('profile.name', 'profile.residence')
+         AND deleted_at IS NULL AND consent_revoked_at IS NULL
+         AND (expires_at IS NULL OR expires_at > UTC_TIMESTAMP())
+       ORDER BY updated_at DESC, id DESC`, [userId]);
+    return {
+      saved: values.length > 0,
+      name: rows.find(row => row.memory_type === 'profile.name')?.content ?? null,
+      residence: rows.find(row => row.memory_type === 'profile.residence')?.content ?? null,
+    };
+  }
   readonly devices:PairingTransaction;
   constructor(pool:Pool,private readonly connection:PoolConnection) {
     // Reuse Prompt 2's parent-device, assignment and user locks on this connection.

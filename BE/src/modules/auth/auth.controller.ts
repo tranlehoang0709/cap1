@@ -1,9 +1,11 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Patch, Post, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { AuthenticatedUser } from './auth.types';
+import { DeviceToolDelegationDto } from './dto/device-tool-delegation.dto';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -18,7 +20,7 @@ import { ToolDelegationDto } from './dto/tool-delegation.dto';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(private readonly auth: AuthService, private readonly config: ConfigService) {}
 
   @Public()
   @Post('register')
@@ -89,7 +91,20 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Issue a short-lived scoped PA tool delegation' })
   issueToolDelegation(@CurrentUser() user: AuthenticatedUser, @Body() dto: ToolDelegationDto) {
-    return this.auth.issueToolDelegation(user.id, dto.scope, dto.session_id);
+    return this.auth.issueToolDelegation(user.id, dto.scope, dto.session_id, dto.device_id);
+  }
+
+  @Post('tool-delegations/device')
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  issueDeviceToolDelegation(@Headers('x-ai-device-service') serviceToken: string | undefined,
+    @Headers('authorization') authorization: string | undefined,
+    @Body() dto: DeviceToolDelegationDto) {
+    const expected = this.config.get<string>('AI_DEVICE_SERVICE_TOKEN') ?? '';
+    const bearer = authorization?.match(/^Bearer (.+)$/i)?.[1];
+    if (!expected || (serviceToken !== expected && bearer !== expected)) throw new UnauthorizedException('Device service authentication required');
+    return this.auth.issueDeviceToolDelegation({ deviceUid: dto.device_uid, credential: dto.credential,
+      sessionId: dto.session_id, proofNonce: dto.proof_nonce, scope: dto.scope });
   }
 
   @Patch('password')

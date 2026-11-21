@@ -15,6 +15,15 @@ const validEnvironment = (): Record<string, unknown> => ({
 });
 
 describe('validateEnvironment', () => {
+  it('does not require Admin bootstrap credentials unless seeding is explicitly enabled', () => {
+    const input = validEnvironment();
+    delete input.ADMIN_EMAIL;
+    delete input.ADMIN_PASSWORD;
+    delete input.ADMIN_DISPLAY_NAME;
+    expect(validateEnvironment(input)).toEqual(input);
+    expect(() => validateEnvironment({ ...input, ADMIN_SEED_ENABLED: 'true' }))
+      .toThrow('ADMIN_EMAIL is required when ADMIN_SEED_ENABLED=true');
+  });
   it('permits only explicitly opted-in isolated MySQL test schemas',()=>{
     const env={...validEnvironment(),NODE_ENV:'test',MYSQL_INTEGRATION_TESTS:'true',DB_NAME:'aiva_iot_test_local'};
     expect(validateEnvironment(env)).toEqual(env);

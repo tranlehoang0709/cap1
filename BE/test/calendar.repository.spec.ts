@@ -23,6 +23,7 @@ describe('CalendarRepository.claimDue', () => {
 
     expect(connection.beginTransaction).toHaveBeenCalledTimes(1);
     expect(connection.execute.mock.calls[0][0]).toContain('FOR UPDATE');
+    expect(connection.execute.mock.calls[0][0]).toContain('r.remind_at <= UTC_TIMESTAMP()');
     expect(connection.execute.mock.calls[1][0]).toContain("status='queued'");
     expect(connection.commit).toHaveBeenCalledTimes(1);
     expect(connection.release).toHaveBeenCalledTimes(1);

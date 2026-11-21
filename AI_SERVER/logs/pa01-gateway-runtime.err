@@ -1,0 +1,24 @@
+INFO:     Started server process [14996]
+INFO:     Waiting for application startup.
+{"timestamp":"2026-11-21T07:51:54.763843+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8081 (Press CTRL+C to quit)
+{"timestamp":"2026-11-21T07:52:15.989125+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-21T07:52:16.015959+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","http_status":200,"stage":"ota"}
+{"timestamp":"2026-11-21T07:52:30.228843+00:00","level":"WARNING","event":"gateway.local_proxy.failed","message":"Gateway Local proxy failed","error_type":"RuntimeError","stage":"websocket"}
+INFO:     127.0.0.1:53078 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+{"timestamp":"2026-11-21T07:53:04.722319+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-21T07:53:04.729488+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","http_status":200,"stage":"ota"}
+{"timestamp":"2026-11-21T07:53:17.323793+00:00","level":"WARNING","event":"gateway.local_proxy.failed","message":"Gateway Local proxy failed","error_type":"RuntimeError","stage":"websocket"}
+INFO:     127.0.0.1:53106 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+{"timestamp":"2026-11-21T07:53:37.734254+00:00","level":"WARNING","event":"gateway.local_proxy.failed","message":"Gateway Local proxy failed","error_type":"RuntimeError","stage":"websocket"}
+INFO:     127.0.0.1:53110 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+{"timestamp":"2026-11-21T07:53:59.877551+00:00","level":"WARNING","event":"gateway.local_proxy.failed","message":"Gateway Local proxy failed","error_type":"RuntimeError","stage":"websocket"}
+INFO:     127.0.0.1:64639 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)
+{"timestamp":"2026-11-21T07:54:25.199032+00:00","level":"WARNING","event":"gateway.local_proxy.failed","message":"Gateway Local proxy failed","error_type":"RuntimeError","stage":"websocket"}
+INFO:     127.0.0.1:62795 - "WebSocket /ws/robot" 403
+INFO:     connection rejected (403 Forbidden)

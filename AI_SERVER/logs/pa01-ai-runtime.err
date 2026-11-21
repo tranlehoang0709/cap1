@@ -1,0 +1,5 @@
+INFO:     Started server process [19772]
+INFO:     Waiting for application startup.
+{"timestamp":"2026-11-21T08:21:03.728170+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8002 (Press CTRL+C to quit)

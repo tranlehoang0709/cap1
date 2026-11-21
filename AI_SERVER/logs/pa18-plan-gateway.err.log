@@ -1,0 +1,51 @@
+INFO:     Started server process [19012]
+INFO:     Waiting for application startup.
+{"timestamp":"2026-11-21T06:00:27.018166+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8081 (Press CTRL+C to quit)
+{"timestamp":"2026-11-21T06:02:55.896680+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-21T06:02:55.956566+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+INFO:     127.0.0.1:49820 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+{"timestamp":"2026-11-21T06:34:56.486807+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Users\troc\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\troc\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+{"timestamp":"2026-11-21T06:34:56.514781+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+INFO:     127.0.0.1:51589 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+{"timestamp":"2026-11-21T07:01:48.414406+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Users\troc\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\troc\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+{"timestamp":"2026-11-21T07:01:48.422317+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+INFO:     127.0.0.1:65445 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+{"timestamp":"2026-11-21T07:47:16.340581+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Users\troc\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\troc\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+{"timestamp":"2026-11-21T07:47:16.351261+00:00","level":"INFO","event":"gateway.ota.response","message":"Gateway OTA response","stage":"ota","http_status":200}
+INFO:     127.0.0.1:58543 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open

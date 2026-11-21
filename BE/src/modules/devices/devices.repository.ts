@@ -42,6 +42,13 @@ export class DevicesRepository {
     return rows[0] ? toDevice(rows[0]) : null;
   }
 
+  async findActiveOwner(deviceId: string): Promise<string | null> {
+    const [rows] = await this.db.execute<RowDataPacket[]>(
+      'SELECT CAST(user_id AS CHAR) AS userId FROM device_assignments WHERE device_id = ? LIMIT 1', [deviceId],
+    );
+    return rows[0]?.userId ? String(rows[0].userId) : null;
+  }
+
   async listDevices(userId: string | null, page: number, limit: number): Promise<{ items: DeviceRecord[]; total: number }> {
     const join = userId ? 'INNER JOIN device_assignments da ON da.device_id = d.id' : '';
     const where = userId ? 'WHERE da.user_id = ?' : '';

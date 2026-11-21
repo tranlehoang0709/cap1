@@ -10,6 +10,7 @@ export class AdminSeeder implements OnApplicationBootstrap {
   constructor(@Inject(MYSQL_POOL) private readonly pool: Pool, private readonly config: ConfigService) {}
 
   async onApplicationBootstrap(): Promise<void> {
+    if (this.config.get<boolean>('auth.adminSeedEnabled') !== true) return;
     const email = this.config.getOrThrow<string>('auth.adminEmail').trim().toLowerCase();
     const password = this.config.getOrThrow<string>('auth.adminPassword');
     const displayName = this.config.getOrThrow<string>('auth.adminDisplayName').trim();

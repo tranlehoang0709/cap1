@@ -662,7 +662,7 @@ export class PersonalAssistantService implements OnApplicationBootstrap, OnAppli
       }
       // Keep active child tasks intact while detaching them cleanly from the deleted parent.
       await this.repo.detachSubtasksOnParentDelete(conn, userId, id);
-      await this.repo.softDeleteTask(conn, id);
+      await this.repo.deleteTaskPermanently(conn, userId, id);
       if (current.plan_id) {
         await this.repo.syncPlanCompletionStatus(conn, current.plan_id);
       }
@@ -917,6 +917,17 @@ export class PersonalAssistantService implements OnApplicationBootstrap, OnAppli
       const refreshedPlan = await this.repo.findPlanByIdRaw(pId, conn);
       const built = await this.repo.buildPlanRecord(refreshedPlan!, conn);
       return { ...built, already_completed: false };
+    });
+  }
+
+  async deletePlan(userId: string, planId: string): Promise<{ success: true; id: string }> {
+    const id = assertBigintId(planId, 'plan id');
+    return this.repo.withTransaction(async conn => {
+      const row = await this.repo.findPlanByIdRaw(id, conn, true);
+      if (!row) throw new NotFoundException('Personal plan was not found');
+      if (String(row.user_id) !== userId) throw new ForbiddenException('Personal plan does not belong to the authenticated user');
+      await this.repo.deletePlanWithTasks(conn, userId, id);
+      return { success: true, id };
     });
   }
 

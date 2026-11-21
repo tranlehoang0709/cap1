@@ -1,5 +1,5 @@
-import { ConflictException, ForbiddenException, HttpException, Injectable,
-  InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, HttpException, Injectable,
+  InternalServerErrorException, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 import { CurrentUser } from '../auth/access-role.guard';
@@ -10,6 +10,7 @@ import { heartbeatInput } from '../monitoring/dto/heartbeat.dto';
 
 @Injectable()
 export class OwnershipService {
+  private readonly logger = new Logger(OwnershipService.name);
   constructor(private readonly repository:OwnershipRepository,private readonly config:ConfigService) {}
   private user(actor:CurrentUser):string {
     if (!actor || actor.role!=='USER') throw new ForbiddenException('USER role required');
@@ -86,6 +87,52 @@ export class OwnershipService {
       return {accepted:true as const,deviceId:authorization.deviceId,lastSeenAt:input.observedAt.toISOString()};
     }),true);
   }
+  async reminderReceipt(body: unknown) {
+    if (this.config.get<string>('DEVICE_AUTH_CONTRACT_APPROVED') !== 'true') {
+      throw new ForbiddenException('CONTRACT_NOT_APPROVED');
+    }
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new BadRequestException('INVALID_INPUT');
+    const { deviceUid, credential, expectedOwner, reminderId, deliveryId, ...extra } = body as Record<string, unknown>;
+    if (Object.keys(extra).length) throw new BadRequestException('INVALID_INPUT');
+    const proof = authorizationInput({ deviceUid, credential });
+    const expected = deviceId(expectedOwner);
+    const reminder = deviceId(reminderId);
+    const delivery = deviceId(deliveryId);
+    return this.database(() => this.repository.withTransaction(async tx => {
+      const authorized = await this.validateAuthorizedDevice(tx, proof.deviceUid, proof.credential);
+      if (authorized.ownerUserId !== expected) throw new ForbiddenException('DEVICE_ACCESS_DENIED');
+      return tx.confirmReminderReceipt(authorized.ownerUserId, authorized.deviceId, reminder, delivery);
+    }), true);
+  }
+
+  async personalMemory(body: unknown) {
+    if (this.config.get<string>('DEVICE_AUTH_CONTRACT_APPROVED') !== 'true') {
+      throw new ForbiddenException('CONTRACT_NOT_APPROVED');
+    }
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new BadRequestException('INVALID_INPUT');
+    const { deviceUid, credential, expectedOwner, write, ...extra } = body as Record<string, unknown>;
+    if (Object.keys(extra).length || typeof expectedOwner !== 'string') throw new BadRequestException('INVALID_INPUT');
+    const proof = authorizationInput({ deviceUid, credential });
+    const expectedUserId = deviceId(expectedOwner);
+    const values: Array<[string, string]> = [];
+    if (write !== undefined) {
+      if (!write || typeof write !== 'object' || Array.isArray(write)) throw new BadRequestException('INVALID_INPUT');
+      for (const [key, value] of Object.entries(write)) {
+        if ((key !== 'name' && key !== 'residence') || typeof value !== 'string' ||
+            !value.trim() || Array.from(value.trim()).length > 120 || /[\p{Cc}\p{Cf}]/u.test(value)) {
+          throw new BadRequestException('INVALID_INPUT');
+        }
+        values.push([key, value.trim()]);
+      }
+      if (!values.length) throw new BadRequestException('INVALID_INPUT');
+    }
+    return this.database(() => this.repository.withTransaction(async tx => {
+      const authorized = await this.validateAuthorizedDevice(tx, proof.deviceUid, proof.credential);
+      // The session's prior owner is a binding check, never the storage principal.
+      if (authorized.ownerUserId !== expectedUserId) throw new ForbiddenException('DEVICE_ACCESS_DENIED');
+      return tx.voicePersonalMemory(authorized.ownerUserId, values);
+    }), true);
+  }
   /** Reuse on the caller's transaction so authorization and heartbeat cannot race revoke. */
   async validateAuthorizedDevice(tx:OwnershipTransaction,deviceUid:string,credential:string,unknownDeviceStatus:401|404=401) {
     const hash=createHash('sha256').update(credential,'utf8').digest('hex');
@@ -113,6 +160,10 @@ export class OwnershipService {
       const code=(error as {code?:string})?.code;
       if(['ER_LOCK_DEADLOCK','ER_LOCK_WAIT_TIMEOUT'].includes(code??'')) {
         throw new ConflictException(internal?{allowed:false,reason:'AUTHORIZATION_RETRY'}:'Device state changed; refresh before retrying');
+      }
+      if (internal) {
+        const detail = error instanceof Error ? `${error.message}\n${error.stack ?? ''}` : String(code ?? 'unknown');
+        this.logger.error(`Device authorization database failure${code ? ` (${code})` : ''}: ${detail}`);
       }
       throw new InternalServerErrorException(internal?{allowed:false,reason:'AUTHORIZATION_UNAVAILABLE'}:'Unable to access devices');
     }

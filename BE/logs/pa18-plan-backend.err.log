@@ -1,0 +1,708 @@
+[Nest] 3008  - 11/21/2026, 12:58:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at sweep (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at PersonalAssistantService.onApplicationBootstrap (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:95:9)
+    at MapIterator.iteratee (E:\learn\AI_Project\cap1\BE\node_modules\@nestjs\core\hooks\on-app-bootstrap.hook.js:22:43)
+    at MapIterator.next (E:\learn\AI_Project\cap1\BE\node_modules\iterare\lib\map.js:13:39)
+    at IteratorWithOperators.next (E:\learn\AI_Project\cap1\BE\node_modules\iterare\lib\iterate.js:21:28)
+    at Array.from (<anonymous>)
+    at IteratorWithOperators.toArray (E:\learn\AI_Project\cap1\BE\node_modules\iterare\lib\iterate.js:180:22)
+    at callOperator (E:\learn\AI_Project\cap1\BE\node_modules\@nestjs\core\hooks\on-app-bootstrap.hook.js:23:10)
+    at callModuleBootstrapHook (E:\learn\AI_Project\cap1\BE\node_modules\@nestjs\core\hooks\on-app-bootstrap.hook.js:43:23)
+[Nest] 3008  - 11/21/2026, 12:59:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:00:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:01:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:02:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:03:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:04:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:05:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:06:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:07:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:08:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:09:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:10:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:11:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:12:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:13:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:14:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:15:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:16:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:17:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:18:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:19:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:20:14 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:21:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:22:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:23:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:24:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:25:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:26:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:27:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:28:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:29:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:30:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:31:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:32:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:33:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:34:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:35:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:36:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:37:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:38:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:39:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:40:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:41:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:42:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:43:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:44:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:45:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:46:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:47:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:48:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:49:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:50:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:51:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:52:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:53:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:54:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:55:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:56:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:57:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:58:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 1:59:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:00:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:01:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:02:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:03:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:04:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:05:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:06:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:07:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:08:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:09:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:10:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:11:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:12:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:13:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:14:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:15:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:16:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:17:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:18:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:19:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:20:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:21:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:22:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:23:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:24:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:25:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:26:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:27:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:28:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:29:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:30:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:31:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:32:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:33:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:34:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:35:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:36:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:37:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:38:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:39:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:40:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:41:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:42:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:43:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:44:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:45:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:46:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:47:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:48:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:49:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:50:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:51:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:52:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:53:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[Nest] 3008  - 11/21/2026, 2:54:15 PM   ERROR [PersonalAssistantService] Personal task alert sweep failed; will retry. Unknown column 'deleted_at' in 'where clause'
+Error: Unknown column 'deleted_at' in 'where clause'
+    at PersonalAssistantRepository.sweepTaskAlerts (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.repository.js:302:41)
+    at Timeout.sweep [as _onTimeout] (E:\learn\AI_Project\cap1\BE\dist\modules\personal-assistant\personal-assistant.service.js:88:42)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)

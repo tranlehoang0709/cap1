@@ -21,9 +21,11 @@ export interface RefreshTokenPayload {
 export interface ToolDelegationPayload {
   sub: string;
   typ: 'tool_delegation';
-  scope: 'schedule.query';
+  scope: 'schedule.query' | 'event.query' | 'event.check_conflict' | 'event.create' | 'event.update' | 'event.delete';
   sid: string;
   aud: string;
+  did?: string;
+  jti?: string;
 }
 
 export interface TokenPair {

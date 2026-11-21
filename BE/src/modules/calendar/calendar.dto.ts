@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, MaxLength, Min, MinLength } from 'class-validator';
+import { IsBoolean, IsDateString, IsIn, IsInt, IsOptional, IsString, MaxLength, Min, MinLength } from 'class-validator';
 
 export class CreateCalendarEventDto {
   @ApiProperty({ maxLength: 255 }) @IsString() @MinLength(1) @MaxLength(255)
@@ -46,7 +46,7 @@ export class ReminderQueryDto {
 }
 
 export class ReminderAckDto {
-  @ApiProperty({ enum: ['delivered', 'failed'] }) @IsString()
+  @ApiProperty({ enum: ['delivered', 'failed'] }) @IsIn(['delivered', 'failed'])
   result!: 'delivered' | 'failed';
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(120)
   failure_code?: string;

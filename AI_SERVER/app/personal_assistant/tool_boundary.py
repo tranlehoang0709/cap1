@@ -74,6 +74,7 @@ class TrustedToolContext:
     completed_dependencies: frozenset[str] = field(default_factory=frozenset, repr=False)
     dependency_record_ids: Mapping[str, str] = field(default_factory=dict, repr=False)
     memory_authorizations: Mapping[str, MemoryAuthorization] = field(default_factory=dict, repr=False)
+    device_id: str | None = field(default=None, repr=False)
 
     def __post_init__(self):
         if any(not isinstance(value, str) or not value.strip() or len(value) > 128

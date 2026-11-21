@@ -1,0 +1,24 @@
+INFO:     Started server process [2388]
+INFO:     Waiting for application startup.
+{"timestamp":"2026-11-20T23:07:53.533130+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8081 (Press CTRL+C to quit)
+{"timestamp":"2026-11-20T23:11:11.055111+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T23:11:11.202737+00:00","level":"WARNING","event":"ota.device_authorization_failed","message":"Device authorization failed","http_status":500,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T23:11:11.203440+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","http_status":503,"stage":"ota"}
+{"timestamp":"2026-11-20T23:11:26.194997+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T23:11:26.207075+00:00","level":"WARNING","event":"ota.device_authorization_failed","message":"Device authorization failed","http_status":500,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T23:11:26.207709+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","http_status":503,"stage":"ota"}
+{"timestamp":"2026-11-20T23:11:52.322297+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T23:11:52.332785+00:00","level":"WARNING","event":"ota.device_authorization_failed","message":"Device authorization failed","http_status":500,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T23:11:52.333241+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","http_status":503,"stage":"ota"}
+{"timestamp":"2026-11-20T23:12:42.330343+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T23:12:42.340332+00:00","level":"WARNING","event":"ota.device_authorization_failed","message":"Device authorization failed","http_status":500,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T23:12:42.340745+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","http_status":503,"stage":"ota"}
+{"timestamp":"2026-11-20T23:12:48.335595+00:00","level":"WARNING","event":"gateway.request.denied","message":"Gateway request denied","stage":"http","error_code":"NOT_ALLOWED"}
+{"timestamp":"2026-11-20T23:14:04.655587+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T23:14:04.674935+00:00","level":"WARNING","event":"ota.device_authorization_failed","message":"Device authorization failed","http_status":401,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T23:14:04.675512+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","http_status":403,"stage":"ota"}
+{"timestamp":"2026-11-20T23:14:10.498544+00:00","level":"INFO","event":"gateway.upstream.forward","message":"Gateway forwarding request upstream","stage":"http"}
+{"timestamp":"2026-11-20T23:14:10.534102+00:00","level":"WARNING","event":"ota.device_authorization_failed","message":"Device authorization failed","http_status":500,"error_code":"backend_http_denied"}
+{"timestamp":"2026-11-20T23:14:10.534835+00:00","level":"WARNING","event":"gateway.ota.response","message":"Gateway OTA response","http_status":503,"stage":"ota"}

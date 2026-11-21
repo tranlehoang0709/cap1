@@ -195,6 +195,14 @@ export class PersonalAssistantController {
     return this.pa.completePlanSession(user.id, id, sessionId, dto);
   }
 
+  @Delete('user/plans/:id')
+  @Roles('USER')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete an owned personal plan and its session tasks' })
+  deletePlan(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.pa.deletePlan(user.id, id);
+  }
+
   // =========================================================================
   // personal_events (Personal Schedule & Events)
   // =========================================================================

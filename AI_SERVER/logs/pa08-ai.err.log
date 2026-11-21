@@ -1,0 +1,11 @@
+INFO:     Started server process [20464]
+INFO:     Waiting for application startup.
+{"timestamp":"2026-11-21T05:30:45.592338+00:00","level":"INFO","event":"app.startup","message":"AI Server startup"}
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8002 (Press CTRL+C to quit)
+{"timestamp":"2026-11-21T05:31:21.663151+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","provider":"LOCAL","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0"}
+INFO:     127.0.0.1:55813 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open
+{"timestamp":"2026-11-21T05:36:48.326809+00:00","level":"INFO","event":"robot.config.resolved","message":"Resolved Backend robot configuration","provider":"LOCAL","model":"ggml-org/gemma-4-e4b-it-GGUF:Q4_0"}
+INFO:     127.0.0.1:60028 - "WebSocket /ws/robot" [accepted]
+INFO:     connection open

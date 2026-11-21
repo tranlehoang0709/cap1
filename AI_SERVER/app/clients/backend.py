@@ -72,7 +72,7 @@ def _object(pairs):
 
 class BackendClient:
     def __init__(self, base_url: str, tokens: ServiceTokens, limits: ClientLimits, *, allow_local_http=False,
-                 transport: httpx.AsyncBaseTransport | None = None):
+                 transport: httpx.AsyncBaseTransport | None = None, device_delegation=False):
         parts = urlsplit(base_url)
         local = parts.hostname == "localhost"
         try:
@@ -84,6 +84,7 @@ class BackendClient:
             or (parts.scheme == "http" and not (allow_local_http is True and local))):
             raise ValueError("HTTPS Backend origin required; local HTTP requires explicit opt-in")
         self._tokens, self._limits = tokens, limits
+        self._device_delegation = device_delegation
         self._slots = asyncio.Semaphore(limits.max_connections)
         self._closed = False
         self._client = httpx.AsyncClient(base_url=base_url, trust_env=False, follow_redirects=False,
@@ -106,7 +107,7 @@ class BackendClient:
             raise BackendError(BackendCode.CLOSED)
         try:
             payload = request.model_dump(mode="json", exclude_none=True)
-            if isinstance(request, dto.DeviceProof):
+            if isinstance(request, (dto.DeviceProof, dto.DeviceToolDelegationRequest)):
                 payload["credential"] = request.credential.get_secret_value()
             async def exchange():
                 async with self._slots:
@@ -158,8 +159,25 @@ class BackendClient:
     async def authorize(self, request: dto.DeviceProof, context: AudioContext):
         return await self._post("/internal/devices/authorize", request, self._tokens.device, dto.Authorization, context)
 
+    async def issue_device_delegation(self, request: dto.DeviceProof, session_id: str, nonce: str,
+                                      scope: str, context: AudioContext):
+        delegation = dto.DeviceToolDelegationRequest(device_uid=request.deviceUid, credential=request.credential,
+            session_id=session_id, proof_nonce=nonce, scope=scope)
+        return await self._post("/auth/tool-delegations/device", delegation, self._tokens.device, dto.ToolDelegation, context)
+
     async def heartbeat(self, request: dto.Heartbeat, context: AudioContext):
         return await self._post("/internal/devices/heartbeat", request, self._tokens.device, dto.HeartbeatResult, context)
+
+    async def device_personal_memory(self, request: dto.DevicePersonalMemoryRequest, context: AudioContext):
+        return await self._post("/internal/devices/personal-memory", request,
+                                self._tokens.device, dto.DevicePersonalMemoryResult, context)
+
+    async def confirm_reminder_receipt(self, request: dto.DeviceReminderReceiptRequest, context: AudioContext):
+        result = await self._post("/internal/devices/reminder-receipt", request,
+                                  self._tokens.device, dto.DeviceReminderReceiptResult, context)
+        if (result.reminderId, result.deliveryId) != (request.reminderId, request.deliveryId):
+            raise BackendError(BackendCode.BINDING)
+        return result
 
     async def resolve_config(self, request: dto.ConfigRequest, context: AudioContext):
         result = await self._post("/internal/ai/resolve-config", request, self._tokens.config, dto.ResolvedConfig, context)
@@ -199,5 +217,22 @@ class BackendClient:
     async def complete_turn(self, request: dto.TurnComplete, context: AudioContext):
         result = await self._post('/internal/ai/turns/complete', request, self._tokens.config, dto.TurnSaved, context)
         if result.sessionId != request.sessionId:
+            raise BackendError(BackendCode.BINDING)
+        return result
+
+    async def memory_context(self, user_id: str, device_id: str, context: AudioContext):
+        request = dto.MemoryContextRequest(userId=user_id, deviceId=device_id)
+        result = await self._post('/internal/ai/memories/context', request, self._tokens.config,
+                                  dto.MemoryContextResult, context)
+        if result.userId != user_id:
+            raise BackendError(BackendCode.BINDING)
+        return result
+
+    async def upsert_memories(self, user_id: str, device_id: str, memories, context: AudioContext):
+        request = dto.MemoryUpsertRequest(userId=user_id, deviceId=device_id,
+            memories=tuple(dto.MemoryUpsertItem(key=item.key, value=item.value) for item in memories))
+        result = await self._post('/internal/ai/memories/upsert', request, self._tokens.config,
+                                  dto.MemoryUpsertResult, context)
+        if result.userId != user_id or {item.key for item in result.saved} != {item.key for item in request.memories}:
             raise BackendError(BackendCode.BINDING)
         return result

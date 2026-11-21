@@ -803,6 +803,24 @@ show readback, confirm the same revision and run writes. Missing PA-04 APIs keep
 workflows BLOCKED. Schedule/reminder algorithms and their existing guards are
 unchanged. Focused fixture tests do not prove live Backend availability.
 
+## PA-01 voice integration
+
+| From | Via | Note |
+|---|---|---|
+| Xiaozhi session | device proof | Same as PA-04 |
+| Calendar workflow | scoped delegation | Per operation |
+| Calendar proposal | prepare endpoint | Bound payload |
+| Voice confirmation | confirm endpoint | HMAC proof |
+| Calendar mutation | Backend adapter | Commit ACK |
+| Create ACK | schedule.query | Read-after-write |
+| Voice create state | draft state | Fail is terminal |
+| Calendar query intent | schedule.query | Supersedes draft |
+| Chiều mai | 12:00–18:00 | User timezone |
+
+The Local robot transcript handler reuses the authenticated PA-04 session,
+Backend client, WebSocket response and TTS path. Calendar writes remain disabled
+unless the process-local Calendar write flag and Backend write gate are both enabled.
+
 ## H-06 - Group III personalization additions
 
 | From | Via | Note |

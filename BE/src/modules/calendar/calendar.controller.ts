@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -21,6 +21,11 @@ export class ReminderController {
   constructor(private readonly reminders: ReminderService) {}
   @Get() list(@CurrentUser() user: AuthenticatedUser, @Query() q: ReminderQueryDto) { return this.reminders.list(user, q.status); }
   @Post() create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateReminderDto) { return this.reminders.create(user, dto as unknown as Record<string, unknown>); }
+  @Post(':id/deliveries/:deliveryId/acknowledge') @HttpCode(200) @Roles('USER')
+  confirmReceipt(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string,
+    @Param('deliveryId') deliveryId: string) {
+    return this.reminders.confirmReceipt(user, id, deliveryId);
+  }
 }
 
 @ApiTags('internal-reminders') @ApiBearerAuth() @Controller('internal/reminders') @Roles('ADMIN')

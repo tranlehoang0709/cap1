@@ -1,0 +1,5 @@
+INFO:     127.0.0.1:60121 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49822 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51591 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65447 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58545 - "GET /ready HTTP/1.1" 200 OK
